@@ -1,0 +1,16 @@
+{% load humanize %}
+<div class="container">
+  <div class="section-header">
+    {% if feat_overline %}<div class="section-overline" style="color:var({{ feat_overline_colour }});">{{ feat_overline }}</div>{% endif %}
+    <h2 class="section-title" style="color:var({{ feat_heading_colour }});font-size:{{ feat_heading_size }};">{{ feat_heading }}</h2>
+    {% if feat_subheading %}<p class="section-sub" style="color:var({{ feat_subheading_colour }});">{{ feat_subheading }}</p>{% endif %}
+  </div>
+  <div class="product-grid">
+    {% for product in feat_products %}{% include "store/_product_card.html" %}{% endfor %}
+  </div>
+  {% if feat_view_all_link %}
+  <div class="view-all-row">
+    <a href="{{ feat_view_all_link }}" class="view-all-link" style="color:var({{ feat_view_all_colour }});border-bottom-color:var({{ feat_view_all_colour }});">View All Products →</a>
+  </div>
+  {% endif %}
+</div>

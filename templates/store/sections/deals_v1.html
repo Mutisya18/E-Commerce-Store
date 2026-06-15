@@ -1,0 +1,21 @@
+{% load humanize %}
+{% if deals %}
+<div class="container">
+  <div class="deals-header">
+    <div>
+      <h2 class="deals-title" style="color:var({{ deals_heading_colour }});font-size:{{ deals_heading_size }};">{{ deals_heading }}</h2>
+      {% if deals_subheading %}<p style="color:var({{ deals_subheading_colour }});font-size:{{ deals_subheading_size }};margin-top:8px;opacity:0.8;">{{ deals_subheading }}</p>{% endif %}
+    </div>
+  </div>
+  <div class="product-grid">
+    {% for product in deals %}
+      <div class="deal-card">{% include "store/_product_card.html" %}</div>
+    {% endfor %}
+  </div>
+  {% if deals_view_all_link %}
+  <div style="text-align:center;margin-top:36px;">
+    <a href="{{ deals_view_all_link }}" class="btn btn--outline btn--{{ deals_view_all_colour|slice:'2:' }}">See All Deals →</a>
+  </div>
+  {% endif %}
+</div>
+{% endif %}

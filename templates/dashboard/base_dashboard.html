@@ -1,0 +1,243 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}Dashboard — Mutisya{% endblock %}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,600;0,700;1,600&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{% static 'css/output.css' %}">
+  <style>
+    :root {
+      --navy: #1B2A4A; --navy-hover: #243660; --navy-light: rgba(27,42,74,0.08);
+      --emerald: #1A5C45; --emerald-light: #EAF4F0;
+      --gold: #C9A84C; --gold-light: #FDF6E3;
+      --forest: #1E2D22; --forest-hover: #2C4232; --gold-muted: #8A7A52; --sage: #BECDC2; --sage-light: #E8EFEC;
+      --base: #FAF8F2; --surface: #FFFFFF; --surface-alt: #EDEAE0;
+      --text: #1A1A1A; --text-sub: #5A5A5A; --text-muted: #9A9A9A;
+      --border: #E5E2DC; --danger: #C0392B; --danger-light: #FDECEA;
+      --warning: #D4750A; --warning-light: #FEF3E8;
+      --r: 8px; --r-lg: 12px; --r-xl: 16px;
+      --shadow: 0 1px 3px rgba(0,0,0,0.05), 0 4px 14px rgba(0,0,0,0.04);
+      --shadow-hover: 0 6px 24px rgba(27,42,74,0.13);
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'DM Sans', sans-serif; background: var(--base); color: var(--text); font-size: 14px; line-height: 1.5; -webkit-font-smoothing: antialiased; display: flex; min-height: 100vh; }
+    .serif { font-family: 'Cormorant Garamond', serif; }
+
+    /* SIDEBAR */
+    .sidebar { width: 240px; min-height: 100vh; background: var(--navy); display: flex; flex-direction: column; position: fixed; top: 0; left: 0; z-index: 50; }
+    .sb-logo { padding: 20px 20px 16px; border-bottom: 1px solid rgba(255,255,255,0.08); }
+    .sb-logo-text { font-family: 'Cormorant Garamond', serif; font-size: 22px; font-weight: 700; color: #fff; letter-spacing: -0.3px; text-decoration: none; display: flex; align-items: center; gap: 6px; }
+    .sb-logo-dot { width: 5px; height: 5px; background: var(--gold); border-radius: 50%; }
+    .sb-label { font-size: 10px; color: rgba(255,255,255,0.35); letter-spacing: 0.1em; text-transform: uppercase; margin-top: 2px; }
+    .sb-nav { flex: 1; padding: 12px 0; overflow-y: auto; }
+    .sb-link { display: flex; align-items: center; gap: 10px; padding: 9px 20px; color: rgba(255,255,255,0.65); font-size: 13px; font-weight: 500; cursor: pointer; transition: all 0.15s; border-left: 3px solid transparent; text-decoration: none; position: relative; }
+    .sb-link:hover { color: #fff; background: rgba(255,255,255,0.06); }
+    .sb-link.active { color: #fff; background: rgba(255,255,255,0.1); border-left-color: #fff; }
+    .sb-group-label { padding: 16px 20px 4px; font-size: 10px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: rgba(255,255,255,0.3); }
+    .sb-icon { width: 16px; height: 16px; flex-shrink: 0; opacity: 0.8; }
+    .sb-badge { margin-left: auto; background: var(--danger); color: #fff; font-size: 10px; font-weight: 700; padding: 1px 6px; border-radius: 10px; min-width: 18px; text-align: center; }
+    .sb-badge.gold { background: var(--gold); }
+    .sb-bottom { padding: 16px 20px; border-top: 1px solid rgba(255,255,255,0.08); }
+    .sb-avatar { width: 32px; height: 32px; border-radius: 50%; background: var(--gold); color: var(--navy); font-size: 12px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+
+    /* MAIN */
+    .main { margin-left: 240px; flex: 1; display: flex; flex-direction: column; min-height: 100vh; }
+
+    /* TOPBAR */
+    .topbar { height: 60px; background: var(--surface); border-bottom: 1px solid var(--border); display: flex; align-items: center; padding: 0 28px; gap: 16px; position: sticky; top: 0; z-index: 40; }
+    .topbar-title { font-size: 17px; font-weight: 600; color: var(--text); }
+    .topbar-right { margin-left: auto; display: flex; align-items: center; gap: 8px; }
+    .tb-btn { width: 36px; height: 36px; border-radius: var(--r); background: transparent; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; color: var(--text-sub); transition: background 0.15s; position: relative; text-decoration: none; }
+    .tb-btn:hover { background: var(--surface-alt); }
+    .tb-dot { position: absolute; top: 6px; right: 6px; width: 7px; height: 7px; border-radius: 50%; background: var(--danger); border: 2px solid #fff; }
+    .tb-avatar { width: 32px; height: 32px; border-radius: 50%; background: var(--navy); color: #fff; font-size: 11px; font-weight: 700; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+
+    /* PAGE */
+    .page { padding: 28px; flex: 1; }
+    .page-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; }
+    .page-title { font-family: 'Cormorant Garamond', serif; font-size: 28px; font-weight: 700; color: var(--navy); }
+
+    /* BUTTONS */
+    .btn { display: inline-flex; align-items: center; gap: 7px; padding: 0 16px; height: 36px; border-radius: var(--r); font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.15s; border: none; white-space: nowrap; text-decoration: none; }
+    .btn-navy { background: var(--navy); color: #fff; } .btn-navy:hover { background: var(--navy-hover); }
+    .btn-emerald { background: var(--emerald); color: #fff; } .btn-emerald:hover { background: #1e6b50; }
+    .btn-outline { background: transparent; color: var(--navy); border: 1.5px solid var(--navy); } .btn-outline:hover { background: var(--navy); color: #fff; }
+    .btn-ghost { background: transparent; color: var(--text-sub); border: 1px solid var(--border); } .btn-ghost:hover { background: var(--surface-alt); }
+    .btn-danger { background: var(--danger); color: #fff; } .btn-danger:hover { background: #a93226; }
+    .btn-sm { height: 30px; padding: 0 12px; font-size: 12px; }
+    .btn-lg { height: 44px; padding: 0 24px; font-size: 14px; }
+
+    /* CARDS */
+    .card { background: var(--surface); border-radius: var(--r-lg); box-shadow: var(--shadow); padding: 20px; }
+    .card-title { font-size: 14px; font-weight: 600; color: var(--text); margin-bottom: 16px; }
+
+    /* STAT CARDS */
+    .stats-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 16px; margin-bottom: 24px; }
+    .stat-card { background: var(--surface); border-radius: var(--r-lg); box-shadow: var(--shadow); padding: 20px; position: relative; overflow: hidden; }
+    .stat-card::before { content: ''; position: absolute; top: 0; left: 0; width: 3px; height: 100%; background: var(--navy); }
+    .stat-card.emerald::before { background: var(--emerald); }
+    .stat-card.gold::before { background: var(--gold); }
+    .stat-card.danger::before { background: var(--danger); }
+    .stat-label { font-size: 12px; color: var(--text-muted); font-weight: 500; margin-bottom: 4px; }
+    .stat-value { font-family: 'Cormorant Garamond', serif; font-size: 26px; font-weight: 700; color: var(--navy); line-height: 1; }
+    .stat-sub { font-size: 11px; color: var(--text-muted); margin-top: 4px; }
+    .stat-up { color: var(--emerald); font-weight: 600; }
+    .stat-down { color: var(--danger); font-weight: 600; }
+
+    /* TABLES */
+    .table-wrap { overflow-x: auto; border-radius: var(--r-lg); box-shadow: var(--shadow); }
+    table { width: 100%; background: var(--surface); border-collapse: collapse; }
+    th { padding: 11px 14px; text-align: left; font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-muted); border-bottom: 1px solid var(--border); white-space: nowrap; }
+    td { padding: 12px 14px; font-size: 13px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: var(--base); }
+
+    /* BADGES */
+    .badge { display: inline-flex; align-items: center; padding: 3px 8px; border-radius: 5px; font-size: 11px; font-weight: 700; letter-spacing: 0.04em; white-space: nowrap; }
+    .badge-emerald { background: var(--emerald-light); color: var(--emerald); }
+    .badge-navy { background: var(--navy-light); color: var(--navy); }
+    .badge-gold { background: var(--gold-light); color: #7a5c1a; }
+    .badge-danger { background: var(--danger-light); color: var(--danger); }
+    .badge-warning { background: var(--warning-light); color: var(--warning); }
+    .badge-muted { background: var(--surface-alt); color: var(--text-muted); }
+
+    /* DATE TABS */
+    .date-tabs { display: flex; gap: 4px; background: var(--surface-alt); border-radius: var(--r); padding: 3px; }
+    .date-tab { padding: 5px 12px; border-radius: 6px; font-size: 12px; font-weight: 500; cursor: pointer; border: none; background: transparent; color: var(--text-sub); transition: all 0.15s; text-decoration: none; }
+    .date-tab.active { background: var(--surface); color: var(--navy); font-weight: 600; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+
+    /* MESSAGES */
+    .alert { padding: 12px 16px; border-radius: var(--r); font-size: 13px; font-weight: 500; margin-bottom: 16px; }
+    .alert-success { background: var(--emerald-light); color: var(--emerald); border-left: 3px solid var(--emerald); }
+    .alert-error { background: var(--danger-light); color: var(--danger); border-left: 3px solid var(--danger); }
+    .icon { display:inline-block; flex-shrink:0; vertical-align:middle; }
+    .icon-emoji { display:inline-block; flex-shrink:0; vertical-align:middle; }
+    .icon--inline { vertical-align:-0.125em; margin-right:4px; }
+    .icon--muted { opacity:0.45; }
+    .icon--spin { animation:icon-spin 1s linear infinite; }
+    @keyframes icon-spin { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
+
+    {% block extra_styles %}{% endblock %}
+  </style>
+  {% block extra_head %}{% endblock %}
+</head>
+{% load icon_tags %}
+<body x-data="bodyRoot">
+{% sprite %}
+
+  {# ── SIDEBAR ── #}
+  <aside class="sidebar">
+    <div class="sb-logo">
+      <a href="/dashboard/" class="sb-logo-text">
+        mutisya<span class="sb-logo-dot"></span>
+      </a>
+      <div class="sb-label">Store Admin</div>
+    </div>
+
+    <nav class="sb-nav">
+      <div class="sb-group-label">Main</div>
+      <a href="/dashboard/" class="sb-link {% block nav_overview %}{% endblock %}">
+        {% icon "squares-four" size=18 css_class="sb-icon" %}
+        Dashboard
+      </a>
+      <a href="/dashboard/orders/" class="sb-link {% block nav_orders %}{% endblock %}">
+        {% icon "clipboard-text" size=18 css_class="sb-icon" %}
+        Orders
+        {% if pending_orders_count %}<span class="sb-badge">{{ pending_orders_count }}</span>{% endif %}
+      </a>
+      <a href="/dashboard/products/" class="sb-link {% block nav_products %}{% endblock %}">
+        {% icon "package" size=18 css_class="sb-icon" %}
+        Products
+      </a>
+      <a href="/dashboard/categories/" class="sb-link {% block nav_categories %}{% endblock %}">
+        {% icon "rows" size=18 css_class="sb-icon" %}
+        Categories
+      </a>
+      <a href="/dashboard/customers/" class="sb-link {% block nav_customers %}{% endblock %}">
+        {% icon "users" size=18 css_class="sb-icon" %}
+        Customers
+      </a>
+      <a href="/dashboard/homepage/" class="sb-link {% block nav_homepage %}{% endblock %}">
+        {% icon "house" size=18 css_class="sb-icon" %}
+        Homepage
+      </a>
+
+      <div class="sb-group-label">Finance</div>
+      <a href="/dashboard/payments/" class="sb-link {% block nav_payments %}{% endblock %}">
+        {% icon "credit-card" size=18 css_class="sb-icon" %}
+        Payments
+      </a>
+      <a href="/dashboard/analytics/" class="sb-link {% block nav_analytics %}{% endblock %}">
+        {% icon "chart-bar" size=18 css_class="sb-icon" %}
+        Analytics
+      </a>
+
+      <div class="sb-group-label">System</div>
+      <a href="/dashboard/notifications/" class="sb-link {% block nav_notifications %}{% endblock %}">
+        {% icon "bell" size=18 css_class="sb-icon" %}
+        Notifications
+        {% if unread_notif_count %}<span class="sb-badge">{{ unread_notif_count }}</span>{% endif %}
+      </a>
+      <a href="/dashboard/settings/" class="sb-link {% block nav_settings %}{% endblock %}">
+        {% icon "gear" size=18 css_class="sb-icon" %}
+        Settings
+      </a>
+    </nav>
+
+    <div class="sb-bottom">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <div class="sb-avatar">{{ request.user.first_name|first|upper }}{{ request.user.last_name|first|upper }}</div>
+        <div>
+          <div style="font-size:13px;color:#fff;font-weight:500;">{{ request.user.get_full_name|default:request.user.email }}</div>
+          <div style="font-size:11px;color:rgba(255,255,255,0.4);">Store Owner</div>
+        </div>
+        <form method="post" action="/dashboard/logout/" style="margin-left:auto;">
+          {% csrf_token %}
+          <button type="submit" style="background:none;border:none;cursor:pointer;color:rgba(255,255,255,0.4);font-size:12px;padding:0;" title="Logout">
+            {% icon "sign-out" size=14 %}
+          </button>
+        </form>
+      </div>
+    </div>
+  </aside>
+
+  {# ── MAIN ── #}
+  <div class="main">
+    <header class="topbar">
+      <div>
+        <div class="topbar-title">{% block page_title %}Dashboard{% endblock %}</div>
+        {% block breadcrumb %}{% endblock %}
+      </div>
+      <div class="topbar-right">
+        <a href="/dashboard/notifications/" class="tb-btn" title="Notifications">
+          {% icon "bell" size=18 %}
+          {% if unread_notif_count %}<span class="tb-dot"></span>{% endif %}
+        </a>
+        <div class="tb-avatar" title="{{ request.user.email }}">
+          {{ request.user.first_name|first|upper }}{{ request.user.last_name|first|upper }}
+        </div>
+      </div>
+    </header>
+
+    {# Messages #}
+    {% if messages %}
+      <div style="padding: 16px 28px 0;">
+        {% for message in messages %}
+          <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+        {% endfor %}
+      </div>
+    {% endif %}
+
+    <div class="page">
+      {% block dashboard_content %}{% endblock %}
+    </div>
+  </div>
+
+  <script defer src="{% static 'js/alpine.min.js' %}"></script>
+  <script src="{% static 'js/dashboard.js' %}"></script>
+  {% block extra_js %}{% endblock %}
+</body>
+</html>

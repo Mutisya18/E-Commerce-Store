@@ -1,0 +1,404 @@
+{% extends "dashboard/base_dashboard.html" %}
+{% load humanize icon_tags %}
+{% load static %}
+
+{% block title %}Products — Dashboard{% endblock %}
+{% block page_title %}Products{% endblock %}
+{% block nav_products %}active{% endblock %}
+
+{% block extra_styles %}
+/* ── PAGE HEADER ── */
+.page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+.page-title-wrap .page-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--navy);
+  line-height: 1;
+}
+.page-sub { font-size: 13px; color: var(--text-muted); margin-top: 3px; }
+
+/* ── FILTER ROW ── */
+.filter-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+.search-box {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: var(--r);
+  padding: 0 12px;
+  height: 36px;
+  flex: 1;
+  max-width: 280px;
+  transition: border-color .15s;
+}
+.search-box:focus-within { border-color: var(--navy); }
+.search-box input {
+  border: none;
+  outline: none;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  color: var(--text);
+  background: transparent;
+  width: 100%;
+}
+.search-box input::placeholder { color: var(--text-muted); }
+select.filter-sel {
+  height: 36px;
+  border: 1.5px solid var(--border);
+  border-radius: var(--r);
+  padding: 0 10px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  color: var(--text-sub);
+  background: var(--surface);
+  cursor: pointer;
+  outline: none;
+  transition: border-color .15s;
+}
+select.filter-sel:focus { border-color: var(--navy); }
+
+/* ── BULK BAR ── */
+.bulk-bar {
+  display: none;
+  align-items: center;
+  gap: 10px;
+  background: var(--navy);
+  color: #fff;
+  padding: 10px 16px;
+  border-radius: var(--r);
+  margin-bottom: 12px;
+  font-size: 13px;
+  font-weight: 500;
+}
+.bulk-bar.visible { display: flex; }
+.bulk-bar .bulk-count { margin-right: 4px; }
+.bulk-sep { width: 1px; height: 16px; background: rgba(255,255,255,.2); }
+.bulk-btn {
+  background: rgba(255,255,255,.12);
+  border: none;
+  color: #fff;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 12px;
+  font-weight: 500;
+  padding: 5px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background .15s;
+}
+.bulk-btn:hover { background: rgba(255,255,255,.22); }
+.bulk-btn.danger { background: rgba(192,57,43,.5); }
+.bulk-btn.danger:hover { background: rgba(192,57,43,.75); }
+.bulk-clear { margin-left: auto; background: none; border: none; color: rgba(255,255,255,.6); cursor: pointer; font-size: 18px; line-height: 1; }
+
+/* ── TABLE ── */
+.products-wrap {
+  background: var(--surface);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow);
+  border: 1px solid var(--border);
+  overflow: hidden;
+}
+.products-wrap table {
+  width: 100%;
+  border-collapse: collapse;
+  box-shadow: none;
+  table-layout: fixed;
+}
+.products-wrap th {
+  background: var(--surface-alt);
+  padding: 10px 14px;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+.products-wrap td {
+  padding: 10px 14px;
+  font-size: 11px;
+  border-bottom: 1px solid var(--border);
+  vertical-align: middle;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.products-wrap tr:last-child td { border-bottom: none; }
+.products-wrap tr:hover td { background: var(--base); }
+.products-wrap tr.p-row.hidden { display: none; }
+
+/* Product cell */
+.td-img {
+  width: 30px;
+  height: 30px;
+  border-radius: var(--r);
+  background: var(--surface-alt);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+.td-img img { width: 100%; height: 100%; object-fit: cover; }
+.td-name { font-weight: 600; color: var(--text); font-size: 12px; }
+.td-sub { font-size: 11px; color: var(--text-muted); margin-top: 1px; }
+
+/* Toggle */
+.toggle { position: relative; width: 36px; height: 20px; flex-shrink: 0; display: inline-block; }
+.toggle input { opacity: 0; width: 0; height: 0; }
+.toggle-slider {
+  position: absolute;
+  inset: 0;
+  background: var(--border);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: .2s;
+}
+.toggle-slider::before {
+  content: '';
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  left: 3px;
+  top: 3px;
+  background: #fff;
+  border-radius: 50%;
+  transition: .2s;
+}
+.toggle input:checked + .toggle-slider { background: var(--emerald); }
+.toggle input:checked + .toggle-slider::before { transform: translateX(16px); }
+
+/* Badges */
+.badge-emerald { background: var(--emerald-light); color: var(--emerald); }
+.badge-gray { background: var(--surface-alt); color: var(--text-muted); }
+
+/* Dropdown menu */
+.row-menu { position: relative; display: inline-block; }
+.row-menu-btn {
+  width: 28px; height: 28px;
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  background: var(--surface);
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--text-sub);
+  font-size: 16px; line-height: 1;
+  transition: background .15s;
+}
+.row-menu-btn:hover { background: var(--surface-alt); }
+.row-menu-dropdown {
+  display: none;
+  position: absolute;
+  right: 0; top: 32px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  box-shadow: var(--shadow-hover);
+  min-width: 150px;
+  z-index: 100;
+  overflow: hidden;
+}
+.row-menu.open .row-menu-dropdown { display: block; }
+.row-menu-item {
+  display: block;
+  width: 100%;
+  padding: 9px 14px;
+  font-size: 12px;
+  font-family: 'DM Sans', sans-serif;
+  color: var(--text);
+  background: none;
+  border: none;
+  text-align: left;
+  cursor: pointer;
+  text-decoration: none;
+  transition: background .12s;
+  white-space: nowrap;
+}
+.row-menu-item:hover { background: var(--surface-alt); }
+.row-menu-item.danger { color: var(--danger); }
+.row-menu-item.danger:hover { background: var(--danger-light); }
+
+/* Inline stock edit */
+.stock-edit-wrap { display:flex; align-items:center; gap:4px; }
+.stock-val { font-weight:600; cursor:default; }
+.stock-edit-btn { background:none; border:none; cursor:pointer; color:var(--text-muted); padding:0 2px; line-height:1; font-size:11px; transition:opacity .15s; }
+.stock-input { width:52px; height:24px; border:1.5px solid var(--navy); border-radius:4px; font-size:11px; font-family:'DM Sans',sans-serif; text-align:center; outline:none; padding:0 4px; }
+.stock-confirm-btn { background:none; border:none; cursor:pointer; font-size:14px; line-height:1; padding:0 1px; }
+
+/* Empty state */
+.empty-state { text-align: center; padding: 64px 0; }
+.empty-state .empty-icon { font-size: 48px; margin-bottom: 12px; }
+.empty-state .empty-heading { font-size: 16px; font-weight: 600; color: var(--text); margin-bottom: 6px; }
+.empty-state .empty-sub { font-size: 13px; color: var(--text-muted); }
+{% endblock %}
+
+{% block dashboard_content %}
+
+<!-- Page Header -->
+<div class="page-header">
+  <div class="page-title-wrap">
+    <div class="page-title">Products</div>
+    <div class="page-sub">{{ total_count }} product{{ total_count|pluralize }} total</div>
+  </div>
+  <div style="display:flex;gap:8px">
+    <a href="/dashboard/products/export/" class="btn btn-ghost">Export CSV</a>
+    <a href="/dashboard/products/add/" class="btn btn-navy">+ Add Product</a>
+  </div>
+</div>
+
+<!-- Filter Row -->
+<div class="filter-row">
+  <div class="search-box">
+    {% icon "magnifying-glass" size=13 %}
+    <input type="text" id="productSearch" placeholder="Search products…" autocomplete="off">
+  </div>
+  <select class="filter-sel" id="catFilter">
+    <option value="">All Categories</option>
+    {% for cat in categories %}
+    <option value="{{ cat.name|lower }}">{{ cat.name }}</option>
+    {% endfor %}
+  </select>
+  <select class="filter-sel" id="stockFilter">
+    <option value="">All Stock</option>
+    <option value="in">In Stock</option>
+    <option value="low">Low Stock</option>
+    <option value="out">Out of Stock</option>
+  </select>
+  <select class="filter-sel" id="visFilter">
+    <option value="">All Visibility</option>
+    <option value="visible">Visible</option>
+    <option value="hidden">Hidden</option>
+  </select>
+</div>
+
+<!-- Bulk Actions Bar -->
+<div class="bulk-bar" id="bulkBar">
+  <span class="bulk-count"><span id="bulkCount">0</span> selected</span>
+  <div class="bulk-sep"></div>
+  <button class="bulk-btn danger" id="btn-bulk-delete">Delete Selected</button>
+  <button class="bulk-btn" id="btn-bulk-visible">Set Visible</button>
+  <button class="bulk-btn" id="btn-bulk-hidden">Set Hidden</button>
+  <button class="bulk-clear" id="btn-clear-selection" title="Clear selection">×</button>
+</div>
+
+<!-- Products Table -->
+<div class="products-wrap">
+  <table>
+    <colgroup>
+      <col style="width:32px">
+      <col style="width:200px"><!-- Product -->
+      <col style="width:100px">
+      <col style="width:100px">
+      <col style="width:100px">
+      <col style="width:70px">
+      <col style="width:60px">
+      <col style="width:50px">
+    </colgroup>
+    <thead>
+      <tr>
+        <th><input type="checkbox" id="selectAll"></th>
+        <th>Product</th>
+        <th>Category</th>
+        <th>Price</th>
+        <th>Sale Price</th>
+        <th>Stock</th>
+        <th>Visible</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody id="productsTbody">
+      {% for product in products %}
+      {% with stock=product.stock threshold=product.low_stock_threshold %}
+      <tr class="p-row"
+          data-name="{{ product.name|lower }}"
+          data-sku="{{ product.sku|lower }}"
+          data-cat="{{ product.category.name|lower|default:'' }}"
+          data-stock="{% if stock == 0 %}out{% elif stock <= threshold %}low{% else %}in{% endif %}"
+          data-vis="{% if product.is_visible %}visible{% else %}hidden{% endif %}"
+          style="cursor:pointer"
+          data-pk="{{ product.pk }}">
+        <td data-no-nav><input type="checkbox" class="row-check" value="{{ product.pk }}"></td>
+        <td style="overflow:visible;white-space:normal">
+          <div style="display:flex;align-items:center;gap:10px">
+            <div class="td-img">
+              {% if product.cover_image %}
+                <img src="{{ product.cover_image.image.url }}" alt="{{ product.name }}">
+              {% else %}
+                {% icon "shopping-bag-open" size=24 color="var(--text-muted)" %}
+              {% endif %}
+            </div>
+            <div>
+              <div class="td-name">{{ product.name }}</div>
+              <div class="td-sub">SKU: {{ product.sku|default:"—" }}</div>
+            </div>
+          </div>
+        </td>
+        <td style="color:var(--text-sub)">{{ product.category.name|default:"—" }}</td>
+        <td style="font-weight:700">KES {{ product.base_price|floatformat:0|intcomma }}</td>
+        <td>
+          {% if product.deal_end_date %}
+            <span style="color:var(--emerald);font-weight:600">—</span>
+          {% else %}
+            <span style="color:var(--text-muted)">—</span>
+          {% endif %}
+        </td>
+        <td data-no-nav>
+          <div class="stock-edit-wrap" id="stock-wrap-{{ product.pk }}">
+            <span class="stock-val" id="stock-val-{{ product.pk }}" style="
+              {% if stock == 0 %}color:var(--danger)
+              {% elif stock <= threshold %}color:var(--warning)
+              {% else %}color:var(--emerald){% endif %}">{{ stock }}</span>
+            <button class="stock-edit-btn" style="opacity:1" data-pk="{{ product.pk }}" data-stock="{{ stock }}" data-threshold="{{ threshold }}" class="stock-edit-btn" title="Edit stock">{% icon "pencil-simple" size=11 %}</button>
+          </div>
+        </td>
+        <td id="vis-cell-{{ product.pk }}" data-no-nav>
+          <label class="toggle">
+            <input type="checkbox" {% if product.is_visible %}checked{% endif %}
+                   class="vis-toggle" data-pk="{{ product.pk }}">
+            <span class="toggle-slider"></span>
+          </label>
+        </td>
+        <td style="overflow:visible" data-no-nav>
+          <form method="post" action="/dashboard/products/{{ product.pk }}/delete/"
+                >
+            {% csrf_token %}
+            <button type="submit" class="btn btn-sm" style="background:var(--danger-light);color:var(--danger);border:none">
+              {% icon "trash" size=12 %}
+            </button>
+          </form>
+        </td>
+      </tr>
+      {% endwith %}
+      {% empty %}
+      <tr>
+        <td colspan="8">
+          <div class="empty-state">
+            <div class="empty-icon">{% icon "shopping-bag-open" size=48 color="var(--text-muted)" %}</div>
+            <div class="empty-heading">No products yet</div>
+            <div class="empty-sub">Add your first product to get started.</div>
+          </div>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}{% endblock %}

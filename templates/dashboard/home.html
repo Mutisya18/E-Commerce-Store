@@ -1,0 +1,204 @@
+{% extends "dashboard/base_dashboard.html" %}
+{% load humanize icon_tags %}
+{% block title %}Overview — Mutisya Dashboard{% endblock %}
+{% block page_title %}Overview{% endblock %}
+{% block nav_overview %}active{% endblock %}
+
+{% block extra_head %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+{% endblock %}
+
+{% block dashboard_content %}
+<div id="overview-stats-root"
+     data-stats='{"period_revenue":{{ period_revenue }},"revenue_change":{{ revenue_change }},"today_orders":{{ today_orders }},"avg_order_value":{{ avg_order_value }},"units_sold":{{ units_sold }},"top_products":{{ top_products_json|safe }},"low_stock_products":{{ low_stock_json|safe }},"rev_labels":{{ rev_labels_json|safe }},"rev_data":{{ rev_data_json|safe }}}'
+     x-data="overviewStats('{{ period }}')">
+
+<div class="page-header">
+  <div>
+    <div class="page-title">Overview</div>
+  </div>
+</div>
+
+{# Main Stats Grid #}
+<div class="stats-grid">
+  <div class="stat-card">
+    <div style="width:40px;height:40px;border-radius:10px;background:var(--emerald-light);display:flex;align-items:center;justify-content:center;margin-bottom:12px;">
+      {% icon "currency-dollar" size=20 color="var(--emerald)" %}
+    </div>
+    <div class="stat-label">Revenue (30 Days)</div>
+    <div class="stat-value">KES {{ period_revenue|floatformat:0|intcomma }}</div>
+    <div class="stat-sub">
+      {% if revenue_change > 0 %}
+        <span class="stat-up">↑ {{ revenue_change|floatformat:0|intcomma }}%</span> vs yesterday
+      {% elif revenue_change < 0 %}
+        <span class="stat-down">↓ {{ revenue_change|floatformat:0|cut:"-" }}%</span> vs yesterday
+      {% else %}
+        No change
+      {% endif %}
+    </div>
+  </div>
+  <div class="stat-card emerald">
+    <div style="width:40px;height:40px;border-radius:10px;background:var(--navy-light);display:flex;align-items:center;justify-content:center;margin-bottom:12px;">
+      {% icon "clipboard-text" size=20 color="var(--navy)" %}
+    </div>
+    <div class="stat-label">Today's Orders</div>
+    <div class="stat-value">{{ today_orders }}</div>
+    <div class="stat-sub"><span class="stat-up">↑ 3</span> new this hour</div>
+  </div>
+  <div class="stat-card gold">
+    <div style="width:40px;height:40px;border-radius:10px;background:var(--gold-light);display:flex;align-items:center;justify-content:center;margin-bottom:12px;">
+      {% icon "shopping-cart" size=20 color="#7a5c1a" %}
+    </div>
+    <div class="stat-label">Avg Order Value</div>
+    <div class="stat-value">KES {{ avg_order_value|floatformat:0|intcomma }}</div>
+    <div class="stat-sub"><span class="stat-down">↓ 4%</span> this week</div>
+  </div>
+  <div class="stat-card navy">
+    <div style="width:40px;height:40px;border-radius:10px;background:var(--warning-light);display:flex;align-items:center;justify-content:center;margin-bottom:12px;">
+      {% icon "warning" size=16 color="var(--warning)" %}
+    </div>
+    <div class="stat-label">Low Stock</div>
+    <div class="stat-value">{{ low_stock_products.count }}</div>
+    <div class="stat-sub" style="color:var(--navy);cursor:pointer;" id="low-stock-scroll" style="cursor:pointer;">Tap to review →</div>
+  </div>
+</div>
+
+{# Charts Row #}
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px;">
+  <div class="card">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+      <div class="card-title">Sales Overview</div>
+      <div class="date-tabs">
+        <button @click="setPeriod('today')" class="date-tab" :class="period === 'today' ? 'active' : ''">Today</button>
+        <button @click="setPeriod('week')" class="date-tab" :class="period === 'week' ? 'active' : ''">This Week</button>
+        <button @click="setPeriod('month')" class="date-tab" :class="period === 'month' ? 'active' : ''">This Month</button>
+      </div>
+    </div>
+    <canvas id="salesChart" style="max-height:200px;"></canvas>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Best Sellers</div>
+    {% if top_products %}
+      <div style="display:flex;flex-direction:column;gap:12px;">
+        {% for item in top_products %}
+        <div style="display:flex;align-items:center;gap:12px;">
+          <span style="font-size:12px;color:var(--text-muted);width:120px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ item.product__name }}</span>
+          <div style="flex:1;height:8px;background:var(--surface-alt);border-radius:4px;overflow:hidden;">
+            <div style="height:100%;background:var(--navy);border-radius:4px;width:{% widthratio item.units_sold top_products.0.units_sold 100 %}%;transition:width 0.6s;"></div>
+          </div>
+          <span style="font-size:12px;color:var(--text-muted);width:60px;text-align:right;">{{ item.units_sold }} sold</span>
+        </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <p style="color:var(--text-muted);font-size:13px;text-align:center;padding:40px 0;">No sales data</p>
+    {% endif %}
+  </div>
+</div>
+
+{# Recent Orders - Full Width #}
+<div class="card" style="margin-bottom:20px;">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+    <div class="card-title">Recent Orders</div>
+    <a href="/dashboard/orders/" class="btn btn-ghost btn-sm">View All</a>
+  </div>
+  {% if recent_orders %}
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Order #</th>
+            <th>Customer</th>
+            <th>Total</th>
+            <th>Status</th>
+            <th>Date</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for order in recent_orders %}
+          <tr>
+            <td><strong>{{ order.order_number }}</strong></td>
+            <td>{{ order.full_name }}</td>
+            <td>KES {{ order.total|floatformat:0|intcomma }}</td>
+            <td>
+              {% if order.status == 'pending' %}
+                <span class="badge badge-warning">Pending</span>
+              {% elif order.status == 'processing' %}
+                <span class="badge badge-navy">Processing</span>
+              {% elif order.status == 'shipped' %}
+                <span class="badge badge-navy">Shipped</span>
+              {% elif order.status == 'delivered' %}
+                <span class="badge badge-emerald">Delivered</span>
+              {% elif order.status == 'cancelled' %}
+                <span class="badge badge-muted">Cancelled</span>
+              {% endif %}
+            </td>
+            <td style="font-size:12px;color:var(--text-muted);">{{ order.created_at|date:"M d, Y" }}</td>
+            <td><a href="/dashboard/orders/{{ order.order_number }}/" class="btn btn-ghost btn-sm">View</a></td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+      <p style="color:var(--text-muted);font-size:13px;text-align:center;padding:40px 0;">No orders yet</p>
+    {% endif %}
+</div>
+
+{# Two Column Grid - Top Selling and Low Stock #}
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
+  {# Top Selling Products #}
+  <div class="card">
+      <div class="card-title">Top Selling This Week</div>
+      <template x-if="stats.top_products && stats.top_products.length">
+        <div>
+          <template x-for="(item, i) in stats.top_products" :key="i">
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border);">
+              <div style="flex:1;">
+                <div style="font-size:13px;font-weight:600;color:var(--text);" x-text="item.product__name"></div>
+                <div style="font-size:11px;color:var(--text-muted);margin-top:2px;" x-text="item.units_sold + ' units sold'"></div>
+              </div>
+              <div style="font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:700;color:var(--emerald);" x-text="i + 1"></div>
+            </div>
+          </template>
+        </div>
+      </template>
+      <template x-if="!stats.top_products || !stats.top_products.length">
+        <p style="color:var(--text-muted);font-size:13px;text-align:center;padding:20px 0;">No sales this week</p>
+      </template>
+    </div>
+
+    {# Low Stock Alerts #}
+    <div class="card low-stock-section">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:16px;">
+        <div style="width:32px;height:32px;border-radius:8px;background:var(--warning-light);display:flex;align-items:center;justify-content:center;">
+          {% icon "warning" size=16 color="var(--warning)" %}
+        </div>
+        <div class="card-title" style="margin:0;">Low Stock Alerts</div>
+      </div>
+      <template x-if="stats.low_stock_products && stats.low_stock_products.length">
+        <div>
+          <template x-for="(product, i) in stats.low_stock_products" :key="i">
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border);">
+              <div style="flex:1;">
+                <div style="font-size:13px;font-weight:600;color:var(--text);" x-text="product.name"></div>
+                <div style="font-size:11px;color:var(--text-muted);margin-top:2px;" x-text="product.stock + ' units left'"></div>
+              </div>
+              <div style="padding:4px 8px;border-radius:4px;background:var(--warning-light);color:var(--warning);font-size:11px;font-weight:600;">Low</div>
+            </div>
+          </template>
+        </div>
+      </template>
+      <template x-if="!stats.low_stock_products || !stats.low_stock_products.length">
+        <p style="font-size:13px;color:var(--text-muted);text-align:center;padding:20px 0;">All products have sufficient stock</p>
+      </template>
+    </div>
+  </div>
+
+</div>
+</div>{# end overviewStats #}
+{% endblock %}
+
+{% block extra_js %}{% endblock %}

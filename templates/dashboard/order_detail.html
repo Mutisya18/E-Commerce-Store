@@ -1,0 +1,204 @@
+{% extends "dashboard/base_dashboard.html" %}
+{% load humanize icon_tags %}
+{% load static %}
+
+{% block title %}{{ order.order_number }} — Dashboard{% endblock %}
+{% block page_title %}Orders{% endblock %}
+{% block nav_orders %}active{% endblock %}
+
+{% block extra_styles %}
+.order-grid { display: grid; grid-template-columns: 1fr 300px; gap: 16px; align-items: start; }
+.card { background: var(--surface); border-radius: var(--r-lg); box-shadow: var(--shadow); padding: 20px; margin-bottom: 12px; }
+.card:last-child { margin-bottom: 0; }
+.card-title { font-size: 13px; font-weight: 700; color: var(--text); margin-bottom: 14px; }
+
+.section-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; color: var(--text-muted); margin-bottom: 6px; }
+
+.info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 16px; padding-bottom: 16px; border-bottom: 1px solid var(--border); }
+
+.items-table { width: 100%; border-collapse: collapse; margin-bottom: 12px; }
+.items-table th { text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: var(--text-muted); padding: 6px 0; border-bottom: 1px solid var(--border); }
+.items-table th:not(:first-child) { text-align: right; }
+.items-table td { padding: 10px 0; font-size: 13px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+.items-table td:not(:first-child) { text-align: right; }
+.items-table tr:last-child td { border-bottom: none; }
+
+.totals-row { display: flex; justify-content: space-between; font-size: 13px; color: var(--text-sub); margin-bottom: 4px; }
+.totals-total { display: flex; justify-content: space-between; font-size: 15px; font-weight: 700; color: var(--navy); padding-top: 8px; border-top: 1px solid var(--border); margin-top: 8px; }
+
+.badge { display: inline-flex; align-items: center; padding: 3px 8px; border-radius: 5px; font-size: 11px; font-weight: 700; letter-spacing: .04em; }
+.badge-emerald { background: var(--emerald-light); color: var(--emerald); }
+.badge-warning { background: var(--warning-light); color: var(--warning); }
+.badge-navy { background: var(--navy-light); color: var(--navy); }
+.badge-danger { background: var(--danger-light); color: var(--danger); }
+.badge-gray { background: var(--surface-alt); color: var(--text-muted); }
+
+.status-badge { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 500; }
+.status-badge::before { content: ''; width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+.s-pending    { background: #F0F0F0; color: var(--text-sub); } .s-pending::before    { background: #A0A0A0; }
+.s-processing { background: var(--warning-light); color: var(--warning); } .s-processing::before { background: var(--warning); }
+.s-shipped    { background: #EBF1FF; color: #2C4FA0; } .s-shipped::before { background: #2C4FA0; }
+.s-out_for_delivery { background: #EBF1FF; color: #2C4FA0; } .s-out_for_delivery::before { background: #2C4FA0; }
+.s-delivered  { background: var(--emerald-light); color: var(--emerald); } .s-delivered::before { background: var(--emerald); }
+.s-cancelled  { background: var(--danger-light); color: var(--danger); } .s-cancelled::before { background: var(--danger); }
+
+.note-entry { padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 13px; color: var(--text-sub); line-height: 1.5; }
+.note-entry:last-child { border-bottom: none; }
+.note-meta { font-size: 11px; color: var(--text-muted); margin-top: 3px; }
+
+.form-select { width: 100%; height: 38px; border: 1.5px solid var(--border); border-radius: var(--r); padding: 0 10px; font-family: 'DM Sans', sans-serif; font-size: 13px; color: var(--text); background: var(--surface); outline: none; cursor: pointer; margin-bottom: 10px; }
+.form-select:focus { border-color: var(--navy); }
+.form-textarea { width: 100%; border: 1.5px solid var(--border); border-radius: var(--r); padding: 8px 10px; font-family: 'DM Sans', sans-serif; font-size: 13px; color: var(--text); background: var(--surface); outline: none; resize: vertical; min-height: 72px; }
+.form-textarea:focus { border-color: var(--navy); }
+
+.page-content { animation: fadeUp .2s ease; }
+@keyframes fadeUp { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
+{% endblock %}
+
+{% block dashboard_content %}
+<div id="dashboard-root" data-csrf="{{ csrf_token }}" data-order="{{ order.order_number }}" style="display:none"></div>
+<div class="page-content">
+
+  <!-- Header -->
+  <div style="margin-bottom:20px">
+    <a href="/dashboard/orders/" style="font-size:13px;color:var(--text-muted);text-decoration:none;display:inline-flex;align-items:center;gap:4px;margin-bottom:8px">
+      {% icon "caret-left" size=14 %}
+      Back to Orders
+    </a>
+    <div style="display:flex;align-items:center;justify-content:space-between">
+      <div>
+        <div style="font-family:'Cormorant Garamond',serif;font-size:26px;font-weight:700;color:var(--navy);line-height:1;display:flex;align-items:center;gap:10px">
+          {{ order.order_number }}
+          <span class="status-badge s-{{ order.status }}" id="statusBadge">{{ order.get_status_display }}</span>
+          {% if order.payment_status == 'paid' %}<span class="badge badge-emerald">Paid</span>
+          {% elif order.payment_status == 'pending' %}<span class="badge badge-warning">Unpaid</span>
+          {% elif order.payment_status == 'refunded' %}<span class="badge badge-navy">Refunded</span>
+          {% elif order.payment_status == 'failed' %}<span class="badge badge-danger">Failed</span>{% endif %}
+        </div>
+        <div style="font-size:12px;color:var(--text-muted);margin-top:4px">
+          <a href="/dashboard/orders/" style="color:var(--text-muted);text-decoration:none">Orders</a>
+          <span style="margin:0 6px">›</span>{{ order.order_number }}
+          <span style="margin-left:8px">Placed {{ order.created_at|date:"d M Y, H:i" }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="order-grid">
+
+    <!-- LEFT: Order details -->
+    <div>
+      <div class="card">
+
+        <!-- Customer + Address -->
+        <div class="info-grid">
+          <div>
+            <div class="section-label">Customer</div>
+            <div style="font-weight:600;font-size:13px">{{ order.full_name }}</div>
+            <div style="font-size:12px;color:var(--text-sub)">{{ order.email }}</div>
+            <div style="font-size:12px;color:var(--text-sub)">{{ order.phone }}</div>
+            {% if order.user %}
+            <a href="/dashboard/customers/{{ order.user.pk }}/" style="font-size:11px;color:var(--navy);text-decoration:none;margin-top:4px;display:inline-block">→ View Customer Profile</a>
+            {% endif %}
+          </div>
+          <div>
+            <div class="section-label">Delivery Address</div>
+            <div style="font-size:12px;color:var(--text-sub);line-height:1.7">
+              {{ order.address_street }}<br>
+              {{ order.address_city }}, {{ order.address_county }}
+            </div>
+          </div>
+        </div>
+
+        <!-- Payment info -->
+        <div style="margin-bottom:16px;padding-bottom:16px;border-bottom:1px solid var(--border)">
+          <div class="section-label">Payment</div>
+          <div style="display:flex;gap:24px;font-size:13px">
+            <div><span style="color:var(--text-muted)">Method</span><br><strong>{{ order.get_payment_method_display }}</strong></div>
+            <div><span style="color:var(--text-muted)">Status</span><br>
+              {% if order.payment_status == 'paid' %}<span style="color:var(--emerald);font-weight:600">Paid</span>
+              {% else %}<span style="color:var(--warning);font-weight:600">{{ order.get_payment_status_display }}</span>{% endif %}
+            </div>
+          </div>
+        </div>
+
+        <!-- Items -->
+        <div class="section-label">Items Ordered</div>
+        <table class="items-table">
+          <thead>
+            <tr>
+              <th>Product</th>
+              <th>Qty</th>
+              <th>Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for item in order.items.all %}
+            <tr>
+              <td>
+                <div style="font-weight:600">{{ item.product_name }}</div>
+                <div style="font-size:11px;color:var(--text-muted)">KES {{ item.product_price|floatformat:0|intcomma }} each</div>
+              </td>
+              <td>×{{ item.quantity }}</td>
+              <td style="font-weight:700">KES {{ item.line_total|floatformat:0|intcomma }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+
+        <!-- Totals -->
+        <div class="totals-row"><span>Subtotal</span><span>KES {{ order.subtotal|floatformat:0|intcomma }}</span></div>
+        <div class="totals-row"><span>Delivery fee</span><span>{% if order.delivery_fee %}KES {{ order.delivery_fee|floatformat:0|intcomma }}{% else %}Free{% endif %}</span></div>
+        <div class="totals-total"><span>Total</span><span>KES {{ order.total|floatformat:0|intcomma }}</span></div>
+
+        {% if order.notes %}
+        <div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--border)">
+          <div class="section-label">Customer Note</div>
+          <div style="font-size:13px;color:var(--text-sub)">{{ order.notes }}</div>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- RIGHT: Actions -->
+    <div>
+
+      <!-- Update Status -->
+      <div class="card">
+        <div class="card-title">Update Status</div>
+        <select class="form-select" id="statusSelect">
+          {% for val, label in status_choices %}
+          <option value="{{ val }}" {% if order.status == val %}selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+        <button id="btn-update-status" class="btn btn-navy" style="width:100%;justify-content:center">
+          {% icon "check" size=13 %}
+          Update Status
+        </button>
+        <div id="statusMsg" style="font-size:11px;color:var(--emerald);margin-top:6px;text-align:center;display:none">Status updated.</div>
+      </div>
+
+      <!-- Internal Notes -->
+      <div class="card">
+        <div class="card-title">Internal Notes</div>
+        <textarea class="form-textarea" id="noteBody" placeholder="Add a private note…" style="margin-bottom:8px"></textarea>
+        <button id="btn-add-note" class="btn btn-ghost btn-sm" style="width:100%;justify-content:center">Save Note</button>
+
+        <div id="notesList" style="margin-top:12px">
+          {% for note in order.admin_notes.all %}
+          <div class="note-entry">
+            {{ note.body }}
+            <div class="note-meta">{{ note.created_at|date:"d M Y, H:i" }}</div>
+          </div>
+          {% empty %}
+          <div style="font-size:12px;color:var(--text-muted);text-align:center;padding:8px 0" id="noNotes">No notes yet.</div>
+          {% endfor %}
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}{% endblock %}

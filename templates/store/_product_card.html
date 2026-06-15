@@ -1,0 +1,58 @@
+{% load humanize icon_tags %}
+{% with stock=product.stock %}
+<div class="pc-card" data-href="{% url 'store:product_detail' product.slug %}" style="cursor:pointer;">
+
+  <div class="pc-image-wrap">
+    <a href="{% url 'store:product_detail' product.slug %}" class="pc-card-link">
+      {% if product.cover_image %}
+        <img src="{{ product.cover_image.image.url }}" alt="{{ product.name }}" class="pc-img">
+      {% else %}
+        <div class="pc-img-placeholder">{% icon "shopping-bag-open" size=40 color="var(--text-muted)" %}</div>
+      {% endif %}
+    </a>
+    <div class="pc-badges">
+      {% if product.sale_price %}<span class="pc-badge pc-badge-sale">{{ product.discount_percent }}% off</span>{% endif %}
+    </div>
+    <div class="pc-stock-badge {% if stock == 0 %}pc-stock-out{% elif stock <= 5 %}pc-stock-low{% else %}pc-stock-in{% endif %}">
+      {% if stock == 0 %}Out of stock{% elif stock <= 5 %}Low stock{% else %}In stock{% endif %}
+    </div>
+  </div>
+
+  <div class="pc-body">
+    <div class="pc-brand">{% if product.brand %}{{ product.brand }}{% elif product.category %}{{ product.category.name }}{% endif %}</div>
+    <a href="{% url 'store:product_detail' product.slug %}" class="pc-name pc-card-link">{{ product.name }}</a>
+    {% if product.average_rating %}
+      <div class="pc-rating">
+        {% for i in "12345" %}{% if forloop.counter <= product.average_rating %}{% icon "star" size=14 color="var(--gold)" %}{% else %}{% icon "star-regular" size=14 color="var(--border)" %}{% endif %}{% endfor %}
+        <span class="pc-rating-count">({{ product.reviews.count }})</span>
+      </div>
+    {% endif %}
+    <div class="pc-stock-text">{% if stock > 0 %}In stock: {{ stock }} unit{{ stock|pluralize }}{% else %}Out of stock{% endif %}</div>
+    <div class="pc-footer">
+      <div class="pc-price">
+        {% if product.sale_price %}
+          <div style="text-decoration:line-through;color:var(--text-muted);font-weight:400">KES {{ product.base_price|floatformat:0|intcomma }}</div>
+          <div style="color:var(--forest);font-size:13px;font-weight:600">KES {{ product.sale_price|floatformat:0|intcomma }}</div>
+        {% else %}
+          KES {{ product.effective_price|floatformat:0|intcomma }}
+        {% endif %}
+      </div>
+      <div class="pc-cart" x-data="cartControl" data-product-id="{{ product.id }}" data-max-stock="{{ stock }}">
+        <template x-if="quantity === 0">
+          <button class="pc-btn-add-full" @click="increment()" :disabled="maxStock === 0">{% icon "shopping-cart" size=15 css_class="icon--inline" %}Add to cart</button>
+        </template>
+        <template x-if="quantity > 0">
+          <div class="pc-stepper">
+            <button class="pc-btn-dec" @click="decrement()">−</button>
+            <div class="pc-qty">
+              <span x-text="quantity"></span>
+              <span class="pc-sync-dot" :class="error ? 'error' : ''"></span>
+            </div>
+            <button class="pc-btn-inc" @click="increment()" :disabled="quantity >= maxStock">+</button>
+          </div>
+        </template>
+      </div>
+    </div>
+  </div>
+</div>
+{% endwith %}

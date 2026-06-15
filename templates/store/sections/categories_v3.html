@@ -1,0 +1,26 @@
+{% load icon_tags %}
+<div class="container">
+    <div class="section-header">
+    {% if cat_overline %}<div class="section-overline" style="color:var({{ cat_overline_colour }});">{{ cat_overline }}</div>{% endif %}
+    <h2 class="section-title" style="color:var({{ cat_heading_colour }});font-size:{{ cat_heading_size }};">{{ cat_heading }}</h2>
+  </div>
+  <div class="cat-c-wrap">
+    <div class="cat-c-grid">
+      {% if featured_categories %}
+        {% for cat in featured_categories %}
+        <a href="/categories/{{ cat.slug }}/" class="cat-c-card" style="border-top-color:var({{ cat.border_color }});">
+          <div class="cat-c-icon">{% if cat.image %}<img src="{{ cat.image.url }}" style="width:28px;height:28px;object-fit:cover;border-radius:4px;">{% else %}{% icon cat.icon_name size=28 color=cat.icon_color %}{% endif %}</div>
+          <div class="cat-c-name" style="color:var({{ cat.text_color }});">{{ cat.name }}</div>
+        </a>
+        {% endfor %}
+      {% else %}
+        <a href="#" class="cat-c-card" style="border-top-color:var(--forest);"><div class="cat-c-icon">{% icon "device-mobile" size=28 %}</div><div class="cat-c-name" style="color:var(--surface);">Phones</div></a>
+        <a href="#" class="cat-c-card" style="border-top-color:var(--sage);"><div class="cat-c-icon">{% icon "laptop" size=28 %}</div><div class="cat-c-name" style="color:var(--forest);">Laptops</div></a>
+        <a href="#" class="cat-c-card" style="border-top-color:var(--gold);"><div class="cat-c-icon">{% icon "headphones" size=28 %}</div><div class="cat-c-name" style="color:var(--forest);">Audio</div></a>
+        <a href="#" class="cat-c-card" style="border-top-color:var(--forest);"><div class="cat-c-icon">{% icon "house-line" size=28 %}</div><div class="cat-c-name" style="color:var(--surface);">Smart Home</div></a>
+        <a href="#" class="cat-c-card" style="border-top-color:var(--sage);"><div class="cat-c-icon">{% icon "watch" size=28 %}</div><div class="cat-c-name" style="color:var(--forest);">Wearables</div></a>
+        <a href="#" class="cat-c-card" style="border-top-color:var(--gold);"><div class="cat-c-icon">{% icon "plug" size=28 %}</div><div class="cat-c-name" style="color:var(--forest);">Accessories</div></a>
+      {% endif %}
+    </div>
+  </div>
+</div>

@@ -1,0 +1,12 @@
+{% load humanize %}
+<div class="container">
+  <div class="section-header">
+    {% if feat_overline %}<div class="section-overline" style="color:var({{ feat_overline_colour }});">{{ feat_overline }}</div>{% endif %}
+    <h2 class="section-title" style="color:var({{ feat_heading_colour }});font-size:{{ feat_heading_size }};">{{ feat_heading }}</h2>
+  </div>
+  <div style="display:flex;gap:20px;overflow-x:auto;padding-bottom:8px;scrollbar-width:thin;">
+    {% for product in feat_products %}
+    <div style="flex:0 0 280px;">{% include "store/_product_card.html" %}</div>
+    {% endfor %}
+  </div>
+</div>

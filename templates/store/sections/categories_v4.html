@@ -1,0 +1,30 @@
+{% load icon_tags %}
+<div class="container">
+    <div class="section-header">
+    {% if cat_overline %}<div class="section-overline" style="color:var({{ cat_overline_colour }});">{{ cat_overline }}</div>{% endif %}
+    <h2 class="section-title" style="color:var({{ cat_heading_colour }});font-size:{{ cat_heading_size }};">{{ cat_heading }}</h2>
+  </div>
+  <div class="cat-d-scroll">
+    {% if featured_categories %}
+      {% for cat in featured_categories %}
+      {% if forloop.counter == 1 %}<a href="/categories/{{ cat.slug }}/" class="cat-d-card" style="background:var(--forest);">
+      {% elif forloop.counter == 2 %}<a href="/categories/{{ cat.slug }}/" class="cat-d-card" style="background:var(--sage);">
+      {% elif forloop.counter == 3 %}<a href="/categories/{{ cat.slug }}/" class="cat-d-card" style="background:var(--gold-muted);">
+      {% elif forloop.counter == 4 %}<a href="/categories/{{ cat.slug }}/" class="cat-d-card" style="background:var(--forest);">
+      {% elif forloop.counter == 5 %}<a href="/categories/{{ cat.slug }}/" class="cat-d-card" style="background:var(--sage);">
+      {% else %}<a href="/categories/{{ cat.slug }}/" class="cat-d-card" style="background:var(--gold);">{% endif %}
+        <div class="cat-d-bg">{% if cat.image %}<img src="{{ cat.image.url }}" style="width:100%;height:100%;object-fit:cover;">{% else %}{% icon cat.icon_name size=48 color="#fff" %}{% endif %}</div>
+        <div class="cat-d-scrim"></div>
+        <div class="cat-d-label">{{ cat.name }}</div>
+      </a>
+      {% endfor %}
+    {% else %}
+      <a href="#" class="cat-d-card" style="background:var(--forest);"><div class="cat-d-bg">{% icon "device-mobile" size=48 color="#fff" %}</div><div class="cat-d-scrim"></div><div class="cat-d-label">Phones</div></a>
+      <a href="#" class="cat-d-card" style="background:var(--sage);"><div class="cat-d-bg">{% icon "laptop" size=48 color="#fff" %}</div><div class="cat-d-scrim"></div><div class="cat-d-label">Laptops</div></a>
+      <a href="#" class="cat-d-card" style="background:var(--gold-muted);"><div class="cat-d-bg">{% icon "headphones" size=48 color="#fff" %}</div><div class="cat-d-scrim"></div><div class="cat-d-label">Audio</div></a>
+      <a href="#" class="cat-d-card" style="background:var(--forest);"><div class="cat-d-bg">{% icon "house-line" size=48 color="#fff" %}</div><div class="cat-d-scrim"></div><div class="cat-d-label">Smart Home</div></a>
+      <a href="#" class="cat-d-card" style="background:var(--sage);"><div class="cat-d-bg">{% icon "watch" size=48 color="#fff" %}</div><div class="cat-d-scrim"></div><div class="cat-d-label">Wearables</div></a>
+      <a href="#" class="cat-d-card" style="background:var(--gold);"><div class="cat-d-bg">{% icon "plug" size=48 color="#fff" %}</div><div class="cat-d-scrim"></div><div class="cat-d-label">Accessories</div></a>
+    {% endif %}
+  </div>
+</div>

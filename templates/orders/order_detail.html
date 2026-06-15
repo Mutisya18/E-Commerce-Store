@@ -1,0 +1,211 @@
+{% extends "base.html" %}
+{% load humanize icon_tags %}
+{% block title %}Order {{ order.order_number }}{% endblock %}
+
+{% block extra_styles %}
+<style>
+:root {
+  --navy: #1B2A4A;
+  --emerald: #1A5C45;
+  --gold: #C9A84C;
+  --base: #FAF8F5;
+  --surface: #FFFFFF;
+  --border: #E5E2DC;
+  --text: #1A1A1A;
+  --text-muted: #9A9A9A;
+  --warning: #E67E22;
+  --warning-light: #FDF6E3;
+}
+.od-page { max-width: 1100px; margin: 40px auto; padding: 0 20px 60px; }
+.od-back { font-size: 13px; color: var(--text-muted); cursor: pointer; display: inline-flex; align-items: center; gap: 6px; margin-bottom: 12px; }
+.od-back:hover { color: var(--forest); }
+.od-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 24px; flex-wrap: wrap; gap: 16px; }
+.od-title { font-family: 'Cormorant Garamond', serif; font-size: 26px; font-weight: 700; color: var(--forest); margin-bottom: 4px; }
+.od-meta { font-size: 13px; color: var(--text-muted); }
+.od-status-wrap { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; }
+.od-status { display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px; border-radius: 999px; font-size: 12px; font-weight: 600; }
+.od-status-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+.od-status-pending { background: #F3F1ED; color: #6B6B6B; }
+.od-status-processing { background: var(--warning-light); color: var(--warning); }
+.od-status-shipped { background: #E3F2FD; color: #1976D2; }
+.od-status-delivered { background: var(--sage-light); color: var(--sage); }
+.od-status-cancelled { background: #FEF0EE; color: #C0392B; }
+.od-badge { font-size: 11px; padding: 4px 10px; border-radius: 6px; background: var(--base); color: var(--text-muted); border: 0.5px solid var(--border); }
+.od-grid { display: grid; grid-template-columns: minmax(0,1fr) 300px; gap: 20px; align-items: start; }
+.od-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 20px; margin-bottom: 16px; }
+.od-card-title { font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 16px; }
+.od-item { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--border); }
+.od-item:last-child { border-bottom: none; padding-bottom: 0; }
+.od-item:first-child { padding-top: 0; }
+.od-img { width: 48px; height: 48px; border-radius: 8px; background: var(--base); display: flex; align-items: center; justify-content: center; font-size: 22px; flex-shrink: 0; object-fit: cover; }
+.od-item-info { flex: 1; min-width: 0; }
+.od-item-name { font-size: 14px; font-weight: 500; color: var(--text); }
+.od-item-qty { font-size: 12px; color: var(--text-muted); margin-top: 3px; }
+.od-item-price { font-size: 14px; font-weight: 600; color: var(--text); flex-shrink: 0; }
+.od-summary { margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border); }
+.od-sum-row { display: flex; justify-content: space-between; font-size: 14px; color: var(--text-muted); padding: 4px 0; }
+.od-sum-row.total { font-weight: 600; font-size: 15px; color: var(--text); border-top: 1px solid var(--border); margin-top: 8px; padding-top: 12px; }
+.od-info-row { display: flex; gap: 10px; font-size: 13px; padding: 6px 0; }
+.od-info-label { color: var(--text-muted); min-width: 90px; flex-shrink: 0; }
+.od-info-val { color: var(--text); }
+.od-payment { display: flex; align-items: center; gap: 10px; font-size: 13px; }
+.od-mpesa { background: #E6F5EC; color: #1A7A3C; font-weight: 600; font-size: 11px; padding: 4px 11px; border-radius: 999px; }
+.od-card-pill { background: #E3F2FD; color: #1976D2; font-weight: 600; font-size: 11px; padding: 4px 11px; border-radius: 999px; }
+.od-paid { color: var(--sage); font-weight: 600; margin-left: auto; }
+.od-pending { color: var(--warning); font-weight: 600; margin-left: auto; }
+.od-timeline { display: flex; flex-direction: column; gap: 0; }
+.od-tl-step { display: flex; gap: 12px; }
+.od-tl-track { display: flex; flex-direction: column; align-items: center; flex-shrink: 0; }
+.od-tl-dot { width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 11px; font-weight: 700; }
+.od-tl-dot.done { background: var(--sage-light); color: var(--sage); }
+.od-tl-dot.active { background: var(--warning-light); color: var(--warning); }
+.od-tl-dot.pending { background: var(--base); border: 1px solid var(--border); color: var(--text-muted); }
+.od-tl-line { width: 1.5px; flex: 1; min-height: 24px; background: var(--border); }
+.od-tl-line.done { background: var(--sage); }
+.od-tl-content { padding-bottom: 20px; }
+.od-tl-label { font-size: 13px; font-weight: 500; color: var(--text); line-height: 24px; }
+.od-tl-time { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+.od-btn { width: 100%; padding: 10px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; margin-bottom: 10px; border: 1.5px solid var(--border); background: var(--surface); color: var(--text); font-family: inherit; transition: all 0.15s; }
+.od-btn:hover { background: var(--base); }
+.od-btn.primary { background: var(--forest); color: white; border-color: var(--forest); }
+.od-btn.primary:hover { background: #243660; }
+.od-btn.danger { color: #C0392B; border-color: #FEF0EE; }
+.od-btn.danger:hover { background: #FEF0EE; }
+.od-help { font-size: 13px; color: var(--text-muted); line-height: 1.6; }
+.od-help-title { font-weight: 600; color: var(--text); margin-bottom: 8px; }
+.od-help a { color: var(--forest); text-decoration: none; border-bottom: 1px solid var(--gold); }
+.od-sidebar { position: sticky; top: 20px; }
+@media (max-width: 768px) {
+  .od-grid { grid-template-columns: 1fr; }
+  .od-sidebar { position: static; }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="od-page">
+  <a href="{% url 'accounts:order_history' %}" class="od-back">
+    {% icon "arrow-left" size=14 %}
+    Back to Orders
+  </a>
+
+  <div class="od-header">
+    <div>
+      <div class="od-title">Order {{ order.order_number }}</div>
+      <div class="od-meta">Placed {{ order.created_at|date:"d M Y" }} · {{ order.items.count }} item{{ order.items.count|pluralize }}</div>
+    </div>
+    <div class="od-status-wrap">
+      <span class="od-status od-status-{{ order.status|lower }}">
+        <span class="od-status-dot"></span>
+        {{ order.get_status_display }}
+      </span>
+      <span class="od-badge">Est. delivery {{ est_delivery }}</span>
+    </div>
+  </div>
+
+  <div class="od-grid">
+    {# Left Column #}
+    <div>
+      {# Items Ordered #}
+      <div class="od-card">
+        <div class="od-card-title">Items Ordered</div>
+        {% for item in order.items.all %}
+        <div class="od-item">
+          {% if item.product.cover_image %}
+            <img src="{{ item.product.cover_image.image.url }}" alt="{{ item.product_name }}" class="od-img">
+          {% else %}
+            <div class="od-img">{% icon "package" size=32 color="var(--text-muted)" %}</div>
+          {% endif %}
+          <div class="od-item-info">
+            <div class="od-item-name">{{ item.product_name }}</div>
+            <div class="od-item-qty">Qty {{ item.quantity }}</div>
+          </div>
+          <div class="od-item-price">KES {{ item.line_total|floatformat:0|intcomma }}</div>
+        </div>
+        {% endfor %}
+
+        <div class="od-summary">
+          <div class="od-sum-row"><span>Subtotal ({{ order.items.count }} item{{ order.items.count|pluralize }})</span><span>KES {{ order.subtotal|floatformat:0|intcomma }}</span></div>
+          <div class="od-sum-row"><span>Delivery</span><span>KES {{ order.delivery_fee|floatformat:0|intcomma }}</span></div>
+          <div class="od-sum-row total"><span>Total</span><span>KES {{ order.total|floatformat:0|intcomma }}</span></div>
+        </div>
+      </div>
+
+      {# Delivery Details #}
+      <div class="od-card">
+        <div class="od-card-title">Delivery Details</div>
+        <div class="od-info-row"><span class="od-info-label">Name</span><span class="od-info-val">{{ order.full_name }}</span></div>
+        <div class="od-info-row"><span class="od-info-label">Address</span><span class="od-info-val">{{ order.address_street }}, {{ order.address_city }}, {{ order.address_county }}</span></div>
+        <div class="od-info-row"><span class="od-info-label">Phone</span><span class="od-info-val">{{ order.phone }}</span></div>
+        <div class="od-info-row"><span class="od-info-label">Est. arrival</span><span class="od-info-val">{{ est_delivery }}</span></div>
+      </div>
+
+      {# Payment #}
+      <div class="od-card">
+        <div class="od-card-title">Payment</div>
+        <div class="od-payment">
+          {% if order.payment_method == 'mpesa' %}
+            <span class="od-mpesa">M-Pesa</span>
+          {% else %}
+            <span class="od-card-pill">Card</span>
+          {% endif %}
+          <span style="color:var(--text-muted);">{{ order.phone }}</span>
+          {% if order.payment_status == 'paid' %}
+            <span class="od-paid">{% icon "check" size=13 css_class="icon--inline" %} Paid</span>
+          {% else %}
+            <span class="od-pending">Pending</span>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    {# Right Sidebar #}
+    <div class="od-sidebar">
+      {# Order Status Timeline #}
+      <div class="od-card">
+        <div class="od-card-title">Order Status</div>
+        <div class="od-timeline">
+          {% for step in timeline %}
+          <div class="od-tl-step">
+            <div class="od-tl-track">
+              <div class="od-tl-dot {{ step.status }}">
+                {% if step.status == 'done' %}{% icon "check" size=12 %}{% elif step.status == 'active' %}{% icon "arrow-clockwise" size=12 css_class="icon--spin" %}{% else %}{% endif %}
+              </div>
+              {% if not forloop.last %}
+                <div class="od-tl-line {% if step.status == 'done' %}done{% endif %}"></div>
+              {% endif %}
+            </div>
+            <div class="od-tl-content" {% if step.status == 'pending' %}style="opacity:0.5;"{% endif %}>
+              <div class="od-tl-label">{{ step.label }}</div>
+              {% if step.time %}
+                <div class="od-tl-time">{{ step.time|date:"d M · g:i A" }}</div>
+              {% elif step.status == 'active' %}
+                <div class="od-tl-time">In progress...</div>
+              {% endif %}
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+
+      {# Actions #}
+      <div class="od-card">
+        <div class="od-card-title">Actions</div>
+        <button id="btn-track-order" class="od-btn primary">Track my order ↗</button>
+        <button id="btn-download-invoice" class="od-btn">Download invoice</button>
+        {% if order.status not in 'delivered,cancelled' %}
+          <button id="btn-cancel-order" class="od-btn danger" data-order-number="{{ order.order_number }}">Request cancellation</button>
+        {% endif %}
+      </div>
+
+      {# Help #}
+      <div class="od-card">
+        <div class="od-help">
+          <div class="od-help-title">Need help?</div>
+          Questions about your order? Contact support at <a href="mailto:hello@mutisya.co.ke">hello@mutisya.co.ke</a> or call +254 700 000 000.
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

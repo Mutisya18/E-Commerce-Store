@@ -1,0 +1,20 @@
+{% with c=section.custom_content %}
+<div class="container" style="max-width:720px;margin:0 auto;">
+  {% if c.heading %}
+    <h2 style="color:var(--section-heading-color);font-size:var(--section-heading-size);font-weight:var(--section-heading-weight);font-family:'Cormorant Garamond',serif;text-align:center;margin-bottom:40px;">{{ c.heading }}</h2>
+  {% endif %}
+  {% if c.items %}
+    {% for item in c.items %}
+    <div x-data="faqItem" style="border-bottom:1px solid var(--border);padding:20px 0;">
+      <button @click="open=!open" style="width:100%;display:flex;justify-content:space-between;align-items:center;background:none;border:none;cursor:pointer;text-align:left;color:var(--section-heading-color);font-size:16px;font-weight:600;font-family:'DM Sans',sans-serif;">
+        {{ item.question }}
+        <span x-text="open ? '−' : '+'" style="font-size:20px;flex-shrink:0;margin-left:16px;"></span>
+      </button>
+      <div x-show="open" x-collapse style="padding-top:12px;color:var(--section-body-color);font-size:var(--section-body-size);line-height:1.7;">{{ item.answer }}</div>
+    </div>
+    {% endfor %}
+  {% else %}
+    <p style="text-align:center;color:var(--text-muted);">No FAQ items added yet.</p>
+  {% endif %}
+</div>
+{% endwith %}

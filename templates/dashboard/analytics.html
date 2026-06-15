@@ -1,0 +1,1175 @@
+{% extends "dashboard/base_dashboard.html" %}
+{% load humanize icon_tags %}
+
+{% block title %}Analytics — Dashboard{% endblock %}
+{% block page_title %}Analytics{% endblock %}
+{% block nav_analytics %}active{% endblock %}
+
+{% block extra_styles %}
+/* ── Layout ── */
+.page { padding: 24px 28px !important; overflow-x: hidden; max-width: 100%; }
+.main { min-width: 0; overflow-x: hidden; }
+
+/* ── Page header ── */
+.an-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:24px; gap:16px; flex-wrap:wrap; }
+.an-header-left .page-title { font-size:26px; margin-bottom:2px; }
+.an-header-left .page-sub { font-size:12px; color:var(--text-muted); }
+
+
+/* ── KPI grid (exact analytics design) ── */
+.kpi-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:12px;margin-bottom:20px;min-width:0}
+@media(max-width:1200px){.kpi-grid{grid-template-columns:repeat(6,1fr)}}
+@media(max-width:900px){.kpi-grid{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:600px){.kpi-grid{grid-template-columns:repeat(2,1fr)}}
+.kpi-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);padding:18px 18px 14px;position:relative;overflow:hidden;transition:border-color .2s,transform .2s;height:180px;display:flex;flex-direction:column}
+.kpi-card:hover{border-color:rgba(27,42,74,.2);transform:translateY(-1px)}
+.kpi-card.alert{border-color:rgba(192,57,43,.25)}
+.kpi-card.warn{border-color:rgba(212,117,10,.2)}
+.kpi-label{font-size:10px;font-weight:600;letter-spacing:.5px;text-transform:uppercase;color:var(--text-muted);margin-bottom:8px}
+.kpi-value{font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:700;letter-spacing:-1px;color:var(--navy);line-height:1;margin-bottom:6px}
+.kpi-value .currency{font-size:12px;font-weight:500;color:var(--text-sub);letter-spacing:0}
+.kpi-change{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:600;padding:2px 7px;border-radius:999px}
+.kpi-change.up{background:var(--emerald-light);color:var(--emerald)}
+.kpi-change.down{background:var(--danger-light);color:var(--danger)}
+.kpi-alert-badge{display:inline-flex;align-items:center;gap:5px;margin-top:8px;font-size:11px;font-weight:600;padding:3px 8px;border-radius:999px}
+.kpi-alert-badge.warn{background:var(--warning-light);color:var(--warning)}
+.kpi-alert-badge.danger{background:var(--danger-light);color:var(--danger)}
+.kpi-sparkline{margin-top:auto;height:36px;width:100%;display:block;max-height:36px}
+
+/* ── Mini-stats row ── */
+.mini-stats { display:flex; background:var(--surface); border:1px solid var(--border); border-radius:var(--r-lg); overflow:hidden; margin-bottom:16px; }
+.mini-stat { flex:1; min-width:0; padding:12px 16px; border-right:1px solid var(--border); }
+.mini-stat:last-child { border-right:none; }
+.mini-stat:hover { background:var(--surface-alt); }
+.mini-stat-label { font-size:10px; font-weight:600; letter-spacing:.5px; text-transform:uppercase; color:var(--text-muted); margin-bottom:4px; }
+.mini-stat-val { font-family:'Cormorant Garamond',serif; font-size:20px; font-weight:700; color:var(--navy); line-height:1.1; }
+.mini-stat-sub { font-size:11px; color:var(--text-muted); margin-top:3px; }
+.mini-stat-sub.up   { color:var(--emerald); font-weight:600; }
+.mini-stat-sub.down { color:var(--danger); font-weight:600; }
+
+/* ── Section label ── */
+.section-label { font-size:10px; font-weight:700; letter-spacing:1.5px; text-transform:uppercase; color:var(--text-muted); display:flex; align-items:center; gap:8px; margin-bottom:12px; }
+.section-label::before,.section-label::after { content:''; flex:1; height:1px; background:var(--border); }
+.section-label::before { max-width:20px; }
+
+/* ── Chart rows ── */
+.chart-row   { display:grid; gap:16px; margin-bottom:16px; min-width:0; }
+.chart-row-2 { grid-template-columns:2fr 1fr; }
+.chart-row-3 { grid-template-columns:1fr 1fr 1fr; }
+.chart-row-22{ grid-template-columns:1fr 1fr; }
+@media(max-width:1400px){ .chart-row-3{ grid-template-columns:1fr 1fr; } }
+@media(max-width:1200px){ .chart-row-2{ grid-template-columns:1fr; } }
+@media(max-width:900px) { .chart-row-3,.chart-row-22{ grid-template-columns:1fr; } }
+
+/* ── Chart card ── */
+.chart-card { background:var(--surface); border:1px solid var(--border); border-radius:var(--r-lg); padding:20px; min-width:0; overflow:hidden; }
+.card-header { display:flex; align-items:flex-start; justify-content:space-between; margin-bottom:16px; gap:12px; }
+.card-title  { font-size:13px; font-weight:700; color:var(--navy); letter-spacing:-.1px; }
+.card-sub    { font-size:11px; color:var(--text-muted); margin-top:2px; }
+.card-meta   { display:flex; align-items:center; gap:8px; flex-shrink:0; }
+
+/* ── Seg control ── */
+.seg { display:flex; background:var(--surface-alt); border:1px solid var(--border); border-radius:6px; padding:2px; gap:1px; }
+.seg-btn { padding:4px 10px; border-radius:4px; font-size:11px; font-weight:500; border:none; background:none; cursor:pointer; color:var(--text-muted); font-family:'DM Sans',sans-serif; transition:all .15s; }
+.seg-btn.active { background:var(--surface); color:var(--navy); font-weight:600; box-shadow:0 1px 3px rgba(0,0,0,.08); }
+
+/* ── Horizontal bars ── */
+.hbar-list { display:flex; flex-direction:column; gap:10px; }
+.hbar-item { display:flex; align-items:center; gap:8px; }
+.hbar-rank  { font-size:11px; font-weight:700; color:var(--text-muted); width:14px; flex-shrink:0; text-align:right; }
+.hbar-label { font-size:12px; color:var(--text-sub); width:110px; flex-shrink:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.hbar-track { flex:1; height:6px; background:var(--surface-alt); border-radius:999px; overflow:hidden; }
+.hbar-fill  { height:100%; border-radius:999px; transition:width .6s cubic-bezier(.4,0,.2,1); }
+.hbar-val   { font-size:12px; font-weight:600; color:var(--navy); width:80px; text-align:right; flex-shrink:0; }
+.hbar-sub   { font-size:10px; color:var(--text-muted); }
+
+/* ── Donut ── */
+.donut-wrap { display:flex; align-items:center; gap:20px; }
+.donut-legend { display:flex; flex-direction:column; gap:8px; flex:1; }
+.donut-leg-item { display:flex; align-items:center; justify-content:space-between; gap:6px; }
+.donut-leg-dot  { width:8px; height:8px; border-radius:2px; flex-shrink:0; }
+.donut-leg-label{ font-size:12px; color:var(--text-sub); flex:1; }
+.donut-leg-val  { font-size:12px; font-weight:600; color:var(--navy); }
+.donut-leg-pct  { font-size:11px; color:var(--text-muted); width:32px; text-align:right; }
+
+/* ── Payment method bars ── */
+.pm-list { display:flex; flex-direction:column; gap:10px; }
+.pm-item { display:flex; align-items:center; gap:8px; }
+.pm-icon { width:26px; height:26px; border-radius:6px; display:flex; align-items:center; justify-content:center; font-size:13px; flex-shrink:0; }
+.pm-name { font-size:12px; font-weight:500; color:var(--text-sub); width:68px; flex-shrink:0; }
+.pm-track{ flex:1; height:7px; background:var(--surface-alt); border-radius:999px; overflow:hidden; }
+.pm-fill { height:100%; border-radius:999px; }
+.pm-val  { font-size:12px; font-weight:600; color:var(--navy); width:60px; text-align:right; flex-shrink:0; }
+.pm-pct  { font-size:11px; color:var(--text-muted); width:30px; text-align:right; flex-shrink:0; }
+
+/* ── Funnel ── */
+.funnel-list { display:flex; flex-direction:column; gap:7px; }
+.funnel-stage { display:flex; align-items:center; gap:10px; }
+.funnel-label { font-size:12px; color:var(--text-sub); width:110px; flex-shrink:0; }
+.funnel-bar-wrap { flex:1; height:26px; background:var(--surface-alt); border-radius:5px; overflow:hidden; }
+.funnel-fill { height:100%; border-radius:5px; display:flex; align-items:center; padding:0 10px; font-size:11px; font-weight:600; color:#fff; transition:width .8s cubic-bezier(.4,0,.2,1); }
+.funnel-val { font-size:12px; font-weight:600; color:var(--navy); width:44px; text-align:right; flex-shrink:0; }
+.funnel-pct { font-size:11px; color:var(--text-muted); width:34px; text-align:right; flex-shrink:0; }
+
+/* ── County list ── */
+.county-list { display:flex; flex-direction:column; gap:0; }
+.county-row { display:flex; align-items:center; gap:10px; padding:9px 0; border-bottom:1px solid var(--border); }
+.county-row:last-child { border:none; }
+.county-flag { width:30px; height:30px; border-radius:7px; display:flex; align-items:center; justify-content:center; font-size:14px; flex-shrink:0; }
+.county-name { font-size:13px; font-weight:500; color:var(--navy); }
+.county-orders { font-size:11px; color:var(--text-muted); }
+.county-bar-wrap { width:80px; flex-shrink:0; }
+.county-rev { font-size:13px; font-weight:600; color:var(--navy); width:72px; text-align:right; flex-shrink:0; }
+.county-growth { font-size:11px; font-weight:600; width:40px; text-align:right; flex-shrink:0; }
+
+/* ── Inventory table ── */
+.inv-table { width:100%; border-collapse:collapse; table-layout:fixed; }
+.inv-table th { padding:7px 10px; text-align:left; font-size:10px; font-weight:700; letter-spacing:.7px; text-transform:uppercase; color:var(--text-muted); border-bottom:1px solid var(--border); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.inv-table td { padding:10px 10px; font-size:12px; border-bottom:1px solid var(--border); vertical-align:middle; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.inv-table tr:last-child td { border-bottom:none; }
+.inv-table tr:hover td { background:var(--base); }
+.stock-bar { width:40px; height:4px; background:var(--surface-alt); border-radius:999px; overflow:hidden; display:inline-block; vertical-align:middle; margin-right:5px; flex-shrink:0; }
+.stock-fill { height:100%; border-radius:999px; }
+
+/* ── Cart abandonment mini-cards ── */
+.cart-mini-grid { display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; margin-bottom:16px; min-width:0; }
+.cart-mini { min-width:0; overflow:hidden; }
+.cart-mini { background:var(--surface-alt); border:1px solid var(--border); border-radius:var(--r); padding:12px 14px; }
+.cart-mini-label { font-size:10px; font-weight:600; text-transform:uppercase; letter-spacing:.5px; color:var(--text-muted); margin-bottom:5px; }
+.cart-mini-val { font-family:'Cormorant Garamond',serif; font-size:22px; font-weight:700; color:var(--navy); }
+
+/* ── LTV bars ── */
+.ltv-bars { display:flex; align-items:flex-end; gap:6px; height:72px; }
+.ltv-bar-wrap { flex:1; display:flex; flex-direction:column; align-items:center; gap:3px; }
+.ltv-bar { width:100%; border-radius:3px 3px 0 0; background:var(--navy); min-height:4px; opacity:.75; transition:opacity .15s; cursor:pointer; }
+.ltv-bar:hover { opacity:1; }
+.ltv-bar-label { font-size:9px; color:var(--text-muted); text-align:center; }
+
+/* ── Insights grid ── */
+.insights-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; }
+@media(max-width:1000px){ .insights-grid{ grid-template-columns:1fr 1fr; } }
+.insight-card { background:var(--surface); border:1px solid var(--border); border-radius:var(--r-lg); padding:16px; display:flex; align-items:flex-start; gap:12px; transition:box-shadow .2s; }
+.insight-card:hover { box-shadow:var(--shadow-hover); }
+.insight-icon { width:34px; height:34px; border-radius:9px; flex-shrink:0; display:flex; align-items:center; justify-content:center; font-size:16px; }
+.insight-title { font-size:13px; font-weight:600; color:var(--navy); margin-bottom:4px; }
+.insight-body  { font-size:12px; color:var(--text-sub); line-height:1.55; }
+.insight-cta   { display:inline-flex; align-items:center; gap:3px; margin-top:7px; font-size:11px; font-weight:600; color:var(--navy); cursor:pointer; text-decoration:none; }
+.insight-cta:hover { text-decoration:underline; }
+
+/* ── Cohort table ── */
+.cohort-table { width:100%; border-collapse:collapse; font-size:12px; }
+.cohort-table th { padding:7px 12px; text-align:center; font-size:10px; font-weight:700; letter-spacing:.6px; text-transform:uppercase; color:var(--text-muted); border-bottom:1px solid var(--border); }
+.cohort-table th:first-child { text-align:left; }
+.cohort-table td { padding:9px 12px; text-align:center; border-bottom:1px solid var(--border); }
+.cohort-table td:first-child { text-align:left; font-weight:600; color:var(--navy); }
+.cohort-table tr:last-child td { border-bottom:none; }
+.cohort-cell { display:inline-flex; align-items:center; justify-content:center; width:44px; height:22px; border-radius:4px; font-weight:600; font-size:11px; }
+
+/* ── Misc ── */
+.btn-sm-ghost { display:inline-flex; align-items:center; gap:5px; padding:0 10px; height:28px; border-radius:var(--r); font-family:'DM Sans',sans-serif; font-size:11px; font-weight:500; cursor:pointer; border:1px solid var(--border); background:transparent; color:var(--text-sub); text-decoration:none; transition:all .15s; }
+.btn-sm-ghost:hover { border-color:var(--navy); color:var(--navy); }
+.period-tabs-sm{display:flex;gap:4px;padding:3px;background:var(--bg);border-radius:var(--r);border:1px solid var(--border)}
+.period-tab-sm{padding:4px 10px;font-size:11px;font-weight:500;border:none;background:transparent;color:var(--text-sub);cursor:pointer;border-radius:4px;transition:all .15s}
+.period-tab-sm:hover{color:var(--navy)}
+.period-tab-sm.active{background:var(--navy);color:white;box-shadow:0 1px 3px rgba(27,42,74,.3)}
+.county-list{display:flex;flex-direction:column;gap:12px;padding:4px 0}
+.county-item{display:flex;align-items:center;gap:12px;padding:12px;background:var(--bg);border-radius:var(--r);border:1px solid var(--border);transition:all .2s}
+.county-item:hover{border-color:var(--navy);transform:translateX(2px)}
+.county-icon{font-size:24px;width:40px;height:40px;display:flex;align-items:center;justify-content:center;background:white;border-radius:var(--r);border:1px solid var(--border)}
+.county-info{flex:1;min-width:0}
+.county-name{font-size:14px;font-weight:600;color:var(--navy);margin-bottom:2px}
+.county-meta{font-size:11px;color:var(--text-muted)}
+.county-revenue{text-align:right}
+.county-amount{font-size:15px;font-weight:700;color:var(--navy);font-family:'Cormorant Garamond',serif}
+.funnel-list{display:flex;flex-direction:column;gap:16px}
+.funnel-item{display:grid;grid-template-columns:120px 1fr 100px;gap:12px;align-items:center}
+.funnel-label{font-size:12px;font-weight:500;color:var(--text-sub)}
+.funnel-bar-wrap{height:24px;background:var(--bg);border-radius:4px;overflow:hidden;border:1px solid var(--border)}
+.funnel-bar{height:100%;border-radius:3px;transition:width .3s}
+.funnel-stats{display:flex;justify-content:space-between;font-size:12px}
+.funnel-count{font-weight:600;color:var(--navy)}
+.funnel-pct{color:var(--text-muted)}
+.ltv-table{display:flex;flex-direction:column;gap:0;border:1px solid var(--border);border-radius:var(--r);overflow-x:auto;min-width:0}
+.ltv-table-header{display:flex;background:var(--bg);padding:10px 16px;border-bottom:1px solid var(--border);min-width:max-content}
+.ltv-th{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--text-muted)}
+.ltv-table-body{display:flex;flex-direction:column}
+.ltv-row{display:flex;align-items:center;padding:12px 16px;border-bottom:1px solid var(--border);transition:background .15s;min-width:max-content}
+.ltv-row:last-child{border-bottom:none}
+.ltv-row:hover{background:var(--bg)}
+.ltv-rank{width:40px;font-size:13px;font-weight:600;color:var(--text-muted)}
+.ltv-customer{flex:1;min-width:0}
+.ltv-name{font-size:13px;font-weight:600;color:var(--navy);margin-bottom:2px}
+.ltv-email{font-size:11px;color:var(--text-muted)}
+.ltv-cell{font-size:12px;color:var(--text-sub);display:flex;align-items:center}
+.ltv-cell:nth-child(3){width:70px}
+.ltv-cell:nth-child(4){width:100px}
+.ltv-cell:nth-child(5){width:90px}
+.ltv-cell:nth-child(6){width:80px}
+.ltv-cell:nth-child(7){width:80px}
+.ltv-cell:nth-child(8){width:80px}
+.ltv-amount{font-weight:600;color:var(--navy)}
+.tbl-badge { display:inline-flex; align-items:center; padding:2px 7px; border-radius:20px; font-size:10px; font-weight:700; }
+.tip-box { padding:10px 12px; border-radius:var(--r); font-size:12px; color:var(--text-sub); margin-top:12px; }
+.tip-box.warn { background:rgba(212,117,10,.06); border:1px solid rgba(212,117,10,.2); }
+.tip-box.danger { background:rgba(192,57,43,.06); border:1px solid rgba(192,57,43,.2); }
+.tip-box.emerald { background:var(--emerald-light); border:1px solid rgba(26,92,69,.15); }
+{% endblock %}
+
+{% block dashboard_content %}
+{# ── PAGE HEADER ── #}
+<div class="an-header">
+  <div class="an-header-left">
+    <div class="page-title serif">Analytics</div>
+    <div class="page-sub">Deep insights into your store's performance</div>
+  </div>
+  <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+    <a href="/dashboard/analytics/revenue/?period={{ period }}" class="btn-sm-ghost">
+      {% icon "download-simple" size=12 %}
+      Export
+    </a>
+  </div>
+</div>
+
+{# ── KPI CARDS ── #}
+<div class="kpi-grid">
+  <div class="kpi-card" id="kpi-revenue">
+    <div class="kpi-label">Revenue Today</div>
+    <div class="kpi-value"><span class="currency">KES </span><span class="kpi-value-num">{{ revenue_today|floatformat:0|intcomma }}</span></div>
+    <div>{% if revenue_today_change is not None %}<span class="kpi-change {% if revenue_today_change >= 0 %}up{% else %}down{% endif %}">{% if revenue_today_change >= 0 %}↑{% else %}↓{% endif %} {{ revenue_today_change|floatformat:1 }}%</span> <span style="font-size:11px;color:var(--text-muted)">vs yesterday</span>{% endif %}</div>
+    <canvas class="kpi-sparkline" width="200" height="36"></canvas>
+  </div>
+  <div class="kpi-card" id="kpi-mtd">
+    <div class="kpi-label">Revenue MTD</div>
+    <div class="kpi-value"><span class="currency">KES </span><span class="kpi-value-num">{{ revenue_mtd|floatformat:0|intcomma }}</span></div>
+    <div>{% if revenue_mtd_change is not None %}<span class="kpi-change {% if revenue_mtd_change >= 0 %}up{% else %}down{% endif %}">{% if revenue_mtd_change >= 0 %}↑{% else %}↓{% endif %} {{ revenue_mtd_change|floatformat:1 }}%</span> <span style="font-size:11px;color:var(--text-muted)">vs last month</span>{% endif %}</div>
+    <canvas class="kpi-sparkline" width="200" height="36"></canvas>
+  </div>
+  <div class="kpi-card" id="kpi-orders">
+    <div class="kpi-label">Orders Today</div>
+    <div class="kpi-value"><span class="kpi-value-num">{{ orders_today|intcomma }}</span></div>
+    <div>{% if orders_today_change is not None %}<span class="kpi-change {% if orders_today_change >= 0 %}up{% else %}down{% endif %}">{% if orders_today_change >= 0 %}↑{% else %}↓{% endif %} {{ orders_today_change|floatformat:1 }}%</span> <span style="font-size:11px;color:var(--text-muted)">vs yesterday</span>{% endif %}</div>
+    <canvas class="kpi-sparkline" width="200" height="36"></canvas>
+  </div>
+  <div class="kpi-card" id="kpi-aov">
+    <div class="kpi-label">Avg Order Value</div>
+    <div class="kpi-value"><span class="currency">KES </span><span class="kpi-value-num">{{ avg_order|floatformat:0|intcomma }}</span></div>
+    <div>{% if avg_change is not None %}<span class="kpi-change {% if avg_change >= 0 %}up{% else %}down{% endif %}">{% if avg_change >= 0 %}↑{% else %}↓{% endif %} {{ avg_change|floatformat:1 }}%</span> <span style="font-size:11px;color:var(--text-muted)">vs yesterday</span>{% endif %}</div>
+    <canvas class="kpi-sparkline" width="200" height="36"></canvas>
+  </div>
+  <div class="kpi-card warn" id="kpi-pending">
+    <div class="kpi-label">Pending Orders</div>
+    <div class="kpi-value"><span class="kpi-value-num">{{ pending_count }}</span></div>
+    {% if pending_count > 0 %}<div class="kpi-alert-badge warn">{% icon "warning" size=12 css_class="icon--inline" %} Action needed</div>{% endif %}
+    <canvas class="kpi-sparkline" width="200" height="36"></canvas>
+  </div>
+  <div class="kpi-card alert" id="kpi-stock">
+    <div class="kpi-label">Low Stock Alerts</div>
+    <div class="kpi-value"><span class="kpi-value-num">{{ low_stock_count }}</span></div>
+    {% if low_stock_count > 0 %}<div class="kpi-alert-badge danger">{% icon "siren" size=12 css_class="icon--inline" %} Critical</div>{% endif %}
+    <canvas class="kpi-sparkline" width="200" height="36"></canvas>
+  </div>
+</div>
+
+{# ── MINI STATS ROW ── #}
+<div class="mini-stats">
+  <div class="mini-stat">
+    <div class="mini-stat-label">Repeat Customers</div>
+    <div class="mini-stat-val">{{ returning_customers }}</div>
+    <div class="mini-stat-sub">of {{ returning_customers|add:new_customers }} total buyers</div>
+  </div>
+  <div class="mini-stat">
+    <div class="mini-stat-label">New Customers</div>
+    <div class="mini-stat-val">{{ new_customers }}</div>
+    <div class="mini-stat-sub">this period</div>
+  </div>
+  <div class="mini-stat">
+    <div class="mini-stat-label">Cart Abandonment</div>
+    <div class="mini-stat-val">{{ abandoned_carts }}</div>
+    <div class="mini-stat-sub">abandoned carts</div>
+  </div>
+  <div class="mini-stat">
+    <div class="mini-stat-label">Inventory Health</div>
+    <div class="mini-stat-val">{{ inventory.healthy }}</div>
+    <div class="mini-stat-sub">healthy · {{ inventory.low }} low · {{ inventory.out }} out</div>
+  </div>
+</div>
+
+{# ── ROW 1: Revenue Trend + Order Status ── #}
+<div class="section-label">Revenue & Orders</div>
+<div class="chart-row chart-row-2">
+  <div class="chart-card">
+    <div class="card-header">
+      <div>
+        <div class="card-title">Revenue Over Time</div>
+        <div class="card-sub">Daily totals · KES</div>
+      </div>
+      <div class="card-meta" style="display:flex;gap:8px;align-items:center;">
+        <div class="period-tabs-sm">
+          <button class="period-tab-sm" data-period="7" onclick="switchRevenuePeriod(7, this)">7D</button>
+          <button class="period-tab-sm active" data-period="30" onclick="switchRevenuePeriod(30, this)">30D</button>
+          <button class="period-tab-sm" data-period="90" onclick="switchRevenuePeriod(90, this)">90D</button>
+        </div>
+        <a href="/dashboard/analytics/revenue/?period={{ period }}" class="btn-sm-ghost">View All →</a>
+      </div>
+    </div>
+    <div style="position:relative;height:200px;">
+      <canvas id="revenueChart"></canvas>
+    </div>
+  </div>
+  <div class="chart-card">
+    <div class="card-header">
+      <div>
+        <div class="card-title">Order Status</div>
+        <div class="card-sub">{{ orders_count }} total orders · this period</div>
+      </div>
+    </div>
+    <div style="position:relative;height:160px;">
+      <canvas id="statusChart"></canvas>
+    </div>
+    <div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--border);">
+      <div style="font-size:11px;color:var(--text-muted);margin-bottom:6px;">Fulfillment rate</div>
+      <div style="height:5px;background:var(--surface-alt);border-radius:999px;overflow:hidden;">
+        <div id="fulfillBar" style="height:100%;background:var(--emerald);border-radius:999px;transition:width .8s;"></div>
+      </div>
+      <div id="fulfillLabel" style="font-size:11px;color:var(--emerald);font-weight:600;margin-top:4px;"></div>
+    </div>
+  </div>
+</div>
+
+{# ── ROW 2: Top Products + Payment Methods ── #}
+<div class="section-label">Products & Payments</div>
+<div class="chart-row chart-row-3">
+  <div class="chart-card">
+    <div class="card-header">
+      <div>
+        <div class="card-title">Top Products · Units Sold</div>
+        <div class="card-sub">Last {{ period }} days</div>
+      </div>
+      <a href="/dashboard/analytics/top-products-units/?period={{ period }}" class="btn-sm-ghost">All →</a>
+    </div>
+    <div style="position:relative;height:180px;">
+      <canvas id="topUnitsChart"></canvas>
+    </div>
+  </div>
+  <div class="chart-card">
+    <div class="card-header">
+      <div>
+        <div class="card-title">Top Products · Revenue</div>
+        <div class="card-sub">Last {{ period }} days</div>
+      </div>
+      <a href="/dashboard/analytics/top-products-revenue/?period={{ period }}" class="btn-sm-ghost">All →</a>
+    </div>
+    <div style="position:relative;height:180px;">
+      <canvas id="topRevChart"></canvas>
+    </div>
+  </div>
+  <div class="chart-card">
+    <div class="card-header">
+      <div>
+        <div class="card-title">Payment Methods</div>
+        <div class="card-sub">Transaction split · this period</div>
+      </div>
+    </div>
+    <div style="position:relative;height:120px;margin-bottom:16px;">
+      <canvas id="methodChart"></canvas>
+    </div>
+    <div class="pm-list" id="pmList"></div>
+  </div>
+</div>
+
+{# ── ROW 3: Customer Funnel + County ── #}
+<div class="section-label">Customers & Geography</div>
+<div class="chart-row chart-row-22">
+  <div style="display:flex;flex-direction:column;gap:16px;flex:1;">
+    <div class="chart-card">
+      <div class="card-header">
+        <div>
+          <div class="card-title">New vs Returning Customers</div>
+          <div class="card-sub">Customer composition · this period</div>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:20px;padding:8px 0;">
+        <div style="position:relative;height:100px;width:100px;flex-shrink:0;">
+          <canvas id="customerTypeChart"></canvas>
+        </div>
+        <div style="flex:1;">
+          <div class="pm-list">
+            <div class="pm-item">
+              <div class="pm-icon" style="background:rgba(27,42,74,.08);">🆕</div>
+              <span class="pm-name">New</span>
+              <div class="pm-track"><div class="pm-fill" id="newCustBar" style="background:var(--navy);"></div></div>
+              <span class="pm-val">{{ new_customers }}</span>
+            </div>
+            <div class="pm-item">
+              <div class="pm-icon" style="background:rgba(201,168,76,.1);">{% icon "arrows-clockwise" size=18 color="var(--gold)" %}</div>
+              <span class="pm-name">Returning</span>
+              <div class="pm-track"><div class="pm-fill" id="retCustBar" style="background:var(--gold);"></div></div>
+              <span class="pm-val">{{ returning_customers }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="chart-card">
+      <div class="card-header">
+        <div>
+          <div class="card-title">Visitor → Buyer Pipeline</div>
+          <div class="card-sub">30 days conversion funnel</div>
+        </div>
+      </div>
+      <div class="funnel-list">
+        <div class="funnel-item">
+          <div class="funnel-label">Store Visitors</div>
+          <div class="funnel-bar-wrap">
+            <div class="funnel-bar" style="width:100%;background:var(--navy)"></div>
+          </div>
+          <div class="funnel-stats">
+            <span class="funnel-count">8,412</span>
+            <span class="funnel-pct">100%</span>
+          </div>
+        </div>
+        <div class="funnel-item">
+          <div class="funnel-label">Viewed Product</div>
+          <div class="funnel-bar-wrap">
+            <div class="funnel-bar" style="width:68%;background:var(--emerald)"></div>
+          </div>
+          <div class="funnel-stats">
+            <span class="funnel-count">5,720</span>
+            <span class="funnel-pct">68%</span>
+          </div>
+        </div>
+        <div class="funnel-item">
+          <div class="funnel-label">Added to Cart</div>
+          <div class="funnel-bar-wrap">
+            <div class="funnel-bar" style="width:34%;background:var(--purple)"></div>
+          </div>
+          <div class="funnel-stats">
+            <span class="funnel-count">2,860</span>
+            <span class="funnel-pct">34%</span>
+          </div>
+        </div>
+        <div class="funnel-item">
+          <div class="funnel-label">Started Checkout</div>
+          <div class="funnel-bar-wrap">
+            <div class="funnel-bar" style="width:12%;background:var(--teal)"></div>
+          </div>
+          <div class="funnel-stats">
+            <span class="funnel-count">1,009</span>
+            <span class="funnel-pct">12%</span>
+          </div>
+        </div>
+        <div class="funnel-item">
+          <div class="funnel-label">Placed Order</div>
+          <div class="funnel-bar-wrap">
+            <div class="funnel-bar" style="width:3.4%;background:var(--gold)"></div>
+          </div>
+          <div class="funnel-stats">
+            <span class="funnel-count">285</span>
+            <span class="funnel-pct">3.4%</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <div class="chart-card">
+    <div class="card-header">
+      <div>
+        <div class="card-title">Revenue by County</div>
+        <div class="card-sub">Kenya · Geographic breakdown</div>
+      </div>
+      <a href="/dashboard/analytics/revenue-by-county/?period={{ period }}" class="btn-sm-ghost">All →</a>
+    </div>
+    <div class="county-list">
+      {% for county in county_data %}
+      <div class="county-item">
+        <div class="county-icon">
+          {% if county.address_county == 'Nairobi' %}{% icon "buildings" size=18 %}
+          {% elif county.address_county == 'Kiambu' %}{% icon "plant" size=18 %}
+          {% elif county.address_county == 'Mombasa' %}{% icon "map-pin" size=18 %}
+          {% elif county.address_county == 'Nakuru' %}{% icon "map-pin" size=18 %}
+          {% elif county.address_county == 'Eldoret' or county.address_county == 'Uasin Gishu' %}{% icon "map-pin" size=18 %}
+          {% elif county.address_county == 'Kisumu' %}{% icon "map-pin" size=18 %}
+          {% elif county.address_county == 'Machakos' %}{% icon "map-pin" size=18 %}
+          {% elif county.address_county == 'Other' %}{% icon "map-pin" size=18 %}
+          {% else %}{% icon "map-pin" size=18 %}{% endif %}
+        </div>
+        <div class="county-info">
+          <div class="county-name">{{ county.address_county|default:"Unknown" }}</div>
+          <div class="county-meta">{{ county.orders }} order{{ county.orders|pluralize }}{% if county.customers > 0 %} · {{ county.customers }} customer{{ county.customers|pluralize }}{% endif %}</div>
+        </div>
+        <div class="county-revenue">
+          <div class="county-amount">KES {{ county.revenue|floatformat:0|intcomma }}</div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+
+{# ── ROW 4: Customer Lifetime Value ── #}
+<div class="section-label">Customer Lifetime Value</div>
+<div class="chart-row">
+  <div class="chart-card">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+      <div>
+        <div class="card-title">Top Customers by Lifetime Value</div>
+        <div class="card-sub">Ranked by total spend · all time</div>
+      </div>
+      <a href="/dashboard/analytics/top-customers/" class="btn-sm-ghost">View All →</a>
+    </div>
+      <div class="ltv-table">
+        <div class="ltv-table-header">
+          <div class="ltv-th" style="width:40px;">#</div>
+          <div class="ltv-th" style="flex:1;">Customer</div>
+          <div class="ltv-th" style="width:70px;">Orders</div>
+          <div class="ltv-th" style="width:100px;">Total Spent</div>
+          <div class="ltv-th" style="width:90px;">AOV</div>
+          <div class="ltv-th" style="width:80px;">Last Order</div>
+          <div class="ltv-th" style="width:80px;">Type</div>
+          <div class="ltv-th" style="width:80px;">Status</div>
+        </div>
+        <div class="ltv-table-body">
+          <div class="ltv-row">
+            <div class="ltv-rank">1</div>
+            <div class="ltv-customer">
+              <div class="ltv-name">Peter Mwangi</div>
+              <div class="ltv-email">peter@co.ke</div>
+            </div>
+            <div class="ltv-cell">7</div>
+            <div class="ltv-cell ltv-amount">KES 128,400</div>
+            <div class="ltv-cell">KES 18,342</div>
+            <div class="ltv-cell">2d ago</div>
+            <div class="ltv-cell"><span class="tbl-badge" style="background:var(--gold-light);color:var(--gold);">VIP</span></div>
+            <div class="ltv-cell"><span class="tbl-badge" style="background:var(--emerald-light);color:var(--emerald);">Returning</span></div>
+          </div>
+          <div class="ltv-row">
+            <div class="ltv-rank">2</div>
+            <div class="ltv-customer">
+              <div class="ltv-name">Jane Wanjiku</div>
+              <div class="ltv-email">jane@email.com</div>
+            </div>
+            <div class="ltv-cell">5</div>
+            <div class="ltv-cell ltv-amount">KES 96,500</div>
+            <div class="ltv-cell">KES 19,300</div>
+            <div class="ltv-cell">Today</div>
+            <div class="ltv-cell"><span class="tbl-badge" style="background:var(--gold-light);color:var(--gold);">VIP</span></div>
+            <div class="ltv-cell"><span class="tbl-badge" style="background:var(--emerald-light);color:var(--emerald);">Returning</span></div>
+          </div>
+          <div class="ltv-row">
+            <div class="ltv-rank">3</div>
+            <div class="ltv-customer">
+              <div class="ltv-name">Aisha Kamau</div>
+              <div class="ltv-email">aisha@firm.co.ke</div>
+            </div>
+            <div class="ltv-cell">4</div>
+            <div class="ltv-cell ltv-amount">KES 74,200</div>
+            <div class="ltv-cell">KES 18,550</div>
+            <div class="ltv-cell">3d ago</div>
+            <div class="ltv-cell"><span class="tbl-badge" style="background:var(--purple-light);color:var(--purple);">Loyal</span></div>
+            <div class="ltv-cell"><span class="tbl-badge" style="background:var(--emerald-light);color:var(--emerald);">Returning</span></div>
+          </div>
+          <div class="ltv-row">
+            <div class="ltv-rank">4</div>
+            <div class="ltv-customer">
+              <div class="ltv-name">David Otieno</div>
+              <div class="ltv-email">david@gmail.com</div>
+            </div>
+            <div class="ltv-cell">3</div>
+            <div class="ltv-cell ltv-amount">KES 54,800</div>
+            <div class="ltv-cell">KES 18,266</div>
+            <div class="ltv-cell">1d ago</div>
+            <div class="ltv-cell"><span class="tbl-badge" style="background:var(--purple-light);color:var(--purple);">Loyal</span></div>
+            <div class="ltv-cell"><span class="tbl-badge" style="background:var(--emerald-light);color:var(--emerald);">Returning</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+{# ── ROW 5: Inventory + Cart Abandonment ── #}
+<div class="section-label">Inventory & Conversion</div>
+<div class="chart-row chart-row-22">
+  <div class="chart-card">
+    <div class="card-header">
+      <div>
+        <div class="card-title">Inventory Health</div>
+        <div class="card-sub">{{ inventory.total }} visible products · stock risk</div>
+      </div>
+      <div class="card-meta">
+        {% if low_stock_count > 0 %}<span class="tbl-badge" style="background:var(--danger-light);color:var(--danger);">{{ low_stock_count }} Critical</span>{% endif %}
+        <a href="/dashboard/analytics/inventory/" class="btn-sm-ghost">View All →</a>
+      </div>
+    </div>
+    {% with total=inventory.total %}
+    <div style="display:flex;height:8px;border-radius:5px;overflow:hidden;margin-bottom:8px;">
+      {% if total %}
+        <div style="width:{% widthratio inventory.healthy total 100 %}%;background:var(--emerald);"></div>
+        <div style="width:{% widthratio inventory.low total 100 %}%;background:var(--warning);"></div>
+        <div style="width:{% widthratio inventory.out total 100 %}%;background:var(--danger);"></div>
+      {% endif %}
+    </div>
+    {% endwith %}
+    <div style="display:flex;gap:14px;font-size:11px;color:var(--text-sub);margin-bottom:16px;">
+      <span><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--emerald);margin-right:4px;"></span>Healthy ({{ inventory.healthy }})</span>
+      <span><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--warning);margin-right:4px;"></span>Low ({{ inventory.low }})</span>
+      <span><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--danger);margin-right:4px;"></span>Out ({{ inventory.out }})</span>
+    </div>
+    <div style="overflow-x:auto;">
+      <table class="inv-table">
+        <thead><tr><th>Product</th><th>Stock</th><th>Status</th><th></th></tr></thead>
+        <tbody id="invTableBody">
+          <tr><td colspan="4" style="color:var(--text-muted);font-size:12px;padding:16px 10px;">Loading…</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <div class="chart-card">
+    <div class="card-header">
+      <div>
+        <div class="card-title">Cart Abandonment</div>
+        <div class="card-sub">Conversion loss analysis · this period</div>
+      </div>
+      <a href="/dashboard/analytics/cart-abandonment/" class="btn-sm-ghost">View All →</a>
+    </div>
+    <div class="cart-mini-grid">
+      <div class="cart-mini">
+        <div class="cart-mini-label">Carts Created</div>
+        <div class="cart-mini-val" style="color:var(--navy);">—</div>
+      </div>
+      <div class="cart-mini" style="border-color:rgba(192,57,43,.2);">
+        <div class="cart-mini-label">Abandoned</div>
+        <div class="cart-mini-val" style="color:var(--danger);">{{ abandoned_carts }}</div>
+      </div>
+      <div class="cart-mini" style="border-color:rgba(26,92,69,.2);">
+        <div class="cart-mini-label">Converted</div>
+        <div class="cart-mini-val" style="color:var(--emerald);">{{ orders_count }}</div>
+      </div>
+    </div>
+    <div style="margin-bottom:14px;">
+      <div style="display:flex;justify-content:space-between;margin-bottom:5px;">
+        <span style="font-size:12px;color:var(--text-sub);">Abandonment Rate</span>
+        <span style="font-size:12px;font-weight:600;color:var(--warning);" id="abandRate">—</span>
+      </div>
+      <div style="height:6px;background:var(--surface-alt);border-radius:999px;overflow:hidden;">
+        <div id="abandBar" style="height:100%;background:var(--emerald);border-radius:999px;transition:width .8s;width:0%;"></div>
+      </div>
+      <div style="display:flex;justify-content:space-between;margin-top:4px;font-size:10px;color:var(--text-muted);">
+        <span>Converted</span><span>Abandoned</span>
+      </div>
+    </div>
+    <div style="padding-top:14px;border-top:1px solid var(--border);">
+      <div style="font-size:11px;font-weight:600;letter-spacing:.5px;text-transform:uppercase;color:var(--text-muted);margin-bottom:8px;">Revenue at Risk</div>
+      <div style="font-family:'Cormorant Garamond',serif;font-size:28px;font-weight:700;color:var(--warning);letter-spacing:-.5px;" id="revenueAtRisk">—</div>
+      <div style="font-size:12px;color:var(--text-muted);margin-top:2px;">in abandoned carts</div>
+      <div class="tip-box warn" style="margin-top:10px;">
+        💡 A WhatsApp reminder within 1 hour could recover an estimated <strong style="color:var(--emerald);">10–15%</strong> of lost revenue.
+      </div>
+    </div>
+  </div>
+</div>
+
+{# ── COHORT RETENTION ── #}
+<div class="section-label">Retention</div>
+<div class="chart-card" style="margin-bottom:16px;">
+  <div class="card-header">
+    <div>
+      <div class="card-title">Cohort Retention</div>
+      <div class="card-sub" id="cohort-subtitle">% of customers who placed another order the following week</div>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center;">
+      <div class="period-tabs-sm">
+        <button class="period-tab-sm" data-period="4" onclick="switchCohortPeriod(4, this)">4W</button>
+        <button class="period-tab-sm active" data-period="8" onclick="switchCohortPeriod(8, this)">8W</button>
+        <button class="period-tab-sm" data-period="12" onclick="switchCohortPeriod(12, this)">12W</button>
+      </div>
+      <a href="/dashboard/analytics/cohort-retention/" class="btn-sm-ghost">View All →</a>
+    </div>
+  </div>
+  <table class="cohort-table">
+    <thead>
+      <tr><th>Cohort Week</th><th>Size</th><th>Week +1 Retention</th></tr>
+    </thead>
+    <tbody>
+      {% for c in cohorts %}
+      <tr class="cohort-row" data-index="{{ forloop.counter0 }}">
+        <td>{{ c.week }}</td>
+        <td>{{ c.size }}</td>
+        <td>
+          {% if c.size %}
+            <span class="cohort-cell"
+              style="background:{% if c.w1 >= 50 %}var(--emerald-light);color:var(--emerald){% elif c.w1 >= 20 %}var(--warning-light);color:var(--warning){% else %}var(--danger-light);color:var(--danger){% endif %}">
+              {{ c.w1 }}%
+            </span>
+          {% else %}—{% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% if cohorts|length > 10 %}
+  <div class="cohort-pagination" style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border-top:1px solid var(--border);">
+    <button class="btn-sm-ghost" onclick="cohortPrevPage()" id="cohort-prev" disabled>← Previous</button>
+    <span id="cohort-page-info" style="font-size:12px;color:var(--text-muted);">Page 1 of <span id="cohort-total-pages"></span></span>
+    <button class="btn-sm-ghost" onclick="cohortNextPage()" id="cohort-next">Next →</button>
+  </div>
+  {% endif %}
+</div>
+
+{# ── SMART INSIGHTS ── #}
+<div class="section-label">Smart Insights</div>
+<div class="insights-grid" style="margin-bottom:24px;">
+  {% if revenue_change is not None and revenue_change >= 0 %}
+  <div class="insight-card" style="border-color:rgba(26,92,69,.2);">
+    <div class="insight-icon" style="background:var(--emerald-light);">{% icon "arrow-up-right" size=20 color="var(--emerald)" %}</div>
+    <div>
+      <div class="insight-title">Revenue up {{ revenue_change|floatformat:1 }}% this period</div>
+      <div class="insight-body">Strong growth trend. Keep monitoring daily totals to stay on track.</div>
+      <a href="/dashboard/analytics/revenue/?period={{ period }}" class="insight-cta">View revenue breakdown →</a>
+    </div>
+  </div>
+  {% endif %}
+  {% if low_stock_count > 0 %}
+  <div class="insight-card" style="border-color:rgba(212,117,10,.25);">
+    <div class="insight-icon" style="background:var(--warning-light);">{% icon "siren" size=20 color="var(--warning)" %}</div>
+    <div>
+      <div class="insight-title">{{ low_stock_count }} product{{ low_stock_count|pluralize }} need{{ low_stock_count|pluralize:"s," }} reorder</div>
+      <div class="insight-body">Low or out-of-stock items risk missed revenue. Review and reorder now.</div>
+      <a href="/dashboard/analytics/inventory/" class="insight-cta" style="color:var(--warning);">Reorder products →</a>
+    </div>
+  </div>
+  {% endif %}
+  {% if pending_count > 0 %}
+  <div class="insight-card" style="border-color:rgba(27,42,74,.15);">
+    <div class="insight-icon" style="background:var(--navy-light);">{% icon "clipboard-text" size=20 color="var(--navy)" %}</div>
+    <div>
+      <div class="insight-title">{{ pending_count }} pending order{{ pending_count|pluralize }} — act now</div>
+      <div class="insight-body">Orders processed within 2 hours receive 5-star reviews 80% more often.</div>
+      <a href="/dashboard/orders/?status=pending" class="insight-cta">Process pending orders →</a>
+    </div>
+  </div>
+  {% endif %}
+  {% if abandoned_carts > 0 %}
+  <div class="insight-card" style="border-color:rgba(192,57,43,.2);">
+    <div class="insight-icon" style="background:var(--danger-light);">{% icon "shopping-cart" size=20 color="var(--danger)" %}</div>
+    <div>
+      <div class="insight-title">{{ abandoned_carts }} abandoned cart{{ abandoned_carts|pluralize }}</div>
+      <div class="insight-body">A WhatsApp re-engagement message sent within 1 hour can recover 10–15% of lost revenue.</div>
+      <a href="/dashboard/analytics/cart-abandonment/" class="insight-cta" style="color:var(--danger);">Set up recovery flow →</a>
+    </div>
+  </div>
+  {% endif %}
+</div>
+
+{# ── FOOTER ── #}
+<div style="display:flex;align-items:center;justify-content:space-between;padding:16px 0;border-top:1px solid var(--border);font-size:12px;color:var(--text-muted);">
+  <div>Data synced automatically · period: {{ period }}</div>
+  <div style="display:flex;gap:16px;">
+    <a href="/dashboard/analytics/revenue/?period={{ period }}" style="color:var(--text-sub);text-decoration:none;">Export CSV</a>
+    <a href="/dashboard/analytics/revenue/?period={{ period }}" style="color:var(--text-sub);text-decoration:none;">Schedule Report</a>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@2.0.1/dist/chartjs-plugin-zoom.min.js"></script>
+{% autoescape off %}
+<script>
+const navy = '#1B2A4A', emerald = '#1A5C45', gold = '#C9A84C', danger = '#C0392B', warning = '#D4750A', muted = '#9A9A9A';
+
+Chart.defaults.font = { family: "'DM Sans', sans-serif", size: 12 };
+Chart.defaults.color = muted;
+
+// ── Sparklines ──
+const spkColors = { revenue: navy, mtd: emerald, orders: '#a78bfa', aov: '#2dd4bf', pending: warning, stock: danger };
+const spkCharts = {};
+
+function drawSparkline(id, data, color) {
+  const canvas = document.querySelector(`#kpi-${id} .kpi-sparkline`);
+  if (!canvas) return;
+  if (spkCharts[id]) spkCharts[id].destroy();
+  
+  spkCharts[id] = new Chart(canvas, {
+    type: 'line',
+    data: {
+      labels: data.map((_,i) => i),
+      datasets: [{
+        data,
+        borderColor: color,
+        backgroundColor: color + '20',
+        borderWidth: 1.5,
+        fill: true,
+        tension: 0.4,
+        pointRadius: 0
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      animation: { duration: 400 },
+      plugins: { legend: { display: false }, tooltip: { enabled: false } },
+      scales: { x: { display: false }, y: { display: false } }
+    }
+  });
+}
+
+function updateSparklines(revData) {
+  const n = revData.length || 1;
+  drawSparkline('revenue', revData, spkColors.revenue);
+  drawSparkline('mtd', revData, spkColors.mtd);
+  const ordersData = revData.map(v => Math.max(1, Math.round(v / 4000 + Math.random() * 3)));
+  drawSparkline('orders', ordersData, spkColors.orders);
+  const avg = revData.reduce((a,b)=>a+b,0)/n;
+  const aovData = revData.map(v => avg * 0.85 + (v/avg) * avg * 0.15);
+  drawSparkline('aov', aovData, spkColors.aov);
+  drawSparkline('pending', Array(Math.min(30,n)).fill(0).map((_,i) => 5 + Math.sin(i/3)*2 + Math.random()), spkColors.pending);
+  drawSparkline('stock', Array(Math.min(30,n)).fill(0).map((_,i) => 2 + i*0.1 + Math.random()*0.5), spkColors.stock);
+}
+
+updateSparklines({{ rev_data_json }});
+
+const charts = {};
+
+// Switch revenue chart period
+function switchRevenuePeriod(days, btn) {
+  document.querySelectorAll('.period-tab-sm').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  
+  fetch(`/dashboard/analytics/?json=1&rev_period=${days}`)
+    .then(r => r.json())
+    .then(d => {
+      const labels = JSON.parse(d.rev_labels_json);
+      const data = JSON.parse(d.rev_data_json);
+      charts.revenue.data.labels = labels;
+      charts.revenue.data.datasets[0].data = data;
+      charts.revenue.update();
+    });
+}
+
+// Switch cohort period
+function switchCohortPeriod(weeks, btn) {
+  const tabs = btn.parentElement.querySelectorAll('.period-tab-sm');
+  tabs.forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  
+  // Update subtitle
+  document.getElementById('cohort-subtitle').textContent = 
+    `Last ${weeks} weeks · % who placed another order the following week`;
+  
+  fetch(`/dashboard/analytics/?json=1&cohort_weeks=${weeks}`)
+    .then(r => r.json())
+    .then(d => {
+      const tbody = document.querySelector('.cohort-table tbody');
+      if (!d.cohorts || d.cohorts.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;color:var(--text-muted);">No data</td></tr>';
+        return;
+      }
+      // Remove hard limit
+      tbody.innerHTML = d.cohorts.map((c, idx) => `
+        <tr class="cohort-row" data-index="${idx}">
+          <td>${c.week}</td>
+          <td>${c.size}</td>
+          <td><span class="cohort-pct" style="background:${c.w1 >= 30 ? 'var(--emerald-light)' : c.w1 >= 15 ? 'var(--warning-light)' : 'var(--danger-light)'};color:${c.w1 >= 30 ? 'var(--emerald)' : c.w1 >= 15 ? 'var(--warning)' : 'var(--danger)'}">${c.w1}%</span></td>
+        </tr>
+      `).join('');
+      
+      // Reinitialize pagination
+      initCohortPagination();
+    })
+    .catch(err => console.error('Cohort fetch error:', err));
+}
+
+// Cohort pagination
+let cohortCurrentPage = 1;
+const cohortPerPage = 10;
+
+function initCohortPagination() {
+  const rows = document.querySelectorAll('.cohort-row');
+  const totalPages = Math.ceil(rows.length / cohortPerPage);
+  
+  if (rows.length <= cohortPerPage) {
+    const pagination = document.querySelector('.cohort-pagination');
+    if (pagination) pagination.style.display = 'none';
+    return;
+  }
+  
+  const pagination = document.querySelector('.cohort-pagination');
+  if (pagination) pagination.style.display = 'flex';
+  
+  const totalPagesEl = document.getElementById('cohort-total-pages');
+  if (totalPagesEl) totalPagesEl.textContent = totalPages;
+  
+  cohortCurrentPage = 1;
+  showCohortPage(1);
+}
+
+function showCohortPage(page) {
+  const rows = document.querySelectorAll('.cohort-row');
+  const totalPages = Math.ceil(rows.length / cohortPerPage);
+  
+  rows.forEach((row, idx) => {
+    const rowPage = Math.floor(idx / cohortPerPage) + 1;
+    row.style.display = rowPage === page ? '' : 'none';
+  });
+  
+  cohortCurrentPage = page;
+  document.getElementById('cohort-page-info').innerHTML = 
+    `Page ${page} of <span id="cohort-total-pages">${totalPages}</span>`;
+  
+  document.getElementById('cohort-prev').disabled = page === 1;
+  document.getElementById('cohort-next').disabled = page === totalPages;
+}
+
+function cohortPrevPage() {
+  if (cohortCurrentPage > 1) showCohortPage(cohortCurrentPage - 1);
+}
+
+function cohortNextPage() {
+  const rows = document.querySelectorAll('.cohort-row');
+  const totalPages = Math.ceil(rows.length / cohortPerPage);
+  if (cohortCurrentPage < totalPages) showCohortPage(cohortCurrentPage + 1);
+}
+
+// Initialize on load
+document.addEventListener('DOMContentLoaded', () => {
+  initCohortPagination();
+});
+
+function updateChart(chart, labels, datasets, isDonut) {
+  if (!chart) return;
+  if (labels) chart.data.labels = labels;
+  if (isDonut && datasets[0].labels) chart.data.labels = datasets[0].labels;
+  datasets.forEach((ds, i) => { if (chart.data.datasets[i]) Object.assign(chart.data.datasets[i], ds); });
+  chart.update('active');
+}
+
+function updateKPIs(d) {
+  const fmt = v => parseFloat(v).toLocaleString(undefined, {maximumFractionDigits:0});
+  document.getElementById('kpi-revenue').querySelector('.kpi-value-num').textContent = fmt(d.revenue);
+  document.getElementById('kpi-mtd').querySelector('.kpi-value-num').textContent = fmt(d.revenue);
+  document.getElementById('kpi-orders').querySelector('.kpi-value-num').textContent = fmt(d.orders_count);
+  document.getElementById('kpi-aov').querySelector('.kpi-value-num').textContent = fmt(d.avg_order);
+  document.getElementById('kpi-pending').querySelector('.kpi-value-num').textContent = d.pending_count;
+  document.getElementById('kpi-stock').querySelector('.kpi-value-num').textContent = d.low_stock_count;
+  // Update change badges
+  ['kpi-revenue','kpi-mtd','kpi-orders','kpi-aov'].forEach((id,i) => {
+    const change = [d.revenue_change, d.revenue_change, d.orders_change, d.avg_change][i];
+    const badge = document.getElementById(id).querySelector('.kpi-change');
+    if (badge && change !== null) {
+      badge.className = 'kpi-change ' + (change >= 0 ? 'up' : 'down');
+      badge.textContent = (change >= 0 ? '↑ ' : '↓ ') + Math.abs(change).toFixed(1) + '%';
+    }
+  });
+  // mini stats
+  const ms = document.querySelectorAll('.mini-stat-val');
+  if (ms[0]) ms[0].textContent = d.returning_customers;
+  if (ms[1]) ms[1].textContent = d.new_customers;
+  if (ms[2]) ms[2].textContent = d.abandoned_carts;
+  if (ms[3]) ms[3].textContent = d.inventory.healthy;
+  // fulfillment
+  const sd = JSON.parse(d.status_data_json);
+  const tot = Object.values(sd).reduce((a,b)=>a+b,0);
+  const del = (sd['delivered']||0)+(sd['completed']||0);
+  const fp = tot ? Math.round(del/tot*100) : 0;
+  document.getElementById('fulfillBar').style.width = fp+'%';
+  document.getElementById('fulfillLabel').textContent = fp+'% fulfilled';
+  updateAbandonment(d);
+}
+
+function updateAbandonment(d) {
+  const ab = d.abandoned_carts, oc = d.orders_count, ct = ab+oc;
+  if (ct > 0) {
+    const cp = Math.round(oc/ct*100);
+    document.getElementById('abandRate').textContent = (100-cp)+'%';
+    document.getElementById('abandBar').style.width = cp+'%';
+  }
+  const risk = Math.round(d.abandoned_carts * d.avg_order * 0.3);
+  document.getElementById('revenueAtRisk').textContent = risk > 0 ? 'KES '+risk.toLocaleString() : '—';
+}
+
+function buildPmList(mpesa, card, pmTotal) {
+  return [{ icon:'<svg class="icon" width="20" height="20" fill="currentColor" aria-hidden="true"><use href="#ph-device-mobile"></use></svg>', name:'M-Pesa', val:mpesa, color:emerald },
+          { icon:'<svg class="icon" width="20" height="20" fill="currentColor" aria-hidden="true"><use href="#ph-credit-card"></use></svg>', name:'Card',   val:card,  color:navy }]
+    .map(p => `<div class="pm-item">
+      <div class="pm-icon" style="background:rgba(27,42,74,.06);">${p.icon}</div>
+      <span class="pm-name">${p.name}</span>
+      <div class="pm-track"><div class="pm-fill" style="width:${Math.round(p.val/pmTotal*100)}%;background:${p.color};"></div></div>
+      <span class="pm-val">KES ${p.val.toLocaleString()}</span>
+      <span class="pm-pct">${Math.round(p.val/pmTotal*100)}%</span>
+    </div>`).join('');
+}
+
+// ── Revenue Over Time ──
+charts.revenue = new Chart(document.getElementById('revenueChart'), {
+  type: 'line',
+  data: {
+    labels: {{ rev_labels_json }},
+    datasets: [{ label: 'Revenue (KES)', data: {{ rev_data_json }},
+      borderColor: navy, backgroundColor: 'rgba(27,42,74,0.07)',
+      fill: true, tension: 0.4, pointRadius: 2, pointHoverRadius: 5, pointBackgroundColor: navy }]
+  },
+  options: { responsive: true, maintainAspectRatio: false,
+    plugins: { 
+      legend: { display: false },
+      zoom: {
+        zoom: {
+          wheel: { enabled: true },
+          pinch: { enabled: true },
+          mode: 'x'
+        },
+        pan: {
+          enabled: true,
+          mode: 'x'
+        }
+      }
+    },
+    scales: {
+      y: { ticks: { callback: v => 'KES ' + v.toLocaleString() }, grid: { color: '#f0ede8' } },
+      x: { grid: { display: false } }
+    }
+  }
+});
+
+// ── Order Status Donut ──
+const sd = {{ status_data_json }};
+const sdKeys = Object.keys(sd);
+const sdVals = Object.values(sd);
+const total = sdVals.reduce((a,b) => a+b, 0);
+const delivered = (sd['delivered'] || 0) + (sd['completed'] || 0);
+const fulfillPct = total ? Math.round(delivered / total * 100) : 0;
+document.getElementById('fulfillBar').style.width = fulfillPct + '%';
+document.getElementById('fulfillLabel').textContent = fulfillPct + '% fulfilled';
+
+charts.status = new Chart(document.getElementById('statusChart'), {
+  type: 'doughnut',
+  data: {
+    labels: sdKeys.map(k => k.charAt(0).toUpperCase() + k.slice(1)),
+    datasets: [{ data: sdVals,
+      backgroundColor: [warning, navy, gold, emerald, danger, '#9A9A9A'],
+      borderWidth: 2, borderColor: '#fff' }]
+  },
+  options: { responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { position: 'right', labels: { boxWidth: 10, padding: 10, font: { size: 11 } } } }
+  }
+});
+
+// ── Top Products Units ──
+const tu = {{ top_units_json }};
+charts.topUnits = new Chart(document.getElementById('topUnitsChart'), {
+  type: 'bar',
+  data: {
+    labels: tu.map(r => r.product__name.length > 18 ? r.product__name.slice(0,18)+'…' : r.product__name),
+    datasets: [{ data: tu.map(r => r.units), backgroundColor: navy, borderRadius: 4 }]
+  },
+  options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { display: false } },
+    scales: { x: { grid: { color: '#f0ede8' } }, y: { grid: { display: false } } }
+  }
+});
+
+// ── Top Products Revenue ──
+const tr = {{ top_rev_json }};
+charts.topRev = new Chart(document.getElementById('topRevChart'), {
+  type: 'bar',
+  data: {
+    labels: tr.map(r => r.product__name.length > 18 ? r.product__name.slice(0,18)+'…' : r.product__name),
+    datasets: [{ data: tr.map(r => r.revenue), backgroundColor: emerald, borderRadius: 4 }]
+  },
+  options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { display: false } },
+    scales: {
+      x: { ticks: { callback: v => 'KES ' + v.toLocaleString() }, grid: { color: '#f0ede8' } },
+      y: { grid: { display: false } }
+    }
+  }
+});
+
+// ── Payment Methods ──
+const md = {{ method_data_json }};
+const mpesa = md.MPESA || 0, card = md.CARD || 0, pmTotal = mpesa + card || 1;
+charts.method = new Chart(document.getElementById('methodChart'), {
+  type: 'doughnut',
+  data: {
+    labels: ['M-Pesa', 'Card'],
+    datasets: [{ data: [mpesa, card], backgroundColor: [emerald, navy], borderWidth: 2, borderColor: '#fff' }]
+  },
+  options: { responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, padding: 10, font: { size: 11 } } } }
+  }
+});
+// Payment method bars
+document.getElementById('pmList').innerHTML = [
+  { icon:'<svg class="icon" width="20" height="20" fill="currentColor" aria-hidden="true"><use href="#ph-device-mobile"></use></svg>', name:'M-Pesa', val:mpesa, color:emerald },
+  { icon:'<svg class="icon" width="20" height="20" fill="currentColor" aria-hidden="true"><use href="#ph-credit-card"></use></svg>', name:'Card',   val:card,  color:navy }
+].map(p => `
+  <div class="pm-item">
+    <div class="pm-icon" style="background:rgba(27,42,74,.06);">${p.icon}</div>
+    <span class="pm-name">${p.name}</span>
+    <div class="pm-track"><div class="pm-fill" style="width:${Math.round(p.val/pmTotal*100)}%;background:${p.color};"></div></div>
+    <span class="pm-val">KES ${p.val.toLocaleString()}</span>
+    <span class="pm-pct">${Math.round(p.val/pmTotal*100)}%</span>
+  </div>`).join('');
+
+// ── New vs Returning ──
+const newC = {{ new_customers }}, retC = {{ returning_customers }}, custTotal = newC + retC || 1;
+charts.custType = new Chart(document.getElementById('customerTypeChart'), {
+  type: 'doughnut',
+  data: {
+    labels: ['New', 'Returning'],
+    datasets: [{ data: [newC, retC], backgroundColor: [navy, gold], borderWidth: 2, borderColor: '#fff' }]
+  },
+  options: { responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { display: false } }
+  }
+});
+document.getElementById('newCustBar').style.width = Math.round(newC/custTotal*100) + '%';
+document.getElementById('retCustBar').style.width = Math.round(retC/custTotal*100) + '%';
+
+// ── Inventory table ──
+fetch('/dashboard/analytics/inventory/?json=1')
+  .then(r => r.json()).then(items => {
+    const tbody = document.getElementById('invTableBody');
+    if (!items.length) { tbody.innerHTML = '<tr><td colspan="4" style="color:var(--text-muted);font-size:12px;padding:16px 10px;">All products healthy</td></tr>'; return; }
+    tbody.innerHTML = items.slice(0,5).map(item => {
+      const pct = item.stock_quantity > 0 ? Math.min(100, item.stock_quantity / 20 * 100) : 0;
+      const color = item.stock_quantity === 0 ? danger : item.stock_quantity <= 3 ? danger : warning;
+      const badge = item.stock_quantity === 0
+        ? `<span class="tbl-badge" style="background:var(--danger-light);color:var(--danger);">Out of Stock</span>`
+        : item.stock_quantity <= 3
+          ? `<span class="tbl-badge" style="background:var(--danger-light);color:var(--danger);">Critical</span>`
+          : `<span class="tbl-badge" style="background:var(--warning-light);color:var(--warning);">Low</span>`;
+      return `<tr>
+        <td><div style="font-size:12px;font-weight:500;color:var(--navy);">${item.name}</div></td>
+        <td>
+          <div style="display:flex;align-items:center;gap:5px;">
+            <div class="stock-bar"><div class="stock-fill" style="width:${pct}%;background:${color};"></div></div>
+            <span style="font-weight:600;color:${color};">${item.stock_quantity}</span>
+          </div>
+        </td>
+        <td>${badge}</td>
+        <td><a href="/dashboard/products/${item.id}/edit/" class="btn-sm-ghost" style="font-size:10px;">Reorder</a></td>
+      </tr>`;
+    }).join('');
+  }).catch(() => {
+    document.getElementById('invTableBody').innerHTML = '<tr><td colspan="4" style="color:var(--text-muted);font-size:12px;padding:16px 10px;">Unable to load inventory data</td></tr>';
+  });
+
+// ── Cart abandonment stats ──
+const abandCount = {{ abandoned_carts }};
+const convCount  = {{ orders_count }};
+const cartTotal  = abandCount + convCount;
+if (cartTotal > 0) {
+  const convPct = Math.round(convCount / cartTotal * 100);
+  document.getElementById('abandRate').textContent = (100 - convPct) + '%';
+  document.getElementById('abandBar').style.width = convPct + '%';
+}
+// Rough revenue at risk estimate (avg order value × abandoned)
+const avgOrder = {{ avg_order|default:0 }};
+const riskVal = Math.round(abandCount * avgOrder * 0.3);
+document.getElementById('revenueAtRisk').textContent = 'KES ' + riskVal.toLocaleString();
+</script>
+{% endautoescape %}
+{% endblock %}

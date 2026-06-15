@@ -1,0 +1,63 @@
+{% extends "dashboard/base_dashboard.html" %}
+{% load humanize %}
+{% block title %}Cohort Retention — Dashboard{% endblock %}
+{% block page_title %}Cohort Retention{% endblock %}
+{% block nav_analytics %}active{% endblock %}
+{% block extra_styles %}
+.report-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:20px; }
+.table-wrap { background:var(--surface); border:1px solid var(--border); border-radius:var(--r-lg); overflow:hidden; }
+table { width:100%; border-collapse:collapse; }
+thead th { padding:11px 16px; text-align:left; font-size:11px; font-weight:600; color:var(--text-muted); text-transform:uppercase; letter-spacing:.06em; background:var(--surface-alt); border-bottom:1px solid var(--border); }
+tbody tr { border-bottom:1px solid var(--border); }
+tbody tr:last-child { border-bottom:none; }
+tbody tr:hover { background:var(--surface-alt); }
+td { padding:11px 16px; font-size:13px; }
+.period-btn { display:inline-flex; align-items:center; padding:0 14px; height:32px; border-radius:var(--r); font-size:12px; font-weight:500; border:1px solid var(--border); background:var(--surface); color:var(--text-sub); text-decoration:none; margin-left:6px; }
+.period-btn:hover { border-color:var(--navy); color:var(--navy); }
+.period-btn.active { background:var(--navy); color:white; border-color:var(--navy); }
+{% endblock %}
+{% block dashboard_content %}
+<div class="report-header">
+  <div>
+    <a href="/dashboard/analytics/" style="font-size:13px;color:var(--text-muted);text-decoration:none;">← Back to Analytics</a>
+    <div class="page-title serif" style="margin-top:6px;">Cohort Retention</div>
+    <div style="font-size:13px;color:var(--text-muted);margin-top:3px;">% of customers who placed another order the following week</div>
+  </div>
+  <div>
+    <a href="?weeks=4" class="period-btn {% if cohort_weeks == 4 %}active{% endif %}">4 Weeks</a>
+    <a href="?weeks=8" class="period-btn {% if cohort_weeks == 8 %}active{% endif %}">8 Weeks</a>
+    <a href="?weeks=12" class="period-btn {% if cohort_weeks == 12 %}active{% endif %}">12 Weeks</a>
+    <a href="?weeks=24" class="period-btn {% if cohort_weeks == 24 %}active{% endif %}">24 Weeks</a>
+  </div>
+</div>
+<div class="table-wrap">
+  <table>
+    <thead>
+      <tr>
+        <th>Cohort Week</th>
+        <th>Cohort Size</th>
+        <th>Week +1 Retention</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for c in cohorts %}
+      <tr>
+        <td>{{ c.week }}</td>
+        <td>{{ c.size }}</td>
+        <td>
+          {% if c.size %}
+            <span style="display:inline-block;padding:4px 10px;border-radius:4px;font-size:12px;font-weight:600;background:{% if c.w1 >= 50 %}var(--emerald-light);color:var(--emerald){% elif c.w1 >= 20 %}var(--warning-light);color:var(--warning){% else %}var(--danger-light);color:var(--danger){% endif %}">
+              {{ c.w1 }}%
+            </span>
+          {% else %}—{% endif %}
+        </td>
+      </tr>
+      {% empty %}
+      <tr>
+        <td colspan="3" style="text-align:center;color:var(--text-muted);padding:40px;">No cohort data available</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

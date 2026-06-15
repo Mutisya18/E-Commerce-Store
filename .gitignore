@@ -1,0 +1,30 @@
+vecna/
+# --- Python / Django ---
+vecna/
+__pycache__/
+*.py[cod]
+*$py.class
+*.log
+local_settings.py
+db.sqlite3
+db.sqlite3-journal
+media/
+static/
+
+# --- Node.js / Tailwind ---
+node_modules/
+dist/
+.npm
+npm-debug.log*
+
+# --- Environment & Secret Keys ---
+.env
+.venv
+env/
+venv/
+
+# --- IDE & System ---
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

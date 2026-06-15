@@ -1,0 +1,23 @@
+<div style="margin:-40px 0;padding:40px 0;background:var({{ story_bg_colour }});">
+  <div class="container">
+    <div class="story-grid">
+      <div>
+        {% if story_image_visible and story_image_url %}
+          <img src="{{ story_image_url }}" alt="{{ story_heading }}" style="width:100%;border-radius:14px;object-fit:cover;aspect-ratio:4/3;">
+        {% else %}
+          <div style="width:100%;border-radius:14px;aspect-ratio:4/3;background:var({{ story_image_bg_colour }});"></div>
+        {% endif %}
+      </div>
+      <div>
+        {% if story_overline_visible %}
+        <div class="story-overline" style="color:var({{ story_overline_colour }});">{{ story_overline }}</div>
+        {% endif %}
+        <h2 class="story-headline" style="color:var({{ story_heading_colour }});font-size:{{ story_heading_size }};">{{ story_heading }}</h2>
+        <p class="story-body" style="color:var({{ story_body_colour }});font-size:{{ story_body_size }};">{{ story_body }}</p>
+        {% if story_cta_visible %}
+        <a href="{{ story_cta_link }}" class="btn btn--{{ story_cta_style }} btn--{{ story_cta_colour|slice:'2:' }}">{{ story_cta_text }}</a>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>

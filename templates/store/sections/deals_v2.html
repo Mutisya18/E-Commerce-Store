@@ -1,0 +1,127 @@
+{% load humanize %}
+{% if deals %}
+<div x-data="dealCountdown" data-deadline="{{ deals_timer_end }}">
+
+  {% if deals_timer_position == 'banner' %}
+  {% if deals_timer_visible or deals_banner_label_visible %}
+  <div style="background:var({{ deals_banner_bg }});padding:20px 0;">
+    <div class="container" style="display:flex;align-items:center;gap:24px;flex-wrap:wrap;justify-content:{% if deals_timer_align == 'left' %}flex-start{% elif deals_timer_align == 'center' %}center{% else %}flex-end{% endif %};">
+      {% if deals_banner_label_visible %}
+      <div style="color:var({{ deals_banner_text }});font-size:{{ deals_banner_label_size }};font-weight:600;">{{ deals_banner_label }}</div>
+      {% endif %}
+      {% if deals_timer_visible %}
+      <div x-show="!expired">
+        <div style="display:flex;align-items:center;gap:16px;">
+          <div style="text-align:center;">
+            <div style="font-family:'Cormorant Garamond',serif;font-weight:700;color:var({{ deals_banner_text }});font-size:{{ deals_timer_size }};line-height:1;" x-text="days"></div>
+            <div style="font-size:11px;color:var({{ deals_banner_text }});opacity:0.7;margin-top:2px;">days</div>
+          </div>
+          <div style="font-family:'Cormorant Garamond',serif;font-weight:700;color:var({{ deals_banner_text }});font-size:{{ deals_timer_size }};opacity:0.5;">:</div>
+          <div style="text-align:center;">
+            <div style="font-family:'Cormorant Garamond',serif;font-weight:700;color:var({{ deals_banner_text }});font-size:{{ deals_timer_size }};line-height:1;" x-text="hours"></div>
+            <div style="font-size:11px;color:var({{ deals_banner_text }});opacity:0.7;margin-top:2px;">hrs</div>
+          </div>
+          <div style="font-family:'Cormorant Garamond',serif;font-weight:700;color:var({{ deals_banner_text }});font-size:{{ deals_timer_size }};opacity:0.5;">:</div>
+          <div style="text-align:center;">
+            <div style="font-family:'Cormorant Garamond',serif;font-weight:700;color:var({{ deals_banner_text }});font-size:{{ deals_timer_size }};line-height:1;" x-text="mins"></div>
+            <div style="font-size:11px;color:var({{ deals_banner_text }});opacity:0.7;margin-top:2px;">mins</div>
+          </div>
+          <div style="font-family:'Cormorant Garamond',serif;font-weight:700;color:var({{ deals_banner_text }});font-size:{{ deals_timer_size }};opacity:0.5;">:</div>
+          <div style="text-align:center;">
+            <div style="font-family:'Cormorant Garamond',serif;font-weight:700;color:var({{ deals_banner_text }});font-size:{{ deals_timer_size }};line-height:1;" x-text="secs"></div>
+            <div style="font-size:11px;color:var({{ deals_banner_text }});opacity:0.7;margin-top:2px;">secs</div>
+          </div>
+        </div>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+  {% endif %}
+  {% endif %}
+
+  <div class="container" style="padding-top:48px;">
+    <div class="deals-header">
+      <div style="width:100%;">
+
+        {% if deals_timer_position == 'inline' %}
+        <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;justify-content:{% if deals_timer_align == 'left' %}flex-start{% elif deals_timer_align == 'center' %}center{% else %}space-between{% endif %};margin-bottom:8px;">
+          <h2 class="deals-title" style="color:var({{ deals_heading_colour }});font-size:{{ deals_heading_size }};margin:0;">{{ deals_heading }}</h2>
+          {% if deals_timer_visible %}
+          <div x-show="!expired">
+            <div style="display:flex;align-items:center;gap:12px;">
+              {% if deals_banner_label_visible %}<span style="color:var({{ deals_banner_text }});font-size:{{ deals_banner_label_size }};font-weight:600;">{{ deals_banner_label }}</span>{% endif %}
+              <div style="display:flex;align-items:center;gap:12px;">
+                <div style="text-align:center;">
+                  <div style="font-family:'Cormorant Garamond',serif;font-weight:700;color:var({{ deals_banner_text }});font-size:{{ deals_timer_size }};line-height:1;" x-text="days"></div>
+                  <div style="font-size:11px;color:var({{ deals_banner_text }});opacity:0.7;margin-top:2px;">days</div>
+                </div>
+                <div style="font-family:'Cormorant Garamond',serif;font-weight:700;color:var({{ deals_banner_text }});font-size:{{ deals_timer_size }};opacity:0.5;">:</div>
+                <div style="text-align:center;">
+                  <div style="font-family:'Cormorant Garamond',serif;font-weight:700;color:var({{ deals_banner_text }});font-size:{{ deals_timer_size }};line-height:1;" x-text="hours"></div>
+                  <div style="font-size:11px;color:var({{ deals_banner_text }});opacity:0.7;margin-top:2px;">hrs</div>
+                </div>
+                <div style="font-family:'Cormorant Garamond',serif;font-weight:700;color:var({{ deals_banner_text }});font-size:{{ deals_timer_size }};opacity:0.5;">:</div>
+                <div style="text-align:center;">
+                  <div style="font-family:'Cormorant Garamond',serif;font-weight:700;color:var({{ deals_banner_text }});font-size:{{ deals_timer_size }};line-height:1;" x-text="mins"></div>
+                  <div style="font-size:11px;color:var({{ deals_banner_text }});opacity:0.7;margin-top:2px;">mins</div>
+                </div>
+                <div style="font-family:'Cormorant Garamond',serif;font-weight:700;color:var({{ deals_banner_text }});font-size:{{ deals_timer_size }};opacity:0.5;">:</div>
+                <div style="text-align:center;">
+                  <div style="font-family:'Cormorant Garamond',serif;font-weight:700;color:var({{ deals_banner_text }});font-size:{{ deals_timer_size }};line-height:1;" x-text="secs"></div>
+                  <div style="font-size:11px;color:var({{ deals_banner_text }});opacity:0.7;margin-top:2px;">secs</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          {% endif %}
+        </div>
+        {% else %}
+        <h2 class="deals-title" style="color:var({{ deals_heading_colour }});font-size:{{ deals_heading_size }};">{{ deals_heading }}</h2>
+        {% endif %}
+
+        {% if deals_timer_position == 'below' and deals_timer_visible %}
+        <div x-show="!expired" style="margin-top:8px;margin-bottom:8px;">
+          <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;justify-content:{% if deals_timer_align == 'left' %}flex-start{% elif deals_timer_align == 'center' %}center{% else %}flex-end{% endif %};">
+            {% if deals_banner_label_visible %}<span style="color:var({{ deals_banner_text }});font-size:{{ deals_banner_label_size }};font-weight:600;">{{ deals_banner_label }}</span>{% endif %}
+            <div style="display:flex;align-items:center;gap:12px;">
+              <div style="text-align:center;">
+                <div style="font-family:'Cormorant Garamond',serif;font-weight:700;color:var({{ deals_banner_text }});font-size:{{ deals_timer_size }};line-height:1;" x-text="days"></div>
+                <div style="font-size:11px;color:var({{ deals_banner_text }});opacity:0.7;margin-top:2px;">days</div>
+              </div>
+              <div style="font-family:'Cormorant Garamond',serif;font-weight:700;color:var({{ deals_banner_text }});font-size:{{ deals_timer_size }};opacity:0.5;">:</div>
+              <div style="text-align:center;">
+                <div style="font-family:'Cormorant Garamond',serif;font-weight:700;color:var({{ deals_banner_text }});font-size:{{ deals_timer_size }};line-height:1;" x-text="hours"></div>
+                <div style="font-size:11px;color:var({{ deals_banner_text }});opacity:0.7;margin-top:2px;">hrs</div>
+              </div>
+              <div style="font-family:'Cormorant Garamond',serif;font-weight:700;color:var({{ deals_banner_text }});font-size:{{ deals_timer_size }};opacity:0.5;">:</div>
+              <div style="text-align:center;">
+                <div style="font-family:'Cormorant Garamond',serif;font-weight:700;color:var({{ deals_banner_text }});font-size:{{ deals_timer_size }};line-height:1;" x-text="mins"></div>
+                <div style="font-size:11px;color:var({{ deals_banner_text }});opacity:0.7;margin-top:2px;">mins</div>
+              </div>
+              <div style="font-family:'Cormorant Garamond',serif;font-weight:700;color:var({{ deals_banner_text }});font-size:{{ deals_timer_size }};opacity:0.5;">:</div>
+              <div style="text-align:center;">
+                <div style="font-family:'Cormorant Garamond',serif;font-weight:700;color:var({{ deals_banner_text }});font-size:{{ deals_timer_size }};line-height:1;" x-text="secs"></div>
+                <div style="font-size:11px;color:var({{ deals_banner_text }});opacity:0.7;margin-top:2px;">secs</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        {% endif %}
+
+        {% if deals_subheading %}<p style="color:var({{ deals_subheading_colour }});font-size:{{ deals_subheading_size }};margin-top:8px;opacity:0.8;">{{ deals_subheading }}</p>{% endif %}
+      </div>
+    </div>
+    <div class="product-grid">
+      {% for product in deals %}
+        <div class="deal-card">{% include "store/_product_card.html" %}</div>
+      {% endfor %}
+    </div>
+    {% if deals_view_all_link %}
+    <div style="text-align:center;margin-top:36px;">
+      <a href="{{ deals_view_all_link }}" class="btn btn--outline btn--{{ deals_view_all_colour|slice:'2:' }}">See All Deals →</a>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+{% endif %}

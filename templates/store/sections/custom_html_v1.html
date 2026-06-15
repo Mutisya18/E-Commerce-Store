@@ -1,0 +1,5 @@
+{% if request.user.is_staff %}
+  {% with c=section.custom_content %}
+    <div class="section-custom-html">{{ c.html|safe }}</div>
+  {% endwith %}
+{% endif %}

@@ -1,0 +1,11 @@
+{% with c=section.custom_content %}
+<div class="container" style="display:flex;align-items:center;gap:24px;justify-content:space-between;flex-wrap:wrap;">
+  <div style="display:flex;align-items:center;gap:16px;">
+    {% if c.icon %}<span style="font-size:32px;">{{ c.icon }}</span>{% endif %}
+    <p style="color:var(--section-heading-color);font-size:var(--section-heading-size);font-weight:var(--section-heading-weight);margin:0;">{{ c.headline }}</p>
+  </div>
+  {% if section.btn1_enabled and c.cta_text %}
+    <a href="{{ c.cta_link|default:'#' }}" class="btn btn--{{ section.btn1_style }} btn--{{ section.btn1_colour|slice:'2:' }}">{{ c.cta_text }}</a>
+  {% endif %}
+</div>
+{% endwith %}

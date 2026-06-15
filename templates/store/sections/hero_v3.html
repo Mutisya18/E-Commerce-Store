@@ -1,0 +1,41 @@
+{% load humanize %}
+{% if section.bg_image %}
+  <div style="position:absolute;inset:0;background:url('{{ section.bg_image.url }}') {{ section.bg_image_pos }}/cover no-repeat;z-index:0;"></div>
+  <div style="position:absolute;inset:0;background:color-mix(in srgb,var({{ section.bg_overlay_colour }}) {{ section.bg_overlay_opacity }}%,transparent);z-index:1;"></div>
+{% else %}
+  <div class="hero-pattern"></div>
+{% endif %}
+<div class="hero-glow"></div>
+<div class="hero-content" style="position:relative;z-index:2;align-items:flex-end;padding-bottom:60px;">
+  <div class="hero-text" style="max-width:640px;">
+    {% if settings.hero_overline %}
+      <div class="hero-overline">{{ settings.hero_overline }}</div>
+    {% endif %}
+    <h1 class="hero-headline" style="color:var(--section-heading-color);font-size:var(--section-heading-size);font-weight:var(--section-heading-weight);">{{ settings.hero_headline }}</h1>
+    {% if settings.hero_subheading %}
+      <p class="hero-sub" style="color:var(--section-body-color);font-size:var(--section-body-size);">{{ settings.hero_subheading }}</p>
+    {% endif %}
+    <div class="hero-actions">
+      {% if section.btn1_enabled %}
+        <a href="{{ settings.hero_cta1_link }}" class="btn btn--{{ section.btn1_style }} btn--{{ section.btn1_colour|slice:'2:' }}" style="font-size:16px;height:52px;padding:0 36px;">{{ settings.hero_cta1_text }} →</a>
+      {% endif %}
+      {% if section.btn2_enabled and settings.hero_cta2_text %}
+        <a href="{{ settings.hero_cta2_link }}" class="btn btn--{{ section.btn2_style }} btn--{{ section.btn2_colour|slice:'2:' }}">{{ settings.hero_cta2_text }}</a>
+      {% endif %}
+    </div>
+    {% if hero_show_stats %}<div class="hero-stats" style="margin-top:48px;">
+      <div>
+        <div class="hero-stat-num" style="font-size:22px;">{{ settings.hero_stat1_num|default:"2,400+" }}</div>
+        <div class="hero-stat-label">{{ settings.hero_stat1_label|default:"Products" }}</div>
+      </div>
+      <div>
+        <div class="hero-stat-num" style="font-size:22px;">{{ settings.hero_stat2_num|default:"12K+" }}</div>
+        <div class="hero-stat-label">{{ settings.hero_stat2_label|default:"Happy Customers" }}</div>
+      </div>
+      <div>
+        <div class="hero-stat-num" style="font-size:22px;">{{ settings.hero_stat3_num|default:"4.8★" }}</div>
+        <div class="hero-stat-label">{{ settings.hero_stat3_label|default:"Avg Rating" }}</div>
+      </div>
+    </div>{% endif %}
+  </div>
+</div>

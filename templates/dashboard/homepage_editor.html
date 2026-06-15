@@ -1,0 +1,2226 @@
+{% extends "dashboard/base_dashboard.html" %}
+{% load icon_tags %}
+{% block title %}Homepage Editor{% endblock %}
+{% block nav_homepage %}active{% endblock %}
+{% block page_title %}Homepage Editor{% endblock %}
+
+{% block extra_styles %}
+/* ── SHELL ── */
+.editor-shell { display:grid; grid-template-columns:200px 1fr 300px; height:calc(100vh - 60px); margin:-28px; overflow:hidden; }
+
+/* ── LEFT ── */
+.ep-left { background:var(--surface); border-right:1px solid var(--border); overflow-y:auto; }
+.ep-left-title { padding:16px 16px 8px; font-size:10px; font-weight:700; letter-spacing:.1em; text-transform:uppercase; color:var(--text-muted); }
+.ep-row { display:flex; align-items:center; gap:10px; padding:10px 16px; cursor:pointer; border-left:3px solid transparent; transition:all .12s; }
+.ep-row:hover { background:var(--base); }
+.ep-row.active { background:var(--navy-light); border-left-color:var(--navy); }
+.ep-row-label { font-size:13px; font-weight:500; color:var(--text); flex:1; }
+.ep-row-drag { cursor:grab; color:var(--text-muted); font-size:14px; padding:0 2px; user-select:none; }
+.ep-row-drag:active { cursor:grabbing; }
+.ep-row-eye { background:none; border:none; cursor:pointer; padding:2px 4px; color:var(--text-muted); font-size:14px; line-height:1; }
+.ep-row-eye:hover { color:var(--navy); }
+.ep-row.dragging { opacity:0.4; }
+.ep-row.drag-over { border-top:2px solid var(--navy); }
+
+/* ── MIDDLE ── */
+.ep-mid { background:#e8e8e8; overflow-y:auto; padding:20px; display:flex; flex-direction:column; gap:16px; }
+.ep-preview-card { border-radius:10px; overflow:hidden; border:3px solid transparent; cursor:pointer; transition:border-color .15s; box-shadow:0 2px 12px rgba(0,0,0,.12); }
+.ep-preview-card:hover { border-color:#9aa5b8; }
+.ep-preview-card.active { border-color:var(--navy); box-shadow:0 0 0 1px var(--navy),0 4px 16px rgba(27,42,74,.2); }
+.ep-preview-label { display:flex; align-items:center; justify-content:space-between; padding:10px 14px; background:#fff; border-top:1px solid #e5e2dc; }
+.ep-preview-name { font-size:12px; font-weight:700; color:#1a1a1a; }
+.ep-preview-desc { font-size:10px; color:#9a9a9a; margin-top:1px; }
+.ep-check { background:var(--navy); color:#fff; border-radius:50%; width:18px; height:18px; font-size:9px; font-weight:700; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+
+/* ── PREVIEW VIEWPORT — scaled hero ── */
+.ep-viewport { width:100%; overflow:hidden; position:relative; background:var(--navy); }
+.ep-viewport-inner { width:1280px; transform-origin:top left; }
+
+/* ── REAL HERO CSS (copied from storefront) ── */
+.pv-hero { position:relative; overflow:hidden; background:var(--forest); display:flex; align-items:center; }
+.pv-hero-bg { position:absolute; inset:0; background:linear-gradient(135deg,var(--forest) 0%,#0D1520 50%,#1A2A1E 100%); }
+.pv-hero-pattern { position:absolute; inset:0; opacity:.04; background-image:radial-gradient(circle,#fff 1px,transparent 1px); background-size:32px 32px; }
+.pv-hero-glow { position:absolute; right:15%; top:10%; width:500px; height:500px; background:radial-gradient(ellipse,rgba(201,165,90,.12) 0%,transparent 70%); pointer-events:none; }
+.pv-hero-content { position:relative; z-index:2; max-width:1280px; margin:0 auto; padding:80px 32px; display:flex; align-items:center; justify-content:space-between; gap:48px; width:100%; }
+.pv-hero-text { max-width:560px; }
+.pv-overline { display:inline-flex; align-items:center; gap:8px; font-size:11px; font-weight:600; letter-spacing:.12em; text-transform:uppercase; color:var(--gold); margin-bottom:20px; }
+.pv-overline::before { content:''; display:block; width:24px; height:1px; background:var(--gold); }
+.pv-h1 { font-family:'Cormorant Garamond',serif; font-size:60px; line-height:1.08; color:#fff; margin-bottom:20px; letter-spacing:-.5px; word-wrap:break-word; overflow-wrap:break-word; width:100%; }
+.pv-sub { font-size:17px; font-weight:300; line-height:1.65; color:rgba(255,255,255,.72); margin-bottom:36px; width:100%; }
+.pv-actions { display:flex; gap:14px; align-items:center; }
+.pv-actions--centred { justify-content:center; }
+.pv-btn-primary { padding:14px 28px; background:#fff; color:var(--forest); border:none; border-radius:8px; font-family:'DM Sans',sans-serif; font-size:15px; font-weight:700; display:inline-flex; align-items:center; gap:8px; text-decoration:none; cursor:pointer; }
+.pv-btn-secondary { padding:14px 28px; background:transparent; color:#fff; border:1.5px solid rgba(255,255,255,.4); border-radius:8px; font-family:'DM Sans',sans-serif; font-size:15px; font-weight:600; display:inline-flex; align-items:center; gap:8px; text-decoration:none; cursor:pointer; }
+.pv-btn-outline { padding:14px 28px; background:transparent; color:#fff; border:1.5px solid rgba(255,255,255,.4); border-radius:8px; font-family:'DM Sans',sans-serif; font-size:15px; font-weight:600; display:inline-flex; align-items:center; gap:8px; text-decoration:none; cursor:pointer; }
+.pv-stats { display:flex; gap:32px; margin-top:40px; padding-top:32px; border-top:1px solid rgba(255,255,255,.1); }
+.pv-stats--centred { justify-content:center; }
+.pv-stat-num { font-family:'Cormorant Garamond',serif; font-size:28px; font-weight:700; color:#fff; line-height:1; }
+.pv-stat-label { font-size:12px; color:rgba(255,255,255,.55); margin-top:3px; }
+.pv-card { background:rgba(255,255,255,.07); backdrop-filter:blur(20px); border:1px solid rgba(255,255,255,.12); border-radius:12px; padding:16px; min-width:0; flex:1; }
+.pv-cards-row { display:flex; flex-direction:row; gap:12px; flex-shrink:0; align-items:flex-start; max-width:420px; }
+.pv-card-badge { display:inline-flex; align-items:center; gap:6px; background:var(--sage); color:var(--forest); font-size:11px; font-weight:700; letter-spacing:.06em; padding:4px 10px; border-radius:4px; margin-bottom:16px; }
+.pv-card-img { width:220px; height:180px; background:linear-gradient(135deg,rgba(255,255,255,.05),rgba(255,255,255,.01)); border-radius:10px; margin:0 auto 16px; display:flex; align-items:center; justify-content:center; font-size:80px; overflow:hidden; }
+.pv-card-name { font-family:'Cormorant Garamond',serif; font-size:20px; font-weight:600; color:#fff; margin-bottom:4px; }
+.pv-card-price { color:var(--gold); font-weight:700; font-size:18px; }
+.pv-card-old { color:rgba(255,255,255,.4); font-size:14px; text-decoration:line-through; margin-left:8px; }
+/* reactive button classes */
+.pv-btn { display:inline-flex;align-items:center;gap:8px;padding:14px 28px;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:15px;font-weight:600;cursor:default; }
+.pv-btn.filled.forest     { background:var(--forest);color:#fff; }
+.pv-btn.filled.gold       { background:var(--gold);color:var(--forest); }
+.pv-btn.filled.goldmuted  { background:var(--gold-muted);color:#fff; }
+.pv-btn.filled.sage       { background:var(--sage);color:var(--forest); }
+.pv-btn.filled.base       { background:var(--base);color:var(--forest); }
+.pv-btn.filled.surface    { background:#fff;color:var(--forest); }
+.pv-btn.filled.surfacealt { background:var(--surface-alt);color:var(--forest); }
+.pv-btn.filled.text       { background:#1A1A1A;color:#fff; }
+.pv-btn.outline.forest    { background:transparent;color:var(--forest);border:1.5px solid var(--forest); }
+.pv-btn.outline.gold      { background:transparent;color:var(--gold);border:1.5px solid var(--gold); }
+.pv-btn.outline.goldmuted { background:transparent;color:var(--gold-muted);border:1.5px solid var(--gold-muted); }
+.pv-btn.outline.sage      { background:transparent;color:var(--forest);border:1.5px solid var(--sage); }
+.pv-btn.outline.surface   { background:transparent;color:#fff;border:1.5px solid rgba(255,255,255,.4); }
+.pv-btn.ghost.forest      { background:transparent;color:var(--forest);border-bottom:2px solid var(--gold);border-radius:0;padding-bottom:3px; }
+.pv-btn.ghost.surface     { background:transparent;color:#fff;border-bottom:2px solid rgba(255,255,255,.4);border-radius:0;padding-bottom:3px; }
+.pv-btn.ghost.gold        { background:transparent;color:var(--gold);border-bottom:2px solid var(--gold);border-radius:0;padding-bottom:3px; }
+/* centred variant */
+.pv-hero-content--centred { justify-content:center; text-align:center; }
+.pv-hero-text--centred { max-width:640px; text-align:center; }
+.pv-overline--centred { justify-content:center; }
+.pv-overline--centred::before { display:none; }
+/* bleed variant */
+.pv-hero-content--bleed { align-items:flex-end; padding-bottom:60px; }
+
+/* ── RIGHT ── */
+.ep-right { background:var(--surface); border-left:1px solid var(--border); display:flex; flex-direction:column; overflow:hidden; }
+.ep-right-head { padding:14px 16px; border-bottom:1px solid var(--border); flex-shrink:0; }
+.ep-right-body { flex:1; overflow-y:auto; padding:14px 16px; }
+.ep-right-foot { padding:12px 16px; border-top:1px solid var(--border); flex-shrink:0; }
+.ep-section-name { font-size:14px; font-weight:700; color:var(--navy); margin-bottom:10px; }
+.ep-tabs { display:flex; gap:2px; background:var(--surface-alt); border-radius:6px; padding:2px; }
+.ep-tab { flex:1; padding:5px 0; border-radius:4px; font-size:11px; font-weight:600; cursor:pointer; border:none; background:transparent; color:var(--text-sub); transition:all .12s; }
+.ep-tab.active { background:var(--surface); color:var(--navy); box-shadow:0 1px 3px rgba(0,0,0,.08); }
+.ep-group { margin-bottom:16px; }
+.ep-group-title { font-size:10px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:var(--text-muted); margin-bottom:8px; }
+.ep-label { font-size:11px; font-weight:600; color:var(--text-sub); margin-bottom:4px; display:block; }
+.ep-input { width:100%; height:32px; border:1px solid var(--border); border-radius:6px; padding:0 9px; font-family:'DM Sans',sans-serif; font-size:12px; color:var(--text); background:var(--surface); margin-bottom:8px; box-sizing:border-box; }
+.ep-input:focus { outline:none; border-color:var(--navy); }
+.ep-seg { display:flex; gap:2px; background:var(--surface-alt); border-radius:5px; padding:2px; margin-bottom:8px; }
+.ep-seg-btn { flex:1; padding:4px 2px; border-radius:3px; font-size:10px; font-weight:600; cursor:pointer; border:none; background:transparent; color:var(--text-sub); transition:all .12s; }
+.ep-seg-btn.active { background:var(--surface); color:var(--navy); box-shadow:0 1px 2px rgba(0,0,0,.08); }
+.ep-swatches { display:flex; gap:5px; flex-wrap:wrap; margin-bottom:8px; }
+.ep-swatch { width:22px; height:22px; border-radius:50%; cursor:pointer; border:2px solid transparent; transition:transform .12s; flex-shrink:0; }
+.ep-swatch:hover { transform:scale(1.15); }
+.ep-swatch.active { border-color:var(--navy); box-shadow:0 0 0 2px #fff,0 0 0 3px var(--navy); }
+.ep-toggle-row { display:flex; align-items:center; justify-content:space-between; padding:7px 0; border-bottom:1px solid var(--border); }
+.ep-toggle-row:last-child { border-bottom:none; }
+.ep-toggle-label { font-size:12px; color:var(--text); }
+.ep-toggle { position:relative; width:30px; height:17px; flex-shrink:0; }
+.ep-toggle input { opacity:0; width:0; height:0; }
+.ep-toggle-slider { position:absolute; inset:0; background:var(--border); border-radius:17px; cursor:pointer; transition:.2s; }
+.ep-toggle-slider:before { content:''; position:absolute; width:11px; height:11px; left:3px; top:3px; background:#fff; border-radius:50%; transition:.2s; }
+.ep-toggle input:checked + .ep-toggle-slider { background:var(--navy); }
+.ep-toggle input:checked + .ep-toggle-slider:before { transform:translateX(13px); }
+.ep-upload-zone { border:2px dashed var(--border); border-radius:7px; padding:14px; text-align:center; cursor:pointer; transition:border-color .15s; margin-bottom:8px; font-size:11px; color:var(--text-muted); }
+.ep-upload-zone:hover { border-color:var(--navy); }
+.ep-cols2 { display:grid; grid-template-columns:1fr 1fr; gap:6px; }
+.ep-divider { height:1px; background:var(--border); margin:14px 0; }
+.ep-toast { position:fixed; bottom:20px; left:50%; transform:translateX(-50%) translateY(8px); background:var(--navy); color:#fff; padding:9px 18px; border-radius:8px; font-size:12px; font-weight:600; z-index:999; opacity:0; transition:all .2s; pointer-events:none; }
+.ep-toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
+{% endblock %}
+
+{% block dashboard_content %}
+<div class="editor-shell" x-data="heroEditor()" x-init="init()"
+  data-editor='{
+    "hero_overline":        "{{ settings.hero_overline|escapejs }}",
+    "hero_headline":        "{{ settings.hero_headline|escapejs }}",
+    "hero_subheading":      "{{ settings.hero_subheading|escapejs }}",
+    "hero_cta1_text":       "{{ settings.hero_cta1_text|escapejs }}",
+    "hero_cta1_link":       "{{ settings.hero_cta1_link|escapejs }}",
+    "hero_cta2_text":       "{{ settings.hero_cta2_text|escapejs }}",
+    "hero_cta2_link":       "{{ settings.hero_cta2_link|escapejs }}",
+    "hero_show_deal_card":  {{ saved_show_deal_card }},
+    "hero_show_stats":      {{ saved_show_stats }},
+    "overline_colour":      "{{ saved_overline_colour }}",
+    "bg_mode":              "{{ hero_section.bg_mode }}",
+    "bg_colour":            "{{ hero_section.bg_colour }}",
+    "bg_overlay_colour":    "{{ hero_section.bg_overlay_colour }}",
+    "bg_overlay_opacity":   {{ hero_section.bg_overlay_opacity }},
+    "heading_colour":       "{{ hero_section.heading_colour }}",
+    "heading_size":         "{{ hero_section.heading_size }}",
+    "heading_weight":       "{{ hero_section.heading_weight }}",
+    "body_colour":          "{{ hero_section.body_colour }}",
+    "body_size":            "{{ hero_section.body_size }}",
+    "btn1_enabled":         {{ hero_section.btn1_enabled|yesno:"true,false" }},
+    "btn1_style":           "{{ hero_section.btn1_style }}",
+    "btn1_colour":          "{{ hero_section.btn1_colour }}",
+    "btn2_enabled":         {{ hero_section.btn2_enabled|yesno:"true,false" }},
+    "btn2_style":           "{{ hero_section.btn2_style }}",
+    "btn2_colour":          "{{ hero_section.btn2_colour }}",
+    "hero_bg_image_url":    "{{ hero_section.bg_image.url|default:'' }}",
+    "hero_has_bg_image":    {{ hero_section.bg_image|yesno:"true,false" }},
+    "hero_section_pk":      {{ hero_section.pk }},
+    "cat_section_pk":       {{ cat_section.pk }},
+    "feat_section_pk":      {{ feat_section.pk }},
+    "deals_section_pk":     {{ deals_section.pk }},
+    "bs_section_pk":        {{ bs_section.pk }},
+    "story_section_pk":     {{ story_section.pk }},
+    "hero_variant":         "{{ hero_section.variant }}",
+    "cat_variant":          "{{ cat_section.variant }}",
+    "cat_bg_colour":        "{{ cat_section.bg_colour }}",
+    "feat_variant":         "{{ feat_section.variant|default:'1' }}",
+    "deals_variant":        "{{ deals_section.variant|default:'1' }}",
+    "story_variant":        "{{ story_section.variant|default:'1' }}",
+    "store_name":           "{{ settings.store_name|escapejs }}",
+    "footer_tagline":       "{{ settings.footer_tagline|escapejs }}",
+    "footer_ig_url":        "{{ settings.footer_ig_url|escapejs }}",
+    "footer_tiktok_url":    "{{ settings.footer_tiktok_url|escapejs }}",
+    "footer_x_url":         "{{ settings.footer_x_url|escapejs }}",
+    "footer_privacy_url":   "{{ settings.footer_privacy_url|escapejs }}",
+    "footer_terms_url":     "{{ settings.footer_terms_url|escapejs }}",
+    "nav_categories_visible": {{ settings.nav_categories_visible|yesno:"true,false" }},
+    "section_visibility":   { {% for section in sections %}"{{ section.pk }}": {{ section.is_visible|lower }}{% if not forloop.last %}, {% endif %}{% endfor %} },
+    "saved_variants":       {{ saved_variants_json|safe }},
+    "cat_saved_variants":   {{ cat_saved_variants_json|safe }},
+    "feat_saved_variants":  {{ feat_saved_variants_json|safe }},
+    "deals_saved":          {{ deals_saved_json|safe }},
+    "bs_saved":             {{ bs_saved_json|safe }},
+    "sv_saved":             {{ sv_saved_json|safe }},
+    "deal_products":        {{ deal_products_json|safe }},
+    "saved_deal_ids":       {{ saved_deal_ids_json|safe }},
+    "cat_products":         {{ cat_products_json|safe }},
+    "feat_products":        {{ feat_products_json|safe }},
+    "deals_products":       {{ deals_products_json|safe }},
+    "bs_products":          {{ bs_products_json|safe }},
+    "footer_shop_links":    {{ footer_shop_links_json|safe }},
+    "footer_help_links":    {{ footer_help_links_json|safe }}
+  }'>
+
+  {# ══ LEFT — section list ══ #}
+  <div class="ep-left">
+    <div class="ep-left-title">Sections</div>
+    <div id="ep-nav-list">
+    {% for section in sections %}
+    <div class="ep-row"
+      :class="{ active: activeKey==='{{ section.key }}' }"
+      data-pk="{{ section.pk }}"
+      draggable="true"
+      @click.self="activeKey='{{ section.key }}'"
+      @dragstart="dragStart($event,'{{ section.pk }}')"
+      @dragover.prevent="dragOver($event)"
+      @dragleave="dragLeave($event)"
+      @drop="drop($event)"
+      @dragend="dragEnd($event)"
+    >
+      <span class="ep-row-drag" @click.stop title="Drag to reorder">⠿</span>
+      <span class="ep-row-label" @click="activeKey='{{ section.key }}'">{{ section.label }}</span>
+      <button class="ep-row-eye" @click.stop="toggleSectionVisibility('{{ section.pk }}', $el)"
+        :title="sectionVisibility['{{ section.pk }}'] ? 'Hide section' : 'Show section'"
+        x-html="sectionVisibility['{{ section.pk }}'] ? '<svg class=\'icon\' width=\'16\' height=\'16\' fill=\'currentColor\' aria-hidden=\'true\'><use href=\'#ph-eye\'></use></svg>' : '<svg class=\'icon\' width=\'16\' height=\'16\' fill=\'currentColor\' aria-hidden=\'true\'><use href=\'#ph-eye-slash\'></use></svg>'"></button>
+    </div>
+    {% endfor %}
+    <div class="ep-row" :class="{ active: activeKey==='footer' }" @click="activeKey='footer'" style="border-top:1px solid var(--border);margin-top:8px;">
+      <span class="ep-row-label">Footer</span>
+    </div>
+    </div>
+  </div>
+
+  {# ══ MIDDLE — scaled live previews ══ #}
+  <div class="ep-mid">
+    <div x-show="activeKey==='hero'">
+
+      {# ── V1: Split ── #}
+      <div class="ep-preview-card" :class="{ active: activeVariant==='1' }" @click="selectVariant('1')">
+        <div class="ep-viewport" :style="'height:'+vpH+'px'">
+          <div class="ep-viewport-inner" :style="'transform:scale('+scale+');height:'+vpInnerH+'px'">
+            <div class="pv-hero" :style="'background:var('+v1.bg_colour+')'">
+              <div class="pv-hero-pattern"></div>
+              <div class="pv-hero-glow"></div>
+              <div class="pv-hero-content">
+                <div class="pv-hero-text">
+                  <div class="pv-overline" x-show="v1.hero_overline" x-text="v1.hero_overline" :style="'color:var('+v1.overline_colour+')'"></div>
+                  <h1 class="pv-h1" :style="'font-size:'+v1.heading_size+';font-weight:'+(v1.heading_bold?'700':'400')+';font-style:'+(v1.heading_italic?'italic':'normal')+';text-decoration:'+(v1.heading_underline?'underline':'none')+';color:var('+v1.heading_colour+')'">
+                    <span x-text="v1.hero_headline||'Your Headline Here'"></span>
+                  </h1>
+                  <p class="pv-sub" x-show="v1.hero_subheading" x-text="v1.hero_subheading" :style="'font-size:'+v1.body_size+';color:var('+v1.body_colour+')'"></p>
+                  <div class="pv-actions">
+                    <span x-show="v1.btn1_enabled" :class="btnClass(v1,'btn1')" x-text="v1.hero_cta1_text||'Shop Now'"></span>
+                    <span x-show="v1.btn2_enabled && v1.hero_cta2_text" :class="btnClass(v1,'btn2')" x-text="v1.hero_cta2_text"></span>
+                  </div>
+                  <div class="pv-stats" x-show="v1.hero_show_stats">                    <div><div class="pv-stat-num">2,400+</div><div class="pv-stat-label">Products</div></div>
+                    <div><div class="pv-stat-num">12K+</div><div class="pv-stat-label">Customers</div></div>
+                    <div><div class="pv-stat-num">4.8★</div><div class="pv-stat-label">Rating</div></div>
+                  </div>
+                </div>
+                <div x-show="v1.hero_show_deal_card" class="pv-cards-row">
+                  <template x-for="(pid, i) in selectedDealIds.filter(id=>id)" :key="i">
+                    <div class="pv-card">
+                      <div class="pv-card-badge">{% icon "fire" size=12 color="var(--gold)" css_class="icon--inline" %} Deal</div>
+                      <div class="pv-card-img" style="width:100%;height:90px;">
+                        <template x-if="dealById(pid) && dealById(pid).cover_image_url">
+                          <img :src="dealById(pid).cover_image_url" style="width:100%;height:100%;object-fit:cover;border-radius:6px;">
+                        </template>
+                        <template x-if="!dealById(pid) || !dealById(pid).cover_image_url"><span>{% icon "shopping-bag-open" size=32 color="var(--text-muted)" %}</span></template>
+                      </div>
+                      <div class="pv-card-name" style="font-size:14px;" x-text="dealById(pid) ? dealById(pid).name : ''"></div>
+                      <div>
+                        <span class="pv-card-price" style="font-size:14px;" x-text="dealById(pid) ? 'KES '+Math.round(dealById(pid).effective_price).toLocaleString() : ''"></span>
+                        <span class="pv-card-old" style="font-size:11px;" x-show="dealById(pid) && dealById(pid).sale_price" x-text="dealById(pid) ? 'KES '+Math.round(dealById(pid).base_price).toLocaleString() : ''"></span>
+                      </div>
+                    </div>
+                  </template>
+                  <div x-show="!selectedDealIds.some(id=>id)" class="pv-card">
+                    <div class="pv-card-badge">{% icon "fire" size=12 color="var(--gold)" css_class="icon--inline" %} Deal</div>
+                    <div class="pv-card-img" style="width:100%;height:90px;">{% icon "shopping-bag-open" size=32 color="var(--text-muted)" %}</div>
+                    <div class="pv-card-name" style="font-size:14px;">{{ settings.store_name }}</div>
+                    <div><span class="pv-card-price" style="font-size:14px;">Shop Now</span></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="ep-preview-label">
+          <div><div class="ep-preview-name">Variant 1 — Split</div><div class="ep-preview-desc">Text left · Deal card right · Stats bottom</div></div>
+          <div class="ep-check" x-show="activeVariant==='1'">{% icon "check" size=14 %}</div>
+        </div>
+      </div>
+
+      {# ── V2: Centred ── #}
+      <div class="ep-preview-card" :class="{ active: activeVariant==='2' }" @click="selectVariant('2')">
+        <div class="ep-viewport" :style="'height:'+vpH+'px'">
+          <div class="ep-viewport-inner" :style="'transform:scale('+scale+');height:'+vpInnerH+'px'">
+            <div class="pv-hero" :style="'background:var('+v2.bg_colour+')'">
+              <div class="pv-hero-pattern"></div>
+              <div class="pv-hero-glow" style="left:50%;transform:translateX(-50%);right:auto;"></div>
+              <div class="pv-hero-content pv-hero-content--centred">
+                <div class="pv-hero-text pv-hero-text--centred">
+                  <div class="pv-overline pv-overline--centred" x-show="v2.hero_overline" x-text="v2.hero_overline" :style="'color:var('+v2.overline_colour+')'"></div>
+                  <h1 class="pv-h1" :style="'font-size:'+v2.heading_size+';font-weight:'+(v2.heading_bold?'700':'400')+';font-style:'+(v2.heading_italic?'italic':'normal')+';text-decoration:'+(v2.heading_underline?'underline':'none')+';color:var('+v2.heading_colour+')'">
+                    <span x-text="v2.hero_headline||'Your Headline Here'"></span>
+                  </h1>
+                  <p class="pv-sub" x-show="v2.hero_subheading" x-text="v2.hero_subheading" :style="'font-size:'+v2.body_size+';color:var('+v2.body_colour+');margin:0 auto 36px'"></p>
+                  <div class="pv-actions pv-actions--centred">
+                    <span x-show="v2.btn1_enabled" :class="btnClass(v2,'btn1')" x-text="v2.hero_cta1_text||'Shop Now'"></span>
+                    <span x-show="v2.btn2_enabled && v2.hero_cta2_text" :class="btnClass(v2,'btn2')" x-text="v2.hero_cta2_text"></span>
+                  </div>
+                  <div class="pv-stats pv-stats--centred" x-show="v2.hero_show_stats">
+                    <div><div class="pv-stat-num">2,400+</div><div class="pv-stat-label">Products</div></div>
+                    <div><div class="pv-stat-num">12K+</div><div class="pv-stat-label">Customers</div></div>
+                    <div><div class="pv-stat-num">4.8★</div><div class="pv-stat-label">Rating</div></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="ep-preview-label">
+          <div><div class="ep-preview-name">Variant 2 — Centred</div><div class="ep-preview-desc">Everything centred · No deal card</div></div>
+          <div class="ep-check" x-show="activeVariant==='2'">{% icon "check" size=14 %}</div>
+        </div>
+      </div>
+
+      {# ── V3: Full-bleed ── #}
+      <div class="ep-preview-card" :class="{ active: activeVariant==='3' }" @click="selectVariant('3')">
+        <div class="ep-viewport" :style="'height:'+vpH+'px'">
+          <div class="ep-viewport-inner" :style="'transform:scale('+scale+');height:'+vpInnerH+'px'">
+            <div class="pv-hero" :style="v3BgStyle()">
+              <div class="pv-hero-bg" x-show="!v3.bgImagePreview && !v3.hasBgImage"></div>
+              <div class="pv-hero-pattern" x-show="!v3.bgImagePreview && !v3.hasBgImage"></div>
+              <div class="pv-hero-glow"></div>
+              <div class="pv-hero-content pv-hero-content--bleed">
+                <div class="pv-hero-text" style="max-width:640px;">
+                  <div class="pv-overline" x-show="v3.hero_overline" x-text="v3.hero_overline" :style="'color:var('+v3.overline_colour+')'"></div>
+                  <h1 class="pv-h1" :style="'font-size:'+v3.heading_size+';font-weight:'+(v3.heading_bold?'700':'400')+';font-style:'+(v3.heading_italic?'italic':'normal')+';text-decoration:'+(v3.heading_underline?'underline':'none')+';color:var('+v3.heading_colour+')'">
+                    <span x-text="v3.hero_headline||'Your Headline Here'"></span>
+                  </h1>
+                  <p class="pv-sub" x-show="v3.hero_subheading" x-text="v3.hero_subheading" :style="'font-size:'+v3.body_size+';color:var('+v3.body_colour+')'"></p>
+                  <div class="pv-actions">
+                    <span x-show="v3.btn1_enabled" :class="btnClass(v3,'btn1')" style="font-size:17px;padding:16px 36px;" x-text="v3.hero_cta1_text||'Shop Now'"></span>
+                    <span x-show="v3.btn2_enabled && v3.hero_cta2_text" :class="btnClass(v3,'btn2')" x-text="v3.hero_cta2_text"></span>
+                  </div>
+                  <div class="pv-stats" x-show="v3.hero_show_stats" style="margin-top:48px;">
+                    <div><div class="pv-stat-num">2,400+</div><div class="pv-stat-label">Products</div></div>
+                    <div><div class="pv-stat-num">12K+</div><div class="pv-stat-label">Customers</div></div>
+                    <div><div class="pv-stat-num">4.8★</div><div class="pv-stat-label">Rating</div></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="ep-preview-label">
+          <div><div class="ep-preview-name">Variant 3 — Full-bleed</div><div class="ep-preview-desc">BG image + overlay · Large headline · Prominent CTA</div></div>
+          <div class="ep-check" x-show="activeVariant==='3'">{% icon "check" size=14 %}</div>
+        </div>
+      </div>
+
+    </div>{# end hero #}
+
+    <div x-show="activeKey === 'categories'" style="padding:8px 0;">
+
+      {# ── A: Pill strip ── #}
+      <div class="ep-preview-card" :class="{ active: catVariant==='1' }" @click="catVariant='1'" style="margin-bottom:12px;">
+        <div class="ep-viewport" style="height:160px;">
+          <div class="ep-viewport-inner" :style="'transform:scale('+scale+');height:280px;'">>
+            <div :style="'background:var('+cv1.bg_colour+');padding:32px 60px 24px;'">
+            <div style="text-align:center;margin-bottom:20px;">
+              <div x-show="cv1.overline" x-text="cv1.overline" :style="'color:var('+cv1.overline_colour+');font-size:11px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;margin-bottom:8px;'"></div>
+              <div x-text="cv1.heading" :style="'font-family:Cormorant Garamond,serif;font-weight:700;color:var('+cv1.heading_colour+');font-size:'+cv1.heading_size+';line-height:1.15;'"></div>
+            </div>
+            <div style="background:var(--forest);border-radius:10px;padding:14px 16px;display:flex;gap:8px;flex-wrap:wrap;">
+              <template x-for="(cat,idx) in (catProducts.length?catProducts:([{name:'Phones'},{name:'Laptops'},{name:'Audio'},{name:'Smart Home'},{name:'Wearables'},{name:'Accessories'}])).map((c,i)=>({...c,origIdx:i})).filter((c)=>cv1.visible_categories.includes(c.origIdx))" :key="idx">
+                <span :style="'padding:6px 14px;border-radius:50px;font-size:12px;font-weight:500;background:var('+(cv1.category_colors[cat.origIdx]?.bg||'--forest')+');color:var('+(cv1.category_colors[cat.origIdx]?.text||'--surface')+');'" x-text="(cat.icon_name?cat.icon_name+' ':'')+cat.name"></span>
+              </template>
+            </div>
+            </div>
+          </div>
+        </div>
+        <div class="ep-preview-label">
+          <div><div class="ep-preview-name">A — Pill strip</div><div class="ep-preview-desc">Navy bar · gold active pill · wraps on mobile</div></div>
+          <div class="ep-check" x-show="catVariant==='1'">{% icon "check" size=14 %}</div>
+        </div>
+      </div>
+
+      {# ── B: Asymmetric grid ── #}
+      <div class="ep-preview-card" :class="{ active: catVariant==='2' }" @click="catVariant='2'" style="margin-bottom:12px;">
+        <div class="ep-viewport" style="height:160px;">
+          <div class="ep-viewport-inner" :style="'transform:scale('+scale+');height:280px;'">>
+            <div :style="'background:var('+cv2.bg_colour+');padding:32px 60px 24px;'">
+            <div style="text-align:center;margin-bottom:20px;">
+              <div x-show="cv2.overline" x-text="cv2.overline" :style="'color:var('+cv2.overline_colour+');font-size:11px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;margin-bottom:8px;'"></div>
+              <div x-text="cv2.heading" :style="'font-family:Cormorant Garamond,serif;font-weight:700;color:var('+cv2.heading_colour+');font-size:'+cv2.heading_size+';line-height:1.15;'"></div>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;grid-template-rows:80px 80px;gap:5px;border-radius:10px;overflow:hidden;" x-data="{visibleCats: (catProducts.length?catProducts:[{name:'Phones'},{name:'Laptops'},{name:'Audio'},{name:'Smart Home'},{name:'Wearables'},{name:'Accessories'}]).filter((c,i)=>cv2.visible_categories.includes(i)).slice(0,5)}">
+              <div x-show="visibleCats[0]" style="grid-row:1/3;display:flex;flex-direction:column;justify-content:flex-end;padding:12px;position:relative;overflow:hidden;" :style="(cv2.category_settings[0]?.bg_image?'':'background:var('+(cv2.category_settings[0]?.bg_color||'--sage')+')')">
+                <div x-show="cv2.category_settings[0]?.bg_image" :style="'position:absolute;inset:0;background:url('+cv2.category_settings[0].bg_image+') center/cover;'"></div>
+                <div x-show="cv2.category_settings[0]?.bg_image" :style="'position:absolute;inset:0;background:var('+(cv2.category_settings[0]?.overlay_color||'--forest')+');opacity:'+((cv2.category_settings[0]?.overlay_opacity||65)/100)"></div>
+                <div style="position:relative;z-index:1;font-size:13px;font-weight:500;" :style="'color:var('+(cv2.category_settings[0]?.text_color||'--surface')+')'" x-text="visibleCats[0]?.name||''"></div>
+                <div style="position:relative;z-index:1;font-size:11px;opacity:0.7;" :style="'color:var('+(cv2.category_settings[0]?.text_color||'--surface')+')'" x-text="(visibleCats[0]?.product_count||0)+' products'"></div>
+              </div>
+              <div x-show="visibleCats[1]" style="display:flex;align-items:flex-end;padding:8px;position:relative;overflow:hidden;" :style="(cv2.category_settings[1]?.bg_image?'':'background:var('+(cv2.category_settings[1]?.bg_color||'--forest')+')')">
+                <div x-show="cv2.category_settings[1]?.bg_image" :style="'position:absolute;inset:0;background:url('+cv2.category_settings[1].bg_image+') center/cover;'"></div>
+                <div x-show="cv2.category_settings[1]?.bg_image" :style="'position:absolute;inset:0;background:var('+(cv2.category_settings[1]?.overlay_color||'--forest')+');opacity:'+((cv2.category_settings[1]?.overlay_opacity||65)/100)"></div>
+                <span style="position:relative;z-index:1;font-size:11px;font-weight:500;" :style="'color:var('+(cv2.category_settings[1]?.text_color||'--surface')+')'" x-text="visibleCats[1]?.name||''"></span>
+              </div>
+              <div x-show="visibleCats[2]" style="display:flex;align-items:flex-end;padding:8px;position:relative;overflow:hidden;" :style="(cv2.category_settings[2]?.bg_image?'':'background:var('+(cv2.category_settings[2]?.bg_color||'--forest')+')')">
+                <div x-show="cv2.category_settings[2]?.bg_image" :style="'position:absolute;inset:0;background:url('+cv2.category_settings[2].bg_image+') center/cover;'"></div>
+                <div x-show="cv2.category_settings[2]?.bg_image" :style="'position:absolute;inset:0;background:var('+(cv2.category_settings[2]?.overlay_color||'--forest')+');opacity:'+((cv2.category_settings[2]?.overlay_opacity||65)/100)"></div>
+                <span style="position:relative;z-index:1;font-size:11px;font-weight:500;" :style="'color:var('+(cv2.category_settings[2]?.text_color||'--surface')+')'" x-text="visibleCats[2]?.name||''"></span>
+              </div>
+              <div x-show="visibleCats[3]" style="display:flex;align-items:flex-end;padding:8px;position:relative;overflow:hidden;" :style="(cv2.category_settings[3]?.bg_image?'':'background:var('+(cv2.category_settings[3]?.bg_color||'--sage')+')')">
+                <div x-show="cv2.category_settings[3]?.bg_image" :style="'position:absolute;inset:0;background:url('+cv2.category_settings[3].bg_image+') center/cover;'"></div>
+                <div x-show="cv2.category_settings[3]?.bg_image" :style="'position:absolute;inset:0;background:var('+(cv2.category_settings[3]?.overlay_color||'--forest')+');opacity:'+((cv2.category_settings[3]?.overlay_opacity||65)/100)"></div>
+                <span style="position:relative;z-index:1;font-size:11px;font-weight:500;" :style="'color:var('+(cv2.category_settings[3]?.text_color||'--surface')+')'" x-text="visibleCats[3]?.name||''"></span>
+              </div>
+              <div x-show="visibleCats[4]" style="display:flex;align-items:flex-end;padding:8px;position:relative;overflow:hidden;" :style="(cv2.category_settings[4]?.bg_image?'':'background:var('+(cv2.category_settings[4]?.bg_color||'--gold')+')')">
+                <div x-show="cv2.category_settings[4]?.bg_image" :style="'position:absolute;inset:0;background:url('+cv2.category_settings[4].bg_image+') center/cover;'"></div>
+                <div x-show="cv2.category_settings[4]?.bg_image" :style="'position:absolute;inset:0;background:var('+(cv2.category_settings[4]?.overlay_color||'--forest')+');opacity:'+((cv2.category_settings[4]?.overlay_opacity||65)/100)"></div>
+                <span style="position:relative;z-index:1;font-size:11px;font-weight:500;" :style="'color:var('+(cv2.category_settings[4]?.text_color||'--surface')+')'" x-text="visibleCats[4]?.name||''"></span>
+              </div>
+            </div>
+            </div>
+          </div>
+        </div>
+        <div class="ep-preview-label">
+          <div><div class="ep-preview-name">B — Asymmetric grid</div><div class="ep-preview-desc">Hero tile left · 4 small tiles right</div></div>
+          <div class="ep-check" x-show="catVariant==='2'">{% icon "check" size=14 %}</div>
+        </div>
+      </div>
+
+      {# ── C: Light cards top border ── #}
+      <div class="ep-preview-card" :class="{ active: catVariant==='3' }" @click="catVariant='3'" style="margin-bottom:12px;">
+        <div class="ep-viewport" style="height:160px;">
+          <div class="ep-viewport-inner" :style="'transform:scale('+scale+');height:280px;'">>
+            <div :style="'background:var('+cv3.bg_colour+');padding:32px 60px 24px;'">
+            <div style="text-align:center;margin-bottom:20px;">
+              <div x-show="cv3.overline" x-text="cv3.overline" :style="'color:var('+cv3.overline_colour+');font-size:11px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;margin-bottom:8px;'"></div>
+              <div x-text="cv3.heading" :style="'font-family:Cormorant Garamond,serif;font-weight:700;color:var('+cv3.heading_colour+');font-size:'+cv3.heading_size+';line-height:1.15;'"></div>
+            </div>
+            <div style="background:#F3F1ED;padding:10px;border-radius:10px;">
+              <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:5px;">
+                <template x-for="(cat,idx) in (catProducts.length?catProducts:([{name:'Phones'},{name:'Laptops'},{name:'Audio'},{name:'Smart Home'},{name:'Wearables'},{name:'Accessories'}])).map((c,i)=>({...c,origIdx:i})).filter((c)=>cv3.visible_categories.includes(c.origIdx))" :key="idx">
+                  <div :style="'background:#fff;border-radius:6px;padding:10px 6px;display:flex;flex-direction:column;align-items:center;gap:4px;border-top:3px solid var('+(cv3.category_colors[cat.origIdx]?.bg||'--forest')+');'">
+                    <span x-show="cat.icon_name" x-html="catIcon(cat.icon_name,16, cv3.category_colors[cat.origIdx]?.icon||'--forest')" style="display:flex;align-items:center;justify-content:center;"></span>
+                    <span :style="'font-size:9px;font-weight:500;color:var('+(cv3.category_colors[cat.origIdx]?.text||'--text')+');text-align:center;'" x-text="cat.name.length>7?cat.name.slice(0,7)+'…':cat.name"></span>
+                  </div>
+                </template>
+              </div>
+            </div>
+            </div>
+          </div>
+        </div>
+        <div class="ep-preview-label">
+          <div><div class="ep-preview-name">C — Light cards, top border</div><div class="ep-preview-desc">White cards · cycling gold/emerald/navy border</div></div>
+          <div class="ep-check" x-show="catVariant==='3'">{% icon "check" size=14 %}</div>
+        </div>
+      </div>
+
+      {# ── D: Tall portrait scroll ── #}
+      <div class="ep-preview-card" :class="{ active: catVariant==='4' }" @click="catVariant='4'" style="margin-bottom:12px;">
+        <div class="ep-viewport" style="height:160px;">
+          <div class="ep-viewport-inner" :style="'transform:scale('+scale+');height:280px;'">>
+            <div :style="'background:var('+cv4.bg_colour+');padding:32px 60px 24px;'">
+            <div style="text-align:center;margin-bottom:20px;">
+              <div x-show="cv4.overline" x-text="cv4.overline" :style="'color:var('+cv4.overline_colour+');font-size:11px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;margin-bottom:8px;'"></div>
+              <div x-text="cv4.heading" :style="'font-family:Cormorant Garamond,serif;font-weight:700;color:var('+cv4.heading_colour+');font-size:'+cv4.heading_size+';line-height:1.15;'"></div>
+            </div>
+            <div style="display:flex;gap:6px;overflow:hidden;">
+              <template x-for="(cat,i) in (catProducts.length?catProducts:([{name:'Phones'},{name:'Laptops'},{name:'Audio'},{name:'Smart Home'},{name:'Wearables'},{name:'Accessories'}])).filter((c,idx)=>cv4.visible_categories.includes(idx))" :key="i">
+                <div :style="'flex:0 0 80px;height:100px;border-radius:8px;overflow:hidden;position:relative;display:flex;align-items:flex-end;background:'+(i===0?'var(--forest)':i===1?'var(--sage)':i===2?'var(--gold-muted)':i===3?'#2D4A3E':i===4?'var(--forest)':'var(--gold)')+';'">
+                  <div style="position:absolute;inset:0;background:rgba(27,42,74,0.65);"></div>
+                  <span style="position:relative;z-index:1;padding:6px;color:#fff;font-size:9px;font-weight:500;" x-text="cat.name.length>8?cat.name.slice(0,8)+'…':cat.name"></span>
+                </div>
+              </template>
+            </div>
+            </div>
+          </div>
+        </div>
+        <div class="ep-preview-label">
+          <div><div class="ep-preview-name">D — Tall portrait scroll</div><div class="ep-preview-desc">110×170px cards · dark scrim · horizontal scroll</div></div>
+          <div class="ep-check" x-show="catVariant==='4'">{% icon "check" size=14 %}</div>
+        </div>
+      </div>
+
+      {# ── E: List with badges ── #}
+      <div class="ep-preview-card" :class="{ active: catVariant==='5' }" @click="catVariant='5'" style="margin-bottom:12px;">
+        <div class="ep-viewport" style="height:160px;">
+          <div class="ep-viewport-inner" :style="'transform:scale('+scale+');height:280px;'">>
+            <div :style="'background:var('+cv5.bg_colour+');padding:32px 60px 24px;'">
+            <div style="text-align:center;margin-bottom:20px;">
+              <div x-show="cv5.overline" x-text="cv5.overline" :style="'color:var('+cv5.overline_colour+');font-size:11px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;margin-bottom:8px;'"></div>
+              <div x-text="cv5.heading" :style="'font-family:Cormorant Garamond,serif;font-weight:700;color:var('+cv5.heading_colour+');font-size:'+cv5.heading_size+';line-height:1.15;'"></div>
+            </div>
+            <div style="background:#fff;border:0.5px solid #E5E2DC;border-radius:8px;overflow:hidden;">
+              <template x-for="(cat,i) in (catProducts.length?catProducts:([{name:'Phones',product_count:86},{name:'Laptops',product_count:42},{name:'Audio',product_count:31},{name:'Smart Home',product_count:19},{name:'Wearables',product_count:24},{name:'Accessories',product_count:15}])).filter((c,idx)=>cv5.visible_categories.includes(idx))" :key="i">
+                <div style="display:flex;align-items:center;justify-content:space-between;padding:9px 12px;border-bottom:0.5px solid #E5E2DC;">
+                  <span style="font-size:11px;font-weight:500;color:#1A1A1A;" x-text="(cat.icon_name?cat.icon_name+' ':'')+cat.name"></span>
+                  <span style="background:var(--forest);color:var(--gold);font-size:10px;font-weight:500;padding:2px 8px;border-radius:50px;" x-text="cat.product_count"></span>
+                </div>
+              </template>
+            </div>
+            </div>
+          </div>
+        </div>
+        <div class="ep-preview-label">
+          <div><div class="ep-preview-name">E — List with badges</div><div class="ep-preview-desc">Full-width rows · navy/gold count badge</div></div>
+          <div class="ep-check" x-show="catVariant==='5'">{% icon "check" size=14 %}</div>
+        </div>
+      </div>
+
+      {# ── F: Solid colour tiles ── #}
+      <div class="ep-preview-card" :class="{ active: catVariant==='6' }" @click="catVariant='6'">
+        <div class="ep-viewport" style="height:160px;">
+          <div class="ep-viewport-inner" :style="'transform:scale('+scale+');height:280px;'">>
+            <div :style="'background:var('+cv6.bg_colour+');padding:32px 60px 24px;'">
+            <div style="text-align:center;margin-bottom:20px;">
+              <div x-show="cv6.overline" x-text="cv6.overline" :style="'color:var('+cv6.overline_colour+');font-size:11px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;margin-bottom:8px;'"></div>
+              <div x-text="cv6.heading" :style="'font-family:Cormorant Garamond,serif;font-weight:700;color:var('+cv6.heading_colour+');font-size:'+cv6.heading_size+';line-height:1.15;'"></div>
+            </div>
+            <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:5px;">
+              <template x-for="(cat,idx) in (catProducts.length?catProducts:([{name:'Phones'},{name:'Laptops'},{name:'Audio'},{name:'Smart Home'},{name:'Wearables'},{name:'Accessories'}])).map((c,i)=>({...c,origIdx:i})).filter((c)=>cv6.visible_categories.includes(c.origIdx))" :key="idx">
+                <div :style="'border-radius:8px;padding:12px 6px;display:flex;flex-direction:column;align-items:center;gap:5px;background:var('+(cv6.category_colors[cat.origIdx]?.bg||'--forest')+');'">
+                  <span x-show="cat.icon_name" x-html="catIcon(cat.icon_name,16, cv6.category_colors[cat.origIdx]?.icon||'--surface')" style="display:flex;align-items:center;justify-content:center;"></span>
+                  <span :style="'font-size:9px;font-weight:500;color:var('+(cv6.category_colors[cat.origIdx]?.text||'--surface')+');text-align:center;'" x-text="cat.name.length>7?cat.name.slice(0,7)+'…':cat.name"></span>
+                </div>
+              </template>
+            </div>
+            </div>
+          </div>
+        </div>
+        <div class="ep-preview-label">
+          <div><div class="ep-preview-name">F — Solid colour tiles</div><div class="ep-preview-desc">Brand colours · no images · white text</div></div>
+          <div class="ep-check" x-show="catVariant==='6'">{% icon "check" size=14 %}</div>
+        </div>
+      </div>
+
+    </div>{# end categories #}
+
+    {# ══ FEATURED PRODUCTS ══ #}
+    <div x-show="activeKey==='featured'">
+
+      {# ── V1: 4-column grid ── #}
+      <div class="ep-preview-card" :class="{ active: featVariant==='1' }" @click="featVariant='1'" style="margin-bottom:12px;">
+        <div class="ep-viewport" style="height:160px;">
+          <div class="ep-viewport-inner" :style="'transform:scale('+scale+');height:280px;'">
+            <div :style="'background:var('+fv1.bg_colour+');padding:28px 60px 20px;'">
+              <div style="text-align:center;margin-bottom:16px;">
+                <div x-show="fv1.overline" x-text="fv1.overline" :style="'color:var('+fv1.overline_colour+');font-size:10px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;margin-bottom:6px;'"></div>
+                <div x-text="fv1.heading||'Featured Products'" :style="'font-family:Cormorant Garamond,serif;font-weight:700;color:var('+fv1.heading_colour+');font-size:'+fv1.heading_size+';line-height:1.15;'"></div>
+                <div x-show="fv1.subheading" x-text="fv1.subheading" :style="'font-size:11px;color:var('+fv1.subheading_colour+');margin-top:4px;'"></div>
+              </div>
+              <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;">
+                <template x-for="(p,i) in (fv1.product_ids.length ? fv1.product_ids.slice(0,4).map(id=>featProducts.find(x=>x.id===id)).filter(Boolean) : featProducts.slice(0,4))" :key="i">
+                  <div style="background:#fff;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,.1);overflow:hidden;">
+                    <div style="height:60px;background:#f5f5f5;display:flex;align-items:center;justify-content:center;overflow:hidden;">
+                      <img x-show="p.cover_image_url" :src="p.cover_image_url" style="width:100%;height:100%;object-fit:cover;">
+                      <span x-show="!p.cover_image_url"><svg class="icon" width="18" height="18" fill="currentColor" aria-hidden="true"><use href="#ph-shopping-bag-open"></use></svg></span>
+                    </div>
+                    <div style="padding:6px 7px;">
+                      <div style="font-size:9px;font-weight:600;color:#1a1a1a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" x-text="p.name"></div>
+                      <div style="font-size:9px;color:var(--sage);font-weight:700;margin-top:2px;" x-text="'KES '+p.effective_price.toLocaleString()"></div>
+                    </div>
+                  </div>
+                </template>
+              </div>
+              <div x-show="fv1.view_all_link" :style="'text-align:right;margin-top:8px;font-size:10px;font-weight:600;color:var('+fv1.view_all_colour+');'">View All Products →</div>
+            </div>
+          </div>
+        </div>
+        <div class="ep-preview-label">
+          <div><div class="ep-preview-name">A — 4-column grid</div><div class="ep-preview-desc">Overline · heading · 4 cards · view all</div></div>
+          <div class="ep-check" x-show="featVariant==='1'">{% icon "check" size=14 %}</div>
+        </div>
+      </div>
+
+      {# ── V2: Hero card + supporting grid ── #}
+      <div class="ep-preview-card" :class="{ active: featVariant==='2' }" @click="featVariant='2'" style="margin-bottom:12px;">
+        <div class="ep-viewport" style="height:160px;">
+          <div class="ep-viewport-inner" :style="'transform:scale('+scale+');height:280px;'">
+            <div :style="'background:var('+fv2.bg_colour+');padding:28px 60px 20px;'">
+              <div style="margin-bottom:12px;">
+                <div x-show="fv2.overline" x-text="fv2.overline" :style="'color:var('+fv2.overline_colour+');font-size:10px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;margin-bottom:4px;'"></div>
+                <div x-text="fv2.heading||'Featured Products'" :style="'font-family:Cormorant Garamond,serif;font-weight:700;color:var('+fv2.heading_colour+');font-size:'+fv2.heading_size+';line-height:1.15;'"></div>
+                <div x-show="fv2.subheading" x-text="fv2.subheading" :style="'font-size:11px;color:var('+fv2.subheading_colour+');margin-top:3px;'"></div>
+              </div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;align-items:stretch;">
+                <div style="background:#fff;border-radius:6px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.08);display:flex;flex-direction:column;">
+                  <div style="flex:1;min-height:60px;background:#f5f5f5;display:flex;align-items:center;justify-content:center;font-size:32px;overflow:hidden;">
+                    <img :src="(fv2.hero_product_id?featProducts.find(x=>x.id===fv2.hero_product_id):(fv2.product_ids.length?featProducts.find(x=>x.id===fv2.product_ids[0]):featProducts[0]))?.cover_image_url||''"
+                         x-show="(fv2.hero_product_id?featProducts.find(x=>x.id===fv2.hero_product_id):(fv2.product_ids.length?featProducts.find(x=>x.id===fv2.product_ids[0]):featProducts[0]))?.cover_image_url"
+                         style="width:100%;height:100%;object-fit:cover;">
+                    <span x-show="!(fv2.hero_product_id?featProducts.find(x=>x.id===fv2.hero_product_id):(fv2.product_ids.length?featProducts.find(x=>x.id===fv2.product_ids[0]):featProducts[0]))?.cover_image_url"><svg class="icon" width="18" height="18" fill="currentColor" aria-hidden="true"><use href="#ph-shopping-bag-open"></use></svg></span>
+                  </div>
+                  <div style="padding:8px;flex-shrink:0;">
+                    <div style="font-size:10px;font-weight:600;color:#1a1a1a;" x-text="(fv2.hero_product_id?featProducts.find(x=>x.id===fv2.hero_product_id):(fv2.product_ids.length?featProducts.find(x=>x.id===fv2.product_ids[0]):featProducts[0]))?.name||''"></div>
+                    <div style="font-size:10px;color:var(--sage);font-weight:700;" x-text="'KES '+((fv2.hero_product_id?featProducts.find(x=>x.id===fv2.hero_product_id):(fv2.product_ids.length?featProducts.find(x=>x.id===fv2.product_ids[0]):featProducts[0]))?.effective_price||0).toLocaleString()"></div>
+                  </div>
+                </div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">
+                  <template x-for="(p,i) in (fv2.product_ids.filter(id=>id!==fv2.hero_product_id).slice(0,4).map(id=>featProducts.find(x=>x.id===id)).filter(Boolean))" :key="i">
+                    <div style="background:#fff;border-radius:6px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.08);">
+                      <div style="height:40px;background:#f5f5f5;display:flex;align-items:center;justify-content:center;font-size:16px;">
+                        <img x-show="p.cover_image_url" :src="p.cover_image_url" style="width:100%;height:100%;object-fit:cover;">
+                        <span x-show="!p.cover_image_url"><svg class="icon" width="18" height="18" fill="currentColor" aria-hidden="true"><use href="#ph-shopping-bag-open"></use></svg></span>
+                      </div>
+                      <div style="padding:4px 5px;font-size:8px;font-weight:600;color:#1a1a1a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" x-text="p.name"></div>
+                    </div>
+                  </template>
+                </div>
+              </div>
+              <div x-show="fv2.view_all_link" :style="'text-align:right;margin-top:8px;font-size:10px;font-weight:600;color:var('+fv2.view_all_colour+');'">View All →</div>
+            </div>
+          </div>
+        </div>
+        <div class="ep-preview-label">
+          <div><div class="ep-preview-name">B — Hero + grid</div><div class="ep-preview-desc">Large hero card left · 2×2 grid right</div></div>
+          <div class="ep-check" x-show="featVariant==='2'">{% icon "check" size=14 %}</div>
+        </div>
+      </div>
+
+      {# ── V3: Horizontal scroll ── #}
+      <div class="ep-preview-card" :class="{ active: featVariant==='3' }" @click="featVariant='3'" style="margin-bottom:12px;">
+        <div class="ep-viewport" style="height:160px;">
+          <div class="ep-viewport-inner" :style="'transform:scale('+scale+');height:280px;'">
+            <div :style="'background:var('+fv3.bg_colour+');padding:28px 60px 20px;'">
+              <div style="margin-bottom:12px;">
+                <div x-show="fv3.overline" x-text="fv3.overline" :style="'color:var('+fv3.overline_colour+');font-size:10px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;margin-bottom:4px;'"></div>
+                <div x-text="fv3.heading||'Featured Products'" :style="'font-family:Cormorant Garamond,serif;font-weight:700;color:var('+fv3.heading_colour+');font-size:'+fv3.heading_size+';line-height:1.15;'"></div>
+              </div>
+              <div style="display:flex;gap:8px;overflow:hidden;">
+                <template x-for="(p,i) in (fv3.product_ids.length ? fv3.product_ids.slice(0,6).map(id=>featProducts.find(x=>x.id===id)).filter(Boolean) : featProducts.slice(0,6))" :key="i">
+                  <div style="flex:0 0 100px;background:#fff;border-radius:6px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.08);">
+                    <div style="height:60px;background:#f5f5f5;display:flex;align-items:center;justify-content:center;font-size:20px;">
+                      <img x-show="p.cover_image_url" :src="p.cover_image_url" style="width:100%;height:100%;object-fit:cover;">
+                      <span x-show="!p.cover_image_url"><svg class="icon" width="18" height="18" fill="currentColor" aria-hidden="true"><use href="#ph-shopping-bag-open"></use></svg></span>
+                    </div>
+                    <div style="padding:5px 6px;">
+                      <div style="font-size:9px;font-weight:600;color:#1a1a1a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" x-text="p.name"></div>
+                      <div style="font-size:9px;color:var(--sage);font-weight:700;" x-text="'KES '+p.effective_price.toLocaleString()"></div>
+                    </div>
+                  </div>
+                </template>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="ep-preview-label">
+          <div><div class="ep-preview-name">C — Horizontal scroll</div><div class="ep-preview-desc">Wide cards · scrollable · no view all</div></div>
+          <div class="ep-check" x-show="featVariant==='3'">{% icon "check" size=14 %}</div>
+        </div>
+      </div>
+
+    </div>{# end featured #}
+
+    {# ══ DEALS ══ #}
+    <div x-show="activeKey==='deals'">
+      <div class="ep-preview-card" :class="{ active: dealsVariant==='1' }" @click="dealsVariant='1'" style="margin-bottom:12px;">
+        <div class="ep-viewport" style="height:160px;">
+          <div class="ep-viewport-inner" :style="'transform:scale('+scale+');height:280px;'">
+            <div style="background:var(--forest);padding:28px 60px 20px;">
+              <div x-text="dv1.heading||'Today\'s Deals'" :style="'font-family:Cormorant Garamond,serif;font-weight:700;color:var('+dv1.heading_colour+');font-size:'+dv1.heading_size+';line-height:1.15;'"></div>
+              <div x-show="dv1.subheading" x-text="dv1.subheading" :style="'font-size:'+dv1.subheading_size+';color:var('+dv1.subheading_colour+');margin-bottom:10px;opacity:0.8;'"></div>
+              <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;">
+                <template x-for="(p,i) in (dv1.product_ids.length?dv1.product_ids.slice(0,4).map(id=>dealsProducts.find(x=>x.id===id)).filter(Boolean):dealsProducts.slice(0,4))" :key="i">
+                  <div style="background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.1);border-radius:10px;overflow:hidden;">
+                    <div style="height:60px;background:rgba(255,255,255,0.04);display:flex;align-items:center;justify-content:center;overflow:hidden;">
+                      <img x-show="p.cover_image_url" :src="p.cover_image_url" style="width:100%;height:100%;object-fit:cover;">
+                      <span x-show="!p.cover_image_url" style="opacity:0.3;"><svg class="icon" width="18" height="18" fill="#fff" aria-hidden="true"><use href="#ph-shopping-bag-open"></use></svg></span>
+                    </div>
+                    <div style="padding:6px 7px;">
+                      <div style="font-size:9px;font-weight:600;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" x-text="p.name"></div>
+                      <div style="font-size:9px;color:var(--gold);font-weight:700;margin-top:2px;" x-text="'KES '+p.effective_price.toLocaleString()"></div>
+                    </div>
+                  </div>
+                </template>
+              </div>
+              <div x-show="dv1.view_all_link" style="text-align:center;margin-top:10px;font-size:10px;font-weight:600;" :style="'color:var('+dv1.view_all_colour+')'">See All Deals →</div>
+            </div>
+          </div>
+        </div>
+        <div class="ep-preview-label">
+          <div><div class="ep-preview-name">A — Dark grid</div><div class="ep-preview-desc">Navy background · gold prices · deal cards</div></div>
+          <div class="ep-check" x-show="dealsVariant==='1'">{% icon "check" size=14 %}</div>
+        </div>
+      </div>
+
+      {# ── V2: Countdown banner + grid ── #}
+      <div class="ep-preview-card" :class="{ active: dealsVariant==='2' }" @click="dealsVariant='2'" style="margin-bottom:12px;">
+        <div class="ep-viewport" style="height:160px;">
+          <div class="ep-viewport-inner" :style="'transform:scale('+scale+');height:280px;'">
+            <div style="background:var(--forest);padding:0 0 20px;">
+              {# Banner position — separate coloured bar #}
+              <div x-show="dv2.timer_position==='banner' && (dv2.timer_visible || dv2.banner_label_visible)">
+                <div :style="'background:var('+dv2.banner_bg+');padding:10px 60px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;justify-content:'+(dv2.timer_align==='left'?'flex-start':dv2.timer_align==='center'?'center':'flex-end')+';'">
+                  <div x-show="dv2.banner_label_visible" x-text="dv2.banner_label" :style="'color:var('+dv2.banner_text+');font-size:'+dv2.banner_label_size+';font-weight:600;'"></div>
+                  <div x-show="dv2.timer_visible">
+                    <div style="display:flex;align-items:center;gap:8px;">
+                      <template x-for="(seg,i) in [{l:'00',u:'d'},{l:'00',u:'h'},{l:'00',u:'m'},{l:'00',u:'s'}]" :key="seg.u">
+                        <div style="display:flex;align-items:center;gap:4px;">
+                          <div style="text-align:center;">
+                            <div :style="'font-family:Cormorant Garamond,serif;font-weight:700;color:var('+dv2.banner_text+');font-size:'+dv2.timer_size+';line-height:1;'" x-text="seg.l"></div>
+                            <div :style="'font-size:9px;color:var('+dv2.banner_text+');opacity:0.7;'" x-text="seg.u"></div>
+                          </div>
+                          <div x-show="i<3" :style="'font-family:Cormorant Garamond,serif;font-weight:700;color:var('+dv2.banner_text+');font-size:'+dv2.timer_size+';opacity:0.5;line-height:1;margin-bottom:10px;'">:</div>
+                        </div>
+                      </template>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              {# Grid #}
+              <div style="padding:12px 60px 0;">
+                {# Inline: heading + timer on same row #}
+                <div :style="'display:flex;align-items:center;gap:12px;margin-bottom:6px;justify-content:'+(dv2.timer_position==='inline'?(dv2.timer_align==='left'?'flex-start':dv2.timer_align==='center'?'center':'space-between'):'flex-start')+';'">
+                  <div x-text="dv2.heading||'Today\'s Deals'" :style="'font-family:Cormorant Garamond,serif;font-weight:700;color:var('+dv2.heading_colour+');font-size:'+dv2.heading_size+';line-height:1.15;'"></div>
+                  <div x-show="dv2.timer_visible && dv2.timer_position==='inline'">
+                    <div style="display:flex;align-items:center;gap:6px;flex-shrink:0;">
+                      <div x-show="dv2.banner_label_visible" x-text="dv2.banner_label" :style="'color:var('+dv2.banner_text+');font-size:'+dv2.banner_label_size+';font-weight:600;'"></div>
+                      <div style="display:flex;align-items:center;gap:4px;">
+                        <template x-for="(seg,i) in [{l:'00',u:'d'},{l:'00',u:'h'},{l:'00',u:'m'},{l:'00',u:'s'}]" :key="seg.u">
+                          <div style="display:flex;align-items:center;gap:4px;">
+                            <div style="text-align:center;">
+                              <div :style="'font-family:Cormorant Garamond,serif;font-weight:700;color:var('+dv2.banner_text+');font-size:'+dv2.timer_size+';line-height:1;'" x-text="seg.l"></div>
+                              <div :style="'font-size:9px;color:var('+dv2.banner_text+');opacity:0.7;'" x-text="seg.u"></div>
+                            </div>
+                            <div x-show="i<3" :style="'font-family:Cormorant Garamond,serif;font-weight:700;color:var('+dv2.banner_text+');font-size:'+dv2.timer_size+';opacity:0.5;line-height:1;margin-bottom:10px;'">:</div>
+                          </div>
+                        </template>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                {# Below: timer under heading #}
+                <div x-show="dv2.timer_visible && dv2.timer_position==='below'">
+                  <div :style="'display:flex;align-items:center;gap:8px;margin-bottom:6px;justify-content:'+(dv2.timer_align==='left'?'flex-start':dv2.timer_align==='center'?'center':'flex-end')+';'">
+                    <div x-show="dv2.banner_label_visible" x-text="dv2.banner_label" :style="'color:var('+dv2.banner_text+');font-size:'+dv2.banner_label_size+';font-weight:600;'"></div>
+                    <div style="display:flex;align-items:center;gap:4px;">
+                      <template x-for="(seg,i) in [{l:'00',u:'d'},{l:'00',u:'h'},{l:'00',u:'m'},{l:'00',u:'s'}]" :key="seg.u">
+                        <div style="display:flex;align-items:center;gap:4px;">
+                          <div style="text-align:center;">
+                            <div :style="'font-family:Cormorant Garamond,serif;font-weight:700;color:var('+dv2.banner_text+');font-size:'+dv2.timer_size+';line-height:1;'" x-text="seg.l"></div>
+                            <div :style="'font-size:9px;color:var('+dv2.banner_text+');opacity:0.7;'" x-text="seg.u"></div>
+                          </div>
+                          <div x-show="i<3" :style="'font-family:Cormorant Garamond,serif;font-weight:700;color:var('+dv2.banner_text+');font-size:'+dv2.timer_size+';opacity:0.5;line-height:1;margin-bottom:10px;'">:</div>
+                        </div>
+                      </template>
+                    </div>
+                  </div>
+                </div>
+                <div x-show="dv2.subheading" x-text="dv2.subheading" :style="'font-size:'+dv2.subheading_size+';color:var('+dv2.subheading_colour+');margin-bottom:8px;opacity:0.8;'"></div>
+                <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;">
+                  <template x-for="(p,i) in (dv2.product_ids.length?dv2.product_ids.slice(0,4).map(id=>dealsProducts.find(x=>x.id===id)).filter(Boolean):dealsProducts.slice(0,4))" :key="i">
+                    <div style="background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.1);border-radius:8px;overflow:hidden;">
+                      <div style="height:40px;background:rgba(255,255,255,0.04);display:flex;align-items:center;justify-content:center;overflow:hidden;">
+                        <img x-show="p.cover_image_url" :src="p.cover_image_url" style="width:100%;height:100%;object-fit:cover;">
+                        <span x-show="!p.cover_image_url" style="opacity:0.3;"><svg class="icon" width="14" height="14" fill="#fff" aria-hidden="true"><use href="#ph-shopping-bag-open"></use></svg></span>
+                      </div>
+                      <div style="padding:4px 5px;">
+                        <div style="font-size:8px;font-weight:600;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" x-text="p.name"></div>
+                        <div style="font-size:8px;color:var(--gold);font-weight:700;" x-text="'KES '+p.effective_price.toLocaleString()"></div>
+                      </div>
+                    </div>
+                  </template>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="ep-preview-label">
+          <div><div class="ep-preview-name">B — Countdown banner</div><div class="ep-preview-desc">Flash sale timer · navy grid · gold prices</div></div>
+          <div class="ep-check" x-show="dealsVariant==='2'">{% icon "check" size=14 %}</div>
+        </div>
+      </div>
+
+    </div>{# end deals #}
+
+    {# ══ BESTSELLERS ══ #}
+    <div x-show="activeKey==='bestsellers'">
+      <div class="ep-preview-card active">
+        <div class="ep-viewport" :style="'height:'+vpH+'px'">
+          <div class="ep-viewport-inner" :style="'transform:scale('+scale+');height:280px;'">
+            <div :style="'background:var('+bs.bg_colour+');padding:20px 60px;'">
+              <div style="text-align:center;margin-bottom:12px;">
+                <div :style="'font-family:Cormorant Garamond,serif;font-weight:700;color:var('+bs.heading_colour+');font-size:'+bs.heading_size+';line-height:1.15;'" x-text="bs.heading||'Best Sellers'"></div>
+                <div x-show="bs.subheading" x-text="bs.subheading" :style="'font-size:'+bs.subheading_size+';color:var('+bs.subheading_colour+');margin-top:4px;opacity:0.8;'"></div>
+              </div>
+              <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;">
+                <template x-for="(p,i) in (bs.product_ids.length ? bs.product_ids.slice(0,4).map(id=>bsProducts.find(x=>x.id===id)).filter(Boolean) : bsProducts.slice(0,4))" :key="i">
+                  <div style="background:#fff;border-radius:8px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.08);">
+                    <div style="height:50px;display:flex;align-items:center;justify-content:center;overflow:hidden;background:#f5f5f5;">
+                      <img x-show="p.cover_image_url" :src="p.cover_image_url" style="width:100%;height:100%;object-fit:cover;">
+                      <span x-show="!p.cover_image_url"><svg class="icon" width="16" height="16" fill="currentColor" aria-hidden="true"><use href="#ph-shopping-bag-open"></use></svg></span>
+                    </div>
+                    <div style="padding:4px 5px;">
+                      <div style="font-size:8px;font-weight:600;color:#1a1a1a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" x-text="p.name"></div>
+                      <div style="font-size:8px;color:var(--sage);font-weight:700;" x-text="'KES '+p.effective_price.toLocaleString()"></div>
+                    </div>
+                  </div>
+                </template>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="ep-preview-label">
+          <div><div class="ep-preview-name">Best Sellers</div><div class="ep-preview-desc">Top selling products grid</div></div>
+          <div class="ep-check">{% icon "check" size=14 %}</div>
+        </div>
+      </div>
+    </div>{# end bestsellers #}
+
+    {# ══ STORY ══ #}
+    <div x-show="activeKey==='story'">
+
+      {# V1 — text left, image right #}
+      <div class="ep-preview-card" :class="{ active: storyVariant==='1' }" @click="storyVariant='1'">
+        <div class="ep-viewport" :style="'height:'+vpH+'px'">
+          <div class="ep-viewport-inner" :style="'transform:scale('+scale+');height:'+vpInnerH+'px;overflow:hidden;'">
+            <div :style="'background:var('+sv1.bg_colour+');width:100%;height:100%;display:grid;grid-template-columns:1fr 1fr;gap:32px;align-items:start;padding:24px 40px;box-sizing:border-box;'"
+              x-init="$nextTick(()=>{
+                const el=$el; const cs=getComputedStyle(el);
+                $watch('sv1',()=>requestAnimationFrame(()=>{
+                }));
+              })"
+            >
+              <div style="min-width:0;overflow-wrap:break-word;">
+                <div x-show="sv1.overline_visible" x-text="sv1.overline||'Our Story'" :style="'font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var('+sv1.overline_colour+');margin-bottom:8px;'"></div>
+                <div x-text="sv1.heading||'Bringing you the best in technology'" :style="'font-family:Cormorant Garamond,serif;font-weight:700;color:var('+sv1.heading_colour+');font-size:22px;line-height:1.2;margin-bottom:10px;'"></div>
+                <div x-text="sv1.body||'We believe great technology shouldn\'t require guesswork about authenticity.'" :style="'font-size:12px;color:var('+sv1.body_colour+');line-height:1.6;margin-bottom:12px;opacity:0.85;'"></div>
+                <div x-show="sv1.cta_visible" x-text="sv1.cta_text||'Learn More →'" :style="'font-size:11px;font-weight:600;color:var('+sv1.cta_colour+');border-bottom:1.5px solid var('+sv1.cta_colour+');display:inline-block;padding-bottom:2px;'"></div>
+              </div>
+              <div style="min-width:0;">
+                <div x-show="sv1.image_visible && sv1.image_url" style="border-radius:10px;overflow:hidden;height:320px;width:100%;">
+                  <img :src="sv1.image_url" style="width:100%;height:100%;object-fit:cover;display:block;">
+                </div>
+                <div x-show="!sv1.image_visible || !sv1.image_url" :style="'border-radius:10px;height:320px;width:100%;background:var('+sv1.image_bg_colour+');display:flex;align-items:center;justify-content:center;font-size:32px;'">🖼️</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="ep-preview-label">
+          <div><div class="ep-preview-name">V1 — Text left</div><div class="ep-preview-desc">50/50 split · image right</div></div>
+          <div class="ep-check" x-show="storyVariant==='1'">{% icon "check" size=14 %}</div>
+        </div>
+      </div>
+
+      {# V2 — image left, text right #}
+      <div class="ep-preview-card" :class="{ active: storyVariant==='2' }" @click="storyVariant='2'">
+        <div class="ep-viewport" :style="'height:'+vpH+'px'">
+          <div class="ep-viewport-inner" :style="'transform:scale('+scale+');height:'+vpInnerH+'px;overflow:hidden;'">
+            <div :style="'background:var('+sv2.bg_colour+');width:100%;height:100%;display:grid;grid-template-columns:1fr 1fr;gap:32px;align-items:start;padding:24px 40px;box-sizing:border-box;'">
+              <div style="min-width:0;">
+                <div x-show="sv2.image_visible && sv2.image_url" style="border-radius:10px;overflow:hidden;height:320px;width:100%;">
+                  <img :src="sv2.image_url" style="width:100%;height:100%;object-fit:cover;display:block;">
+                </div>
+                <div x-show="!sv2.image_visible || !sv2.image_url" :style="'border-radius:10px;height:320px;width:100%;background:var('+sv2.image_bg_colour+');display:flex;align-items:center;justify-content:center;font-size:32px;'">🖼️</div>
+              </div>
+              <div style="min-width:0;overflow-wrap:break-word;">
+                <div x-show="sv2.overline_visible" x-text="sv2.overline||'Our Story'" :style="'font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var('+sv2.overline_colour+');margin-bottom:8px;'"></div>
+                <div x-text="sv2.heading||'Bringing you the best in technology'" :style="'font-family:Cormorant Garamond,serif;font-weight:700;color:var('+sv2.heading_colour+');font-size:22px;line-height:1.2;margin-bottom:10px;'"></div>
+                <div x-text="sv2.body||'We believe great technology shouldn\'t require guesswork about authenticity.'" :style="'font-size:12px;color:var('+sv2.body_colour+');line-height:1.6;margin-bottom:12px;opacity:0.85;'"></div>
+                <div x-show="sv2.cta_visible" x-text="sv2.cta_text||'Learn More →'" :style="'font-size:11px;font-weight:600;color:var('+sv2.cta_colour+');border-bottom:1.5px solid var('+sv2.cta_colour+');display:inline-block;padding-bottom:2px;'"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="ep-preview-label">
+          <div><div class="ep-preview-name">V2 — Image left</div><div class="ep-preview-desc">50/50 split · image left</div></div>
+          <div class="ep-check" x-show="storyVariant==='2'">{% icon "check" size=14 %}</div>
+        </div>
+      </div>
+
+      {# V3 — full-width centred #}
+      <div class="ep-preview-card" :class="{ active: storyVariant==='3' }" @click="storyVariant='3'">
+        <div class="ep-viewport" :style="'height:'+vpH+'px'">
+          <div class="ep-viewport-inner" :style="'transform:scale('+scale+');height:'+vpInnerH+'px;overflow:hidden;'">
+            <div :style="'background:var('+sv3.bg_colour+');width:100%;height:100%;display:flex;flex-direction:column;box-sizing:border-box;'">
+              <div x-show="sv3.image_visible && sv3.image_url" style="position:relative;height:280px;flex-shrink:0;overflow:hidden;">
+                <img :src="sv3.image_url" style="width:100%;height:100%;object-fit:cover;display:block;">
+                <div :style="'position:absolute;inset:0;background:var('+sv3.overlay_colour+');opacity:'+(sv3.overlay_opacity/100)+';'"></div>
+              </div>
+              <div x-show="!sv3.image_visible || !sv3.image_url" :style="'height:280px;flex-shrink:0;background:var('+sv3.image_bg_colour+');'"></div>
+              <div style="padding:16px 40px;text-align:center;overflow:hidden;min-width:0;">
+                <div x-show="sv3.overline_visible" x-text="sv3.overline||'Our Story'" :style="'font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var('+sv3.overline_colour+');margin-bottom:8px;'"></div>
+                <div x-text="sv3.heading||'Bringing you the best in technology'" :style="'font-family:Cormorant Garamond,serif;font-weight:700;color:var('+sv3.heading_colour+');font-size:22px;line-height:1.2;margin-bottom:8px;overflow-wrap:break-word;'"></div>
+                <div x-text="sv3.body||'We believe great technology shouldn\'t require guesswork about authenticity.'" :style="'font-size:12px;color:var('+sv3.body_colour+');line-height:1.5;margin-bottom:10px;opacity:0.85;overflow-wrap:break-word;'"></div>
+                <div x-show="sv3.cta_visible" x-text="sv3.cta_text||'Learn More →'" :style="'font-size:11px;font-weight:600;color:var('+sv3.cta_colour+');border-bottom:1.5px solid var('+sv3.cta_colour+');display:inline-block;padding-bottom:2px;'"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="ep-preview-label">
+          <div><div class="ep-preview-name">V3 — Full-width</div><div class="ep-preview-desc">Banner image · centred text</div></div>
+          <div class="ep-check" x-show="storyVariant==='3'">{% icon "check" size=14 %}</div>
+        </div>
+      </div>
+
+    </div>{# end story #}
+  </div>
+
+
+  {# ══ RIGHT — per-variant controls ══ #}
+  <div class="ep-right">
+    <div class="ep-right-head">
+      <div class="ep-section-name">
+        <span x-show="activeKey==='hero'">Hero — <span x-text="activeVariant==='1'?'Split':activeVariant==='2'?'Centred':'Full-bleed'"></span></span>
+        <span x-show="activeKey==='categories'">Categories — <span x-text="catVariant==='1'?'A Pill':catVariant==='2'?'B Grid':catVariant==='3'?'C Cards':catVariant==='4'?'D Scroll':catVariant==='5'?'E List':'F Tiles'"></span></span>
+        <span x-show="activeKey==='featured'">Featured — <span x-text="featVariant==='1'?'A Grid':featVariant==='2'?'B Hero+Grid':'C Scroll'"></span></span>
+        <span x-show="activeKey==='deals'">Deals — <span x-text="dealsVariant==='1'?'A Dark grid':'B Countdown'"></span></span>
+        <span x-show="activeKey==='bestsellers'">Best Sellers</span>
+        <span x-show="activeKey==='story'">Brand Story — <span x-text="storyVariant==='1'?'V1 Text Left':storyVariant==='2'?'V2 Image Left':'V3 Full-width'"></span></span>
+        <span x-show="activeKey==='footer'">Footer</span>
+      </div>
+    </div>
+
+    <div class="ep-right-body">
+
+      {# ── HERO CONTROLS ── #}
+      <div x-show="activeKey==='hero'">
+      <div class="ep-group" x-show="activeVariant !== '3'">
+        <div class="ep-group-title" style="display:flex;justify-content:space-between;">Background <span style="cursor:pointer;font-size:11px;color:var(--text-muted);" @click="av.bg_colour='--forest'" title="Reset">↺</span></div>
+        <div class="ep-swatches">
+          <template x-for="sw in fieldSwatches('--forest')" :key="sw.token">
+            <div class="ep-swatch" :class="{ active: av.bg_colour===sw.token }" :style="'background:'+sw.hex" :title="sw.label" @click="av.bg_colour=sw.token"></div>
+          </template>
+        </div>
+      </div>
+
+      <div class="ep-group" x-show="activeVariant==='3'">
+        <div class="ep-group-title">Background Image</div>
+        <div class="ep-upload-zone" @click="$refs.bgUpload.click()">
+          <div x-show="!av.bgImagePreview && !av.hasBgImage">🖼️ Click to upload<br><strong style="color:var(--navy);">Required for Full-bleed</strong></div>
+          <img x-show="av.bgImagePreview" :src="av.bgImagePreview" style="width:100%;border-radius:4px;max-height:70px;object-fit:cover;">
+          <div x-show="av.hasBgImage && !av.bgImagePreview" style="color:var(--emerald);font-weight:600;">Image set — click to replace</div>
+        </div>
+        <input type="file" accept="image/*" x-ref="bgUpload" style="display:none;"
+               @change="av.bgImageFile=$event.target.files[0]; av.bgImagePreview=URL.createObjectURL($event.target.files[0])">
+        <div class="ep-label" style="display:flex;justify-content:space-between;">Overlay colour <span style="cursor:pointer;font-size:11px;color:var(--text-muted);" @click="av.bg_overlay_colour='--forest'" title="Reset">↺</span></div>
+        <div class="ep-swatches">
+          <template x-for="sw in fieldSwatches('--forest')" :key="sw.token">
+            <div class="ep-swatch" :class="{ active: av.bg_overlay_colour===sw.token }" :style="'background:'+sw.hex" @click="av.bg_overlay_colour=sw.token"></div>
+          </template>
+        </div>
+        <div class="ep-label">Opacity: <strong x-text="av.bg_overlay_opacity+'%'"></strong></div>
+        <input type="range" style="width:100%;accent-color:var(--navy);margin-bottom:4px;" min="0" max="90" step="5" :value="av.bg_overlay_opacity" @input="av.bg_overlay_opacity=+$event.target.value">
+        <div style="display:flex;justify-content:space-between;font-size:9px;color:var(--text-muted);margin-bottom:8px;"><span>Transparent</span><span>Solid</span></div>
+      </div>
+
+      <div class="ep-divider"></div>
+
+      {# ── TEXT CONTENT ── #}
+      <div class="ep-group">
+        <div class="ep-group-title">Overline</div>
+        <input class="ep-input" type="text" :value="av.hero_overline" @input="av.hero_overline=$event.target.value" placeholder="e.g. New Arrivals">
+        <div class="ep-label" style="margin-top:4px;display:flex;justify-content:space-between;">Colour <span style="cursor:pointer;font-size:11px;color:var(--text-muted);" @click="av.overline_colour='--gold'" title="Reset">↺</span></div>
+        <div class="ep-swatches">
+          <template x-for="sw in fieldSwatches('--gold')" :key="sw.token">
+            <div class="ep-swatch" :class="{ active: av.overline_colour===sw.token }" :style="'background:'+sw.hex" @click="av.overline_colour=sw.token"></div>
+          </template>
+        </div>
+      </div>
+
+      <div class="ep-group">
+        <div class="ep-group-title">Headline</div>
+        <input class="ep-input" type="text" :value="av.hero_headline" @input="av.hero_headline=$event.target.value" placeholder="Main headline" maxlength="80">
+        <div class="ep-label" style="margin-top:4px;display:flex;justify-content:space-between;">Colour <span style="cursor:pointer;font-size:11px;color:var(--text-muted);" @click="av.heading_colour='--surface'" title="Reset">↺</span></div>
+        <div class="ep-swatches">
+          <template x-for="sw in fieldSwatches('--surface')" :key="sw.token">
+            <div class="ep-swatch" :class="{ active: av.heading_colour===sw.token }" :style="'background:'+sw.hex" @click="av.heading_colour=sw.token"></div>
+          </template>
+        </div>
+        <div class="ep-label">Size</div>
+        <div class="ep-seg">
+          <template x-for="s in [{v:'28px',l:'S'},{v:'36px',l:'M'},{v:'48px',l:'L'},{v:'60px',l:'XL'}]" :key="s.v">
+            <button class="ep-seg-btn" :class="{ active: av.heading_size===s.v }" @click="av.heading_size=s.v" x-text="s.l"></button>
+          </template>
+        </div>
+        <div class="ep-label">Style</div>
+        <div style="display:flex;gap:4px;margin-bottom:8px;">
+          <button class="ep-seg-btn" :class="{ active: av.heading_bold }" @click="av.heading_bold=!av.heading_bold" style="flex:none;padding:4px 10px;font-weight:700;">B</button>
+          <button class="ep-seg-btn" :class="{ active: av.heading_italic }" @click="av.heading_italic=!av.heading_italic" style="flex:none;padding:4px 10px;font-style:italic;">I</button>
+          <button class="ep-seg-btn" :class="{ active: av.heading_underline }" @click="av.heading_underline=!av.heading_underline" style="flex:none;padding:4px 10px;text-decoration:underline;">U</button>
+        </div>
+      </div>
+
+      <div class="ep-group">
+        <div class="ep-group-title">Text Content</div>
+        <input class="ep-input" type="text" :value="av.hero_subheading" @input="av.hero_subheading=$event.target.value" placeholder="Supporting text">
+        <div class="ep-label" style="margin-top:4px;display:flex;justify-content:space-between;">Colour <span style="cursor:pointer;font-size:11px;color:var(--text-muted);" @click="av.body_colour='--surface'" title="Reset">↺</span></div>
+        <div class="ep-swatches">
+          <template x-for="sw in fieldSwatches('--surface')" :key="sw.token">
+            <div class="ep-swatch" :class="{ active: av.body_colour===sw.token }" :style="'background:'+sw.hex" @click="av.body_colour=sw.token"></div>
+          </template>
+        </div>
+        <div class="ep-label">Size</div>
+        <div class="ep-seg">
+          <template x-for="s in [{v:'14px',l:'S'},{v:'16px',l:'M'},{v:'18px',l:'L'}]" :key="s.v">
+            <button class="ep-seg-btn" :class="{ active: av.body_size===s.v }" @click="av.body_size=s.v" x-text="s.l"></button>
+          </template>
+        </div>
+      </div>
+
+      <div class="ep-divider"></div>
+
+      {# ── BUTTON 1 ── #}
+      <div class="ep-group">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+          <div class="ep-group-title" style="margin-bottom:0;">Button 1</div>
+          <label class="ep-toggle"><input type="checkbox" :checked="av.btn1_enabled" @change="av.btn1_enabled=$event.target.checked"><span class="ep-toggle-slider"></span></label>
+        </div>
+        <div x-show="av.btn1_enabled">
+          <div class="ep-cols2" style="margin-bottom:8px;">
+            <div><div class="ep-label">Text</div><input class="ep-input" type="text" :value="av.hero_cta1_text" @input="av.hero_cta1_text=$event.target.value" placeholder="Shop Now"></div>
+            <div><div class="ep-label">Link</div><input class="ep-input" type="text" :value="av.hero_cta1_link" @input="av.hero_cta1_link=$event.target.value" placeholder="/products/"></div>
+          </div>
+          <div class="ep-label">Style</div>
+          <div class="ep-seg">
+            <template x-for="s in ['filled','outline','ghost']" :key="s">
+              <button class="ep-seg-btn" :class="{ active: av.btn1_style===s }" @click="av.btn1_style=s" x-text="s"></button>
+            </template>
+          </div>
+          <div class="ep-label" style="display:flex;justify-content:space-between;">Colour <span style="cursor:pointer;font-size:11px;color:var(--text-muted);" @click="av.btn1_colour='--gold'" title="Reset">↺</span></div>
+          <div class="ep-swatches">
+            <template x-for="sw in fieldSwatches('--gold')" :key="sw.token">
+              <div class="ep-swatch" :class="{ active: av.btn1_colour===sw.token }" :style="'background:'+sw.hex" @click="av.btn1_colour=sw.token"></div>
+            </template>
+          </div>
+        </div>
+      </div>
+
+      {# ── BUTTON 2 (not V3) ── #}
+      <div class="ep-group" x-show="activeVariant !== '3'">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+          <div class="ep-group-title" style="margin-bottom:0;">Button 2</div>
+          <label class="ep-toggle"><input type="checkbox" :checked="av.btn2_enabled" @change="av.btn2_enabled=$event.target.checked"><span class="ep-toggle-slider"></span></label>
+        </div>
+        <div x-show="av.btn2_enabled">
+          <div class="ep-cols2" style="margin-bottom:8px;">
+            <div><div class="ep-label">Text</div><input class="ep-input" type="text" :value="av.hero_cta2_text" @input="av.hero_cta2_text=$event.target.value" placeholder="Learn More"></div>
+            <div><div class="ep-label">Link</div><input class="ep-input" type="text" :value="av.hero_cta2_link" @input="av.hero_cta2_link=$event.target.value" placeholder="/about/"></div>
+          </div>
+          <div class="ep-label">Style</div>
+          <div class="ep-seg">
+            <template x-for="s in ['filled','outline','ghost']" :key="s">
+              <button class="ep-seg-btn" :class="{ active: av.btn2_style===s }" @click="av.btn2_style=s" x-text="s"></button>
+            </template>
+          </div>
+          <div class="ep-label" style="display:flex;justify-content:space-between;">Colour <span style="cursor:pointer;font-size:11px;color:var(--text-muted);" @click="av.btn2_colour='--surface'" title="Reset">↺</span></div>
+          <div class="ep-swatches">
+            <template x-for="sw in fieldSwatches('--surface')" :key="sw.token">
+              <div class="ep-swatch" :class="{ active: av.btn2_colour===sw.token }" :style="'background:'+sw.hex" @click="av.btn2_colour=sw.token"></div>
+            </template>
+          </div>
+        </div>
+      </div>
+
+      <div class="ep-divider"></div>
+
+      {# ── TOGGLES ── #}
+      <div class="ep-group">
+        <div class="ep-group-title">Options</div>
+        <div class="ep-toggle-row" x-show="activeVariant==='1'">
+          <span class="ep-toggle-label">Show deal card</span>
+          <label class="ep-toggle"><input type="checkbox" :checked="av.hero_show_deal_card" @change="av.hero_show_deal_card=$event.target.checked"><span class="ep-toggle-slider"></span></label>
+        </div>
+        <div x-show="activeVariant==='1' && av.hero_show_deal_card" style="margin-top:10px;">
+          <div class="ep-label">Deal products <span style="color:var(--text-muted);font-weight:400;">(up to 3)</span></div>
+          <template x-for="(slot, i) in [0,1,2]" :key="i">
+            <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;">
+              <select style="flex:1;height:30px;border:1px solid var(--border);border-radius:6px;padding:0 6px;font-family:'DM Sans',sans-serif;font-size:11px;background:var(--surface);color:var(--text);"
+                      :value="selectedDealIds[i]||''"
+                      @change="setDealProduct(i, +$event.target.value||null)">
+                <option value="">— None —</option>
+                <template x-for="p in dealProducts" :key="p.id">
+                  <option :value="p.id" :selected="selectedDealIds[i]===p.id" x-text="p.name"></option>
+                </template>
+              </select>
+              <button x-show="selectedDealIds[i]" @click="setDealProduct(i,null)"
+                      style="background:none;border:none;cursor:pointer;color:var(--text-muted);font-size:16px;line-height:1;padding:0 2px;">×</button>
+            </div>
+          </template>
+        </div>
+        <div class="ep-toggle-row" x-show="activeVariant==='3'">
+          <span class="ep-toggle-label">Show stats row</span>
+          <label class="ep-toggle"><input type="checkbox" :checked="av.hero_show_stats" @change="av.hero_show_stats=$event.target.checked"><span class="ep-toggle-slider"></span></label>
+        </div>
+      </div>
+
+      </div>{# end hero controls #}
+
+      {# ── CATEGORIES CONTROLS ── #}
+      <div x-show="activeKey==='categories'">
+        <div class="ep-group">
+          <div class="ep-group-title">Overline</div>
+          <input class="ep-input" type="text" :value="acv.overline" @input="acv.overline=$event.target.value" placeholder="e.g. Explore">
+          <div class="ep-label" style="margin-top:8px;display:flex;justify-content:space-between;">Colour <span style="cursor:pointer;font-size:11px;color:var(--text-muted);" @click="acv.overline_colour='--gold-muted'" title="Reset">↺</span></div>
+          <div class="ep-swatches">
+            <template x-for="sw in fieldSwatches('--gold-muted')" :key="sw.token">
+              <div class="ep-swatch" :class="{ active: acv.overline_colour===sw.token }" :style="'background:'+sw.hex" :title="sw.label" @click="acv.overline_colour=sw.token"></div>
+            </template>
+          </div>
+        </div>
+        <div class="ep-group">
+          <div class="ep-group-title">Heading</div>
+          <input class="ep-input" type="text" :value="acv.heading" @input="acv.heading=$event.target.value" placeholder="e.g. Shop by Category">
+          <div class="ep-label" style="margin-top:8px;">Size</div>
+          <div class="ep-seg">
+            <template x-for="s in [{v:'28px',l:'S'},{v:'38px',l:'M'},{v:'48px',l:'L'},{v:'60px',l:'XL'}]" :key="s.v">
+              <button class="ep-seg-btn" :class="{ active: acv.heading_size===s.v }" @click="acv.heading_size=s.v" x-text="s.l"></button>
+            </template>
+          </div>
+          <div class="ep-label" style="margin-top:8px;display:flex;justify-content:space-between;">Colour <span style="cursor:pointer;font-size:11px;color:var(--text-muted);" @click="acv.heading_colour='--forest'" title="Reset">↺</span></div>
+          <div class="ep-swatches">
+            <template x-for="sw in fieldSwatches('--forest')" :key="sw.token">
+              <div class="ep-swatch" :class="{ active: acv.heading_colour===sw.token }" :style="'background:'+sw.hex" :title="sw.label" @click="acv.heading_colour=sw.token"></div>
+            </template>
+          </div>
+        </div>
+        <div class="ep-group">
+          <div class="ep-group-title" style="display:flex;justify-content:space-between;">Background <span style="cursor:pointer;font-size:11px;color:var(--text-muted);" @click="acv.bg_colour='--base'" title="Reset">↺</span></div>
+          <div class="ep-swatches">
+            <template x-for="sw in fieldSwatches('--base')" :key="sw.token">
+              <div class="ep-swatch" :class="{ active: acv.bg_colour===sw.token }" :style="'background:'+sw.hex" :title="sw.label" @click="acv.bg_colour=sw.token"></div>
+            </template>
+          </div>
+        </div>
+        <div class="ep-group" x-show="['1','3','6'].includes(catVariant)">
+          <div class="ep-group-title">Category Settings</div>
+          <template x-for="(cat, i) in (catProducts.length ? catProducts : [{name:'Phones'},{name:'Laptops'},{name:'Audio'},{name:'Smart Home'},{name:'Wearables'},{name:'Accessories'}])" :key="i">
+            <div style="margin-bottom:16px;padding-bottom:16px;border-bottom:1px solid var(--border);">
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+                <span style="font-size:12px;font-weight:600;color:var(--text);" x-text="(cat.icon_name?cat.icon_name+' ':'')+cat.name"></span>
+                <label class="ep-toggle">
+                  <input type="checkbox" 
+                         :checked="acv.visible_categories.includes(i)" 
+                         @change="acv.visible_categories.includes(i) ? acv.visible_categories = acv.visible_categories.filter(idx => idx !== i) : acv.visible_categories.push(i)">
+                  <span class="ep-toggle-slider"></span>
+                </label>
+              </div>
+              <div class="ep-label" style="font-size:10px;margin-bottom:4px;display:flex;justify-content:space-between;">Text Colour <span style="cursor:pointer;font-size:11px;color:var(--text-muted);" @click="if(!acv.category_colors[i])acv.category_colors[i]={bg:'--forest',text:'--surface',icon:'--gold'};acv.category_colors[i]={...acv.category_colors[i],text:(i%3===0?'--surface':'--forest')};acv.category_colors=[...acv.category_colors]" title="Reset">↺</span></div>
+              <div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:8px;">
+                <template x-for="sw in fieldSwatches(i%3===1||i%3===2?'--forest':'--surface')" :key="sw.token">
+                  <div class="ep-swatch" style="width:20px;height:20px;" :class="{ active: acv.category_colors[i]?.text===sw.token }" :style="'background:'+sw.hex" @click="if(!acv.category_colors[i])acv.category_colors[i]={bg:'--forest',text:'--surface',icon:'--gold'};acv.category_colors[i]={...acv.category_colors[i],text:sw.token};acv.category_colors=[...acv.category_colors]"></div>
+                </template>
+              </div>
+              <div class="ep-label" style="font-size:10px;margin-bottom:4px;display:flex;justify-content:space-between;">Background Colour <span style="cursor:pointer;font-size:11px;color:var(--text-muted);" @click="if(!acv.category_colors[i])acv.category_colors[i]={bg:'--forest',text:'--surface',icon:'--gold'};acv.category_colors[i]={...acv.category_colors[i],bg:(i%3===0?'--forest':i%3===1?'--sage':'--gold')};acv.category_colors=[...acv.category_colors]" title="Reset">↺</span></div>
+              <div style="display:flex;gap:4px;flex-wrap:wrap;">
+                <template x-for="sw in fieldSwatches(i%3===0?'--forest':i%3===1?'--sage':'--gold')" :key="sw.token">
+                  <div class="ep-swatch" style="width:20px;height:20px;" :class="{ active: acv.category_colors[i]?.bg===sw.token }" :style="'background:'+sw.hex" @click="if(!acv.category_colors[i])acv.category_colors[i]={bg:'--forest',text:'--surface',icon:'--gold'};acv.category_colors[i]={...acv.category_colors[i],bg:sw.token};acv.category_colors=[...acv.category_colors]"></div>
+                </template>
+              </div>
+              <div class="ep-label" style="font-size:10px;margin-bottom:4px;margin-top:8px;display:flex;justify-content:space-between;">Icon Colour <span style="cursor:pointer;font-size:11px;color:var(--text-muted);" @click="if(!acv.category_colors[i])acv.category_colors[i]={bg:'--forest',text:'--surface',icon:'--gold'};acv.category_colors[i]={...acv.category_colors[i],icon:(i%3===2?'--forest':'--gold')};acv.category_colors=[...acv.category_colors]" title="Reset">↺</span></div>
+              <div style="display:flex;gap:4px;flex-wrap:wrap;">
+                <template x-for="sw in fieldSwatches(i%3===2?'--forest':'--gold')" :key="sw.token">
+                  <div class="ep-swatch" style="width:20px;height:20px;" :class="{ active: (acv.category_colors[i]?.icon||'--forest')===sw.token }" :style="'background:'+sw.hex" @click="if(!acv.category_colors[i])acv.category_colors[i]={bg:'--forest',text:'--surface',icon:'--gold'};acv.category_colors[i]={...acv.category_colors[i],icon:sw.token};acv.category_colors=[...acv.category_colors]"></div>
+                </template>
+              </div>
+            </div>
+          </template>
+        </div>
+        <div class="ep-group" x-show="catVariant==='2'">
+          <div class="ep-group-title">Category Settings (Variant B)</div>
+          <div style="font-size:11px;color:var(--text-muted);margin-bottom:8px;">First 5 categories only</div>
+          <template x-for="(cat, i) in (catProducts.length ? catProducts.slice(0,5) : [{name:'Phones'},{name:'Laptops'},{name:'Audio'},{name:'Smart Home'},{name:'Wearables'}])" :key="i">
+            <div style="margin-bottom:16px;padding-bottom:16px;border-bottom:1px solid var(--border);">
+              <div style="font-size:12px;font-weight:600;color:var(--text);margin-bottom:8px;" x-text="(cat.icon_name?cat.icon_name+' ':'')+cat.name"></div>
+              
+              <div class="ep-label" style="font-size:10px;margin-bottom:4px;">Background Image</div>
+              <input type="file" accept="image/*" style="font-size:11px;margin-bottom:8px;width:100%;" 
+                     @change="uploadCategoryImage($event, i)">
+              <div x-show="acv.category_settings[i]?.bg_image" style="font-size:10px;color:var(--text-muted);margin-bottom:8px;word-break:break-all;" x-text="acv.category_settings[i]?.bg_image"></div>
+              <button x-show="acv.category_settings[i]?.bg_image" @click="if(!acv.category_settings[i])acv.category_settings[i]={bg_image:null,bg_color:'--forest',overlay_color:'--forest',overlay_opacity:65,text_color:'--surface'};acv.category_settings[i]={...acv.category_settings[i],bg_image:null};acv.category_settings=[...acv.category_settings]" style="font-size:11px;padding:4px 8px;background:var(--danger);color:white;border:none;border-radius:4px;cursor:pointer;margin-bottom:8px;">Remove Image</button>
+              
+              <div class="ep-label" style="font-size:10px;margin-bottom:4px;">Background Colour</div>
+              <div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:8px;">
+                <template x-for="sw in fieldSwatches(i===0||i===3?'--sage':i===4?'--sage':i===1||i===2?'--forest':'--gold')" :key="sw.token">
+                  <div class="ep-swatch" style="width:20px;height:20px;" :class="{ active: acv.category_settings[i]?.bg_color===sw.token }" :style="'background:'+sw.hex" @click="if(!acv.category_settings[i])acv.category_settings[i]={bg_image:null,bg_color:'--forest',overlay_color:'--forest',overlay_opacity:65,text_color:'--surface'};acv.category_settings[i]={...acv.category_settings[i],bg_color:sw.token};acv.category_settings=[...acv.category_settings]"></div>
+                </template>
+              </div>
+              
+              <div class="ep-label" style="font-size:10px;margin-bottom:4px;">Overlay Colour</div>
+              <div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:8px;">
+                <template x-for="sw in fieldSwatches('--forest')" :key="sw.token">
+                  <div class="ep-swatch" style="width:20px;height:20px;" :class="{ active: acv.category_settings[i]?.overlay_color===sw.token }" :style="'background:'+sw.hex" @click="if(!acv.category_settings[i])acv.category_settings[i]={bg_image:null,bg_color:'--forest',overlay_color:'--forest',overlay_opacity:65,text_color:'--surface'};acv.category_settings[i]={...acv.category_settings[i],overlay_color:sw.token};acv.category_settings=[...acv.category_settings]"></div>
+                </template>
+              </div>
+              
+              <div class="ep-label" style="font-size:10px;margin-bottom:4px;">Overlay Opacity: <span x-text="(acv.category_settings[i]?.overlay_opacity||65)+'%'"></span></div>
+              <input type="range" min="0" max="100" style="width:100%;margin-bottom:8px;" 
+                     :value="acv.category_settings[i]?.overlay_opacity||65" 
+                     @input="if(!acv.category_settings[i])acv.category_settings[i]={bg_image:null,bg_color:'--forest',overlay_color:'--forest',overlay_opacity:65,text_color:'--surface'};acv.category_settings[i]={...acv.category_settings[i],overlay_opacity:parseInt($event.target.value)};acv.category_settings=[...acv.category_settings]">
+              
+              <div class="ep-label" style="font-size:10px;margin-bottom:4px;">Text Colour</div>
+              <div style="display:flex;gap:4px;flex-wrap:wrap;">
+                <template x-for="sw in fieldSwatches('--surface')" :key="sw.token">
+                  <div class="ep-swatch" style="width:20px;height:20px;" :class="{ active: acv.category_settings[i]?.text_color===sw.token }" :style="'background:'+sw.hex" @click="if(!acv.category_settings[i])acv.category_settings[i]={bg_image:null,bg_color:'--forest',overlay_color:'--forest',overlay_opacity:65,text_color:'--surface'};acv.category_settings[i]={...acv.category_settings[i],text_color:sw.token};acv.category_settings=[...acv.category_settings]"></div>
+                </template>
+              </div>
+            </div>
+          </template>
+        </div>
+        <div class="ep-group" x-show="!['1','2','3','6'].includes(catVariant)">
+          <div class="ep-group-title">Visible Categories</div>
+          <div style="font-size:11px;color:var(--text-muted);margin-bottom:8px;">Toggle which categories appear in this variant</div>
+          <template x-for="(cat, i) in (catProducts.length ? catProducts : [{name:'Phones'},{name:'Laptops'},{name:'Audio'},{name:'Smart Home'},{name:'Wearables'},{name:'Accessories'}])" :key="i">
+            <div class="ep-toggle-row">
+              <span class="ep-toggle-label" x-text="(cat.icon_name?cat.icon_name+' ':'')+cat.name"></span>
+              <label class="ep-toggle">
+                <input type="checkbox" 
+                       :checked="acv.visible_categories.includes(i)" 
+                       @change="acv.visible_categories.includes(i) ? acv.visible_categories = acv.visible_categories.filter(idx => idx !== i) : acv.visible_categories.push(i)">
+                <span class="ep-toggle-slider"></span>
+              </label>
+            </div>
+          </template>
+        </div>
+      </div>
+
+      {# ── FEATURED CONTROLS ── #}
+      <div x-show="activeKey==='featured'">
+
+        <div class="ep-group">
+          <div class="ep-group-title">Overline</div>
+          <input class="ep-input" type="text" :value="afv.overline" @input="setFv('overline',$event.target.value)" placeholder="e.g. Handpicked">
+          <div class="ep-label" style="margin-top:4px;display:flex;justify-content:space-between;">Colour <span style="cursor:pointer;font-size:11px;color:var(--text-muted);" @click="setFv('overline_colour','--gold-muted')" title="Reset">↺</span></div>
+          <div class="ep-swatches">
+            <template x-for="sw in fieldSwatches('--gold-muted')" :key="sw.token">
+              <div class="ep-swatch" :class="{ active: afv.overline_colour===sw.token }" :style="'background:'+sw.hex" @click="setFv('overline_colour',sw.token)"></div>
+            </template>
+          </div>
+        </div>
+
+        <div class="ep-group">
+          <div class="ep-group-title">Heading</div>
+          <input class="ep-input" type="text" :value="afv.heading" @input="setFv('heading',$event.target.value)" placeholder="Featured Products">
+          <div class="ep-label" style="margin-top:4px;display:flex;justify-content:space-between;">Colour <span style="cursor:pointer;font-size:11px;color:var(--text-muted);" @click="setFv('heading_colour','--forest')" title="Reset">↺</span></div>
+          <div class="ep-swatches">
+            <template x-for="sw in fieldSwatches('--forest')" :key="sw.token">
+              <div class="ep-swatch" :class="{ active: afv.heading_colour===sw.token }" :style="'background:'+sw.hex" @click="setFv('heading_colour',sw.token)"></div>
+            </template>
+          </div>
+          <div class="ep-label">Size</div>
+          <div class="ep-seg">
+            <template x-for="s in [{v:'28px',l:'S'},{v:'38px',l:'M'},{v:'48px',l:'L'},{v:'60px',l:'XL'}]" :key="s.v">
+              <button class="ep-seg-btn" :class="{ active: afv.heading_size===s.v }" @click="setFv('heading_size',s.v)" x-text="s.l"></button>
+            </template>
+          </div>
+        </div>
+
+        <div class="ep-group" x-show="featVariant!=='3'">
+          <div class="ep-group-title">Subheading</div>
+          <input class="ep-input" type="text" :value="afv.subheading" @input="setFv('subheading',$event.target.value)" placeholder="Optional supporting text">
+          <div class="ep-label" style="margin-top:4px;display:flex;justify-content:space-between;">Colour <span style="cursor:pointer;font-size:11px;color:var(--text-muted);" @click="setFv('subheading_colour','--text')" title="Reset">↺</span></div>
+          <div class="ep-swatches">
+            <template x-for="sw in fieldSwatches('--text')" :key="sw.token">
+              <div class="ep-swatch" :class="{ active: afv.subheading_colour===sw.token }" :style="'background:'+sw.hex" @click="setFv('subheading_colour',sw.token)"></div>
+            </template>
+          </div>
+        </div>
+
+        <div class="ep-group">
+          <div class="ep-group-title" style="display:flex;justify-content:space-between;">Background <span style="cursor:pointer;font-size:11px;color:var(--text-muted);" @click="setFv('bg_colour','--surface')" title="Reset">↺</span></div>
+          <div class="ep-swatches">
+            <template x-for="sw in fieldSwatches('--surface')" :key="sw.token">
+              <div class="ep-swatch" :class="{ active: afv.bg_colour===sw.token }" :style="'background:'+sw.hex" @click="setFv('bg_colour',sw.token)"></div>
+            </template>
+          </div>
+        </div>
+
+        <div class="ep-group" x-show="featVariant==='2'">
+          <div class="ep-group-title">Hero Product</div>
+          <select class="ep-input" @change="setFeatHero($event.target.value)">
+            <option value="">— Auto (first selected product) —</option>
+            <template x-for="p in featProducts.filter(p=>afv.product_ids.includes(p.id))" :key="p.id">
+              <option :value="p.id" :selected="afv.hero_product_id===p.id" x-text="p.name"></option>
+            </template>
+          </select>
+        </div>
+
+        <div class="ep-group">
+          <div class="ep-group-title">Products <span style="font-size:10px;color:var(--text-muted);" x-text="'('+afv.product_ids.length+'/'+(featVariant==='2'?5:8)+')'"></span></div>
+          <input class="ep-input" type="text" x-model="featSearch" placeholder="Search products…" style="margin-bottom:8px;">
+          <div style="max-height:200px;overflow-y:auto;border:1px solid var(--border);border-radius:var(--r);">
+            <template x-for="p in featProducts.filter(p=>!featSearch||p.name.toLowerCase().includes(featSearch.toLowerCase())).sort((a,b)=>{ const ai=afv.product_ids.includes(a.id), bi=afv.product_ids.includes(b.id); return ai===bi?0:ai?-1:1; })" :key="p.id">
+              <label style="display:flex;align-items:center;gap:8px;padding:7px 10px;border-bottom:1px solid var(--border);cursor:pointer;font-size:12px;">
+                <input type="checkbox"
+                  :checked="afv.product_ids.includes(p.id)"
+                  :disabled="!afv.product_ids.includes(p.id) && afv.product_ids.length >= (featVariant==='2'?5:8)"
+                  @change="toggleFeatProduct(p.id)">
+                <span style="flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" x-text="p.name"></span>
+                <span style="color:var(--emerald);font-weight:600;font-size:11px;" x-text="'KES '+p.effective_price.toLocaleString()"></span>
+              </label>
+            </template>
+          </div>
+        </div>
+
+        <div class="ep-group" x-show="featVariant!=='3'">
+          <div class="ep-group-title">View All Link</div>
+          <input class="ep-input" type="text" :value="afv.view_all_link" @input="setFv('view_all_link',$event.target.value)" placeholder="/products/">
+          <div class="ep-label" style="margin-top:4px;display:flex;justify-content:space-between;">Colour <span style="cursor:pointer;font-size:11px;color:var(--text-muted);" @click="setFv('view_all_colour','--forest')" title="Reset">↺</span></div>
+          <div class="ep-swatches">
+            <template x-for="sw in fieldSwatches('--forest')" :key="sw.token">
+              <div class="ep-swatch" :class="{ active: afv.view_all_colour===sw.token }" :style="'background:'+sw.hex" @click="setFv('view_all_colour',sw.token)"></div>
+            </template>
+          </div>
+          <div class="ep-label" style="margin-top:4px;font-size:10px;">Leave blank to hide the link</div>
+        </div>
+
+      </div>
+
+      {# ── DEALS CONTROLS ── #}
+      <div x-show="activeKey==='deals'">
+
+        {# ── V2-only: Timer + Banner ── #}
+        <div x-show="dealsVariant==='2'">
+          <div class="ep-group">
+            <div class="ep-group-title">Countdown Timer</div>
+            <div class="ep-toggle-row" style="margin-bottom:8px;">
+              <span class="ep-toggle-label">Show timer</span>
+              <label class="ep-toggle"><input type="checkbox" :checked="adv.timer_visible" @change="setDv('timer_visible',$event.target.checked)"><span class="ep-toggle-slider"></span></label>
+            </div>
+            <div class="ep-label">End date &amp; time</div>
+            <input class="ep-input" type="datetime-local" :value="adv.timer_end" @input="setDv('timer_end',$event.target.value)" style="margin-bottom:6px;">
+            <div class="ep-label">Font size</div>
+            <div class="ep-seg">
+              <template x-for="s in [{v:'24px',l:'S'},{v:'32px',l:'M'},{v:'40px',l:'L'},{v:'52px',l:'XL'}]" :key="s.v">
+                <button class="ep-seg-btn" :class="{ active: adv.timer_size===s.v }" @click="setDv('timer_size',s.v)" x-text="s.l"></button>
+              </template>
+            </div>
+            <div class="ep-label" style="margin-top:6px;">Position</div>
+            <div class="ep-seg">
+              <template x-for="p in [{v:'banner',l:'Banner'},{v:'inline',l:'Inline'},{v:'below',l:'Below'}]" :key="p.v">
+                <button class="ep-seg-btn" :class="{ active: adv.timer_position===p.v }" @click="setDv('timer_position',p.v)" x-text="p.l"></button>
+              </template>
+            </div>
+            <div class="ep-label" style="margin-top:6px;">Alignment</div>
+            <div class="ep-seg">
+              <template x-for="a in [{v:'left',l:'L'},{v:'center',l:'C'},{v:'right',l:'R'}]" :key="a.v">
+                <button class="ep-seg-btn" :class="{ active: adv.timer_align===a.v }" @click="setDv('timer_align',a.v)" x-text="a.l"></button>
+              </template>
+            </div>
+          </div>
+
+          {# Banner controls — only relevant when position=banner #}
+          <div class="ep-group" x-show="adv.timer_position==='banner'">
+            <div class="ep-group-title">Banner</div>
+            <div class="ep-label" style="display:flex;justify-content:space-between;">Background <span style="cursor:pointer;font-size:11px;color:var(--text-muted);" @click="setDv('banner_bg','--gold')" title="Reset">↺</span></div>
+            <div class="ep-swatches">
+              <template x-for="sw in fieldSwatches('--gold')" :key="sw.token">
+                <div class="ep-swatch" :class="{ active: adv.banner_bg===sw.token }" :style="'background:'+sw.hex" @click="setDv('banner_bg',sw.token)"></div>
+              </template>
+            </div>
+            <div class="ep-label" style="margin-top:6px;display:flex;justify-content:space-between;">Text colour <span style="cursor:pointer;font-size:11px;color:var(--text-muted);" @click="setDv('banner_text','--forest')" title="Reset">↺</span></div>
+            <div class="ep-swatches">
+              <template x-for="sw in fieldSwatches('--forest')" :key="sw.token">
+                <div class="ep-swatch" :class="{ active: adv.banner_text===sw.token }" :style="'background:'+sw.hex" @click="setDv('banner_text',sw.token)"></div>
+              </template>
+            </div>
+          </div>
+
+          {# Flash Sale Label — shown for all positions #}
+          <div class="ep-group">
+            <div class="ep-group-title">Flash Sale Label</div>
+            <div class="ep-toggle-row" style="margin-bottom:8px;">
+              <span class="ep-toggle-label">Show label</span>
+              <label class="ep-toggle"><input type="checkbox" :checked="adv.banner_label_visible" @change="setDv('banner_label_visible',$event.target.checked)"><span class="ep-toggle-slider"></span></label>
+            </div>
+            <input class="ep-input" type="text" :value="adv.banner_label" @input="setDv('banner_label',$event.target.value)" placeholder="🔥 Flash Sale ends in:">
+            <div class="ep-label" style="margin-top:4px;">Size</div>
+            <div class="ep-seg">
+              <template x-for="s in [{v:'13px',l:'S'},{v:'16px',l:'M'},{v:'18px',l:'L'},{v:'22px',l:'XL'}]" :key="s.v">
+                <button class="ep-seg-btn" :class="{ active: adv.banner_label_size===s.v }" @click="setDv('banner_label_size',s.v)" x-text="s.l"></button>
+              </template>
+            </div>
+            <div class="ep-label" style="margin-top:6px;display:flex;justify-content:space-between;">Colour <span style="cursor:pointer;font-size:11px;color:var(--text-muted);" @click="setDv('banner_text','--forest')" title="Reset">↺</span></div>
+            <div class="ep-swatches">
+              <template x-for="sw in fieldSwatches('--forest')" :key="sw.token">
+                <div class="ep-swatch" :class="{ active: adv.banner_text===sw.token }" :style="'background:'+sw.hex" @click="setDv('banner_text',sw.token)"></div>
+              </template>
+            </div>
+          </div>
+        </div>
+
+        <div class="ep-group">
+          <div class="ep-group-title">Heading</div>
+          <input class="ep-input" type="text" :value="adv.heading" @input="setDv('heading',$event.target.value)" placeholder="Today's Deals">
+          <div class="ep-label" style="margin-top:4px;display:flex;justify-content:space-between;">Colour <span style="cursor:pointer;font-size:11px;color:var(--text-muted);" @click="setDv('heading_colour','--surface')" title="Reset">↺</span></div>
+          <div class="ep-swatches">
+            <template x-for="sw in fieldSwatches('--surface')" :key="sw.token">
+              <div class="ep-swatch" :class="{ active: adv.heading_colour===sw.token }" :style="'background:'+sw.hex" @click="setDv('heading_colour',sw.token)"></div>
+            </template>
+          </div>
+          <div class="ep-label">Size</div>
+          <div class="ep-seg">
+            <template x-for="s in [{v:'28px',l:'S'},{v:'38px',l:'M'},{v:'48px',l:'L'},{v:'60px',l:'XL'}]" :key="s.v">
+              <button class="ep-seg-btn" :class="{ active: adv.heading_size===s.v }" @click="setDv('heading_size',s.v)" x-text="s.l"></button>
+            </template>
+          </div>
+        </div>
+
+        <div class="ep-group">
+          <div class="ep-group-title">Subheading</div>
+          <input class="ep-input" type="text" :value="adv.subheading" @input="setDv('subheading',$event.target.value)" placeholder="Optional supporting text">
+          <div class="ep-label" style="margin-top:4px;">Size</div>
+          <div class="ep-seg">
+            <template x-for="s in [{v:'13px',l:'S'},{v:'16px',l:'M'},{v:'18px',l:'L'},{v:'22px',l:'XL'}]" :key="s.v">
+              <button class="ep-seg-btn" :class="{ active: adv.subheading_size===s.v }" @click="setDv('subheading_size',s.v)" x-text="s.l"></button>
+            </template>
+          </div>
+          <div class="ep-label" style="display:flex;justify-content:space-between;">Colour <span style="cursor:pointer;font-size:11px;color:var(--text-muted);" @click="setDv('subheading_colour','--surface')" title="Reset">↺</span></div>
+          <div class="ep-swatches">
+            <template x-for="sw in fieldSwatches('--surface')" :key="sw.token">
+              <div class="ep-swatch" :class="{ active: adv.subheading_colour===sw.token }" :style="'background:'+sw.hex" @click="setDv('subheading_colour',sw.token)"></div>
+            </template>
+          </div>
+        </div>
+
+        <div class="ep-group">
+          <div class="ep-group-title">Products <span style="font-size:10px;color:var(--text-muted);" x-text="'('+adv.product_ids.length+'/8)'"></span></div>
+          <input class="ep-input" type="text" x-model="dealsSearch" placeholder="Search sale products…" style="margin-bottom:8px;">
+          <div style="max-height:200px;overflow-y:auto;border:1px solid var(--border);border-radius:var(--r);">
+            <template x-for="p in dealsProducts.filter(p=>!dealsSearch||p.name.toLowerCase().includes(dealsSearch.toLowerCase())).sort((a,b)=>{const ai=adv.product_ids.includes(a.id),bi=adv.product_ids.includes(b.id);return ai===bi?0:ai?-1:1;})" :key="p.id">
+              <label style="display:flex;align-items:center;gap:8px;padding:7px 10px;border-bottom:1px solid var(--border);cursor:pointer;font-size:12px;">
+                <input type="checkbox"
+                  :checked="adv.product_ids.includes(p.id)"
+                  :disabled="!adv.product_ids.includes(p.id) && adv.product_ids.length >= 8"
+                  @change="toggleDealProduct(p.id)">
+                <span style="flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" x-text="p.name"></span>
+                <span style="color:var(--emerald);font-weight:600;font-size:11px;" x-text="'KES '+p.effective_price.toLocaleString()"></span>
+              </label>
+            </template>
+          </div>
+        </div>
+
+        <div class="ep-group">
+          <div class="ep-group-title">See All Link</div>
+          <input class="ep-input" type="text" :value="adv.view_all_link" @input="setDv('view_all_link',$event.target.value)" placeholder="/products/?sale=1">
+          <div class="ep-label" style="margin-top:4px;display:flex;justify-content:space-between;">Colour <span style="cursor:pointer;font-size:11px;color:var(--text-muted);" @click="setDv('view_all_colour','--gold')" title="Reset">↺</span></div>
+          <div class="ep-swatches">
+            <template x-for="sw in fieldSwatches('--gold')" :key="sw.token">
+              <div class="ep-swatch" :class="{ active: adv.view_all_colour===sw.token }" :style="'background:'+sw.hex" @click="setDv('view_all_colour',sw.token)"></div>
+            </template>
+          </div>
+        </div>
+
+      </div>
+
+      {# ── BESTSELLERS CONTROLS ── #}
+      <div x-show="activeKey==='bestsellers'">
+
+        <div class="ep-group">
+          <div class="ep-group-title" style="display:flex;justify-content:space-between;">Background <span style="cursor:pointer;font-size:11px;color:var(--text-muted);" @click="bs={...bs,bg_colour:'--surface-alt'}" title="Reset">↺</span></div>
+          <div class="ep-swatches">
+            <template x-for="sw in fieldSwatches('--surface-alt')" :key="sw.token">
+              <div class="ep-swatch" :class="{ active: bs.bg_colour===sw.token }" :style="'background:'+sw.hex" @click="bs={...bs,bg_colour:sw.token}"></div>
+            </template>
+          </div>
+        </div>
+
+        <div class="ep-group">
+          <div class="ep-group-title">Heading</div>
+          <input class="ep-input" type="text" :value="bs.heading" @input="bs={...bs,heading:$event.target.value}" placeholder="Best Sellers">
+          <div class="ep-label" style="margin-top:4px;display:flex;justify-content:space-between;">Colour <span style="cursor:pointer;font-size:11px;color:var(--text-muted);" @click="bs={...bs,heading_colour:'--forest'}" title="Reset">↺</span></div>
+          <div class="ep-swatches">
+            <template x-for="sw in fieldSwatches('--forest')" :key="sw.token">
+              <div class="ep-swatch" :class="{ active: bs.heading_colour===sw.token }" :style="'background:'+sw.hex" @click="bs={...bs,heading_colour:sw.token}"></div>
+            </template>
+          </div>
+          <div class="ep-label" style="margin-top:4px;">Size</div>
+          <div class="ep-seg">
+            <template x-for="s in [{v:'28px',l:'S'},{v:'38px',l:'M'},{v:'48px',l:'L'},{v:'60px',l:'XL'}]" :key="s.v">
+              <button class="ep-seg-btn" :class="{ active: bs.heading_size===s.v }" @click="bs={...bs,heading_size:s.v}" x-text="s.l"></button>
+            </template>
+          </div>
+        </div>
+
+        <div class="ep-group">
+          <div class="ep-group-title">Subheading</div>
+          <input class="ep-input" type="text" :value="bs.subheading" @input="bs={...bs,subheading:$event.target.value}" placeholder="Optional supporting text">
+          <div class="ep-label" style="margin-top:4px;display:flex;justify-content:space-between;">Colour <span style="cursor:pointer;font-size:11px;color:var(--text-muted);" @click="bs={...bs,subheading_colour:'--text'}" title="Reset">↺</span></div>
+          <div class="ep-swatches">
+            <template x-for="sw in fieldSwatches('--text')" :key="sw.token">
+              <div class="ep-swatch" :class="{ active: bs.subheading_colour===sw.token }" :style="'background:'+sw.hex" @click="bs={...bs,subheading_colour:sw.token}"></div>
+            </template>
+          </div>
+          <div class="ep-label" style="margin-top:4px;">Size</div>
+          <div class="ep-seg">
+            <template x-for="s in [{v:'13px',l:'S'},{v:'16px',l:'M'},{v:'18px',l:'L'},{v:'22px',l:'XL'}]" :key="s.v">
+              <button class="ep-seg-btn" :class="{ active: bs.subheading_size===s.v }" @click="bs={...bs,subheading_size:s.v}" x-text="s.l"></button>
+            </template>
+          </div>
+        </div>
+
+        <div class="ep-group">
+          <div class="ep-group-title">Products (<span x-text="bs.product_ids.length"></span>/8)</div>
+          <input class="ep-input" type="text" x-model="bsSearch" placeholder="Search products…" style="margin-bottom:6px;">
+          <div style="max-height:220px;overflow-y:auto;">
+            <template x-for="p in bsProducts.filter(p=>!bsSearch||p.name.toLowerCase().includes(bsSearch.toLowerCase())).sort((a,b)=>bs.product_ids.includes(b.id)-bs.product_ids.includes(a.id))" :key="p.id">
+              <label style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid var(--border);cursor:pointer;font-size:12px;">
+                <input type="checkbox"
+                  :checked="bs.product_ids.includes(p.id)"
+                  :disabled="!bs.product_ids.includes(p.id) && bs.product_ids.length >= 8"
+                  @change="bs={...bs,product_ids:bs.product_ids.includes(p.id)?bs.product_ids.filter(id=>id!==p.id):(bs.product_ids.length<8?[...bs.product_ids,p.id]:bs.product_ids)}">
+                <span style="flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" x-text="p.name"></span>
+                <span style="color:var(--emerald);font-weight:600;font-size:11px;" x-text="'KES '+p.effective_price.toLocaleString()"></span>
+              </label>
+            </template>
+          </div>
+        </div>
+
+      </div>
+
+      {# ── STORY CONTROLS ── #}
+      <div x-show="activeKey==='story'">
+
+        <div class="ep-group">
+          <div class="ep-group-title">Overline</div>
+          <div class="ep-toggle-row" style="margin-bottom:8px;">
+            <span class="ep-toggle-label">Show overline</span>
+            <label class="ep-toggle"><input type="checkbox" :checked="asv.overline_visible" @change="setSv('overline_visible',$event.target.checked)"><span class="ep-toggle-slider"></span></label>
+          </div>
+          <input class="ep-input" type="text" :value="asv.overline" @input="setSv('overline',$event.target.value)" placeholder="Our Story">
+          <div class="ep-label" style="margin-top:4px;display:flex;justify-content:space-between;">Colour <span style="cursor:pointer;font-size:11px;color:var(--text-muted);" @click="setSv('overline_colour','--gold-muted')" title="Reset">↺</span></div>
+          <div class="ep-swatches">
+            <template x-for="sw in fieldSwatches('--gold-muted')" :key="sw.token">
+              <div class="ep-swatch" :class="{ active: asv.overline_colour===sw.token }" :style="'background:'+sw.hex" @click="setSv('overline_colour',sw.token)"></div>
+            </template>
+          </div>
+        </div>
+
+        <div class="ep-group">
+          <div class="ep-group-title">Heading</div>
+          <input class="ep-input" type="text" :value="asv.heading" @input="setSv('heading',$event.target.value)" placeholder="Bringing you the best in technology">
+          <div class="ep-label" style="margin-top:4px;display:flex;justify-content:space-between;">Colour <span style="cursor:pointer;font-size:11px;color:var(--text-muted);" @click="setSv('heading_colour','--forest')" title="Reset">↺</span></div>
+          <div class="ep-swatches">
+            <template x-for="sw in fieldSwatches('--forest')" :key="sw.token">
+              <div class="ep-swatch" :class="{ active: asv.heading_colour===sw.token }" :style="'background:'+sw.hex" @click="setSv('heading_colour',sw.token)"></div>
+            </template>
+          </div>
+          <div class="ep-label" style="margin-top:4px;">Size</div>
+          <div class="ep-seg">
+            <template x-for="s in [{v:'28px',l:'S'},{v:'36px',l:'M'},{v:'44px',l:'L'},{v:'56px',l:'XL'}]" :key="s.v">
+              <button class="ep-seg-btn" :class="{ active: asv.heading_size===s.v }" @click="setSv('heading_size',s.v)" x-text="s.l"></button>
+            </template>
+          </div>
+        </div>
+
+        <div class="ep-group">
+          <div class="ep-group-title">Body Text</div>
+          <textarea class="ep-input" rows="3" :value="asv.body" @input="setSv('body',$event.target.value)" placeholder="We believe great technology…" style="resize:vertical;"></textarea>
+          <div class="ep-label" style="margin-top:4px;display:flex;justify-content:space-between;">Colour <span style="cursor:pointer;font-size:11px;color:var(--text-muted);" @click="setSv('body_colour','--text')" title="Reset">↺</span></div>
+          <div class="ep-swatches">
+            <template x-for="sw in fieldSwatches('--text')" :key="sw.token">
+              <div class="ep-swatch" :class="{ active: asv.body_colour===sw.token }" :style="'background:'+sw.hex" @click="setSv('body_colour',sw.token)"></div>
+            </template>
+          </div>
+          <div class="ep-label" style="margin-top:4px;">Size</div>
+          <div class="ep-seg">
+            <template x-for="s in [{v:'13px',l:'S'},{v:'16px',l:'M'},{v:'18px',l:'L'},{v:'20px',l:'XL'}]" :key="s.v">
+              <button class="ep-seg-btn" :class="{ active: asv.body_size===s.v }" @click="setSv('body_size',s.v)" x-text="s.l"></button>
+            </template>
+          </div>
+        </div>
+
+        <div class="ep-group">
+          <div class="ep-group-title">CTA Button</div>
+          <div class="ep-toggle-row" style="margin-bottom:8px;">
+            <span class="ep-toggle-label">Show button</span>
+            <label class="ep-toggle"><input type="checkbox" :checked="asv.cta_visible" @change="setSv('cta_visible',$event.target.checked)"><span class="ep-toggle-slider"></span></label>
+          </div>
+          <input class="ep-input" type="text" :value="asv.cta_text" @input="setSv('cta_text',$event.target.value)" placeholder="Learn More →" style="margin-bottom:4px;">
+          <input class="ep-input" type="text" :value="asv.cta_link" @input="setSv('cta_link',$event.target.value)" placeholder="/about/">
+          <div class="ep-label" style="margin-top:4px;display:flex;justify-content:space-between;">Colour <span style="cursor:pointer;font-size:11px;color:var(--text-muted);" @click="setSv('cta_colour','--forest')" title="Reset">↺</span></div>
+          <div class="ep-swatches">
+            <template x-for="sw in fieldSwatches('--forest')" :key="sw.token">
+              <div class="ep-swatch" :class="{ active: asv.cta_colour===sw.token }" :style="'background:'+sw.hex" @click="setSv('cta_colour',sw.token)"></div>
+            </template>
+          </div>
+          <div class="ep-label" style="margin-top:4px;">Style</div>
+          <div class="ep-seg">
+            <template x-for="s in [{v:'filled',l:'Fill'},{v:'outline',l:'Out'},{v:'ghost',l:'Ghost'}]" :key="s.v">
+              <button class="ep-seg-btn" :class="{ active: asv.cta_style===s.v }" @click="setSv('cta_style',s.v)" x-text="s.l"></button>
+            </template>
+          </div>
+        </div>
+
+        <div class="ep-group">
+          <div class="ep-group-title" style="display:flex;justify-content:space-between;">Background <span style="cursor:pointer;font-size:11px;color:var(--text-muted);" @click="setSv('bg_colour','--surface-alt')" title="Reset">↺</span></div>
+          <div class="ep-swatches">
+            <template x-for="sw in fieldSwatches('--surface-alt')" :key="sw.token">
+              <div class="ep-swatch" :class="{ active: asv.bg_colour===sw.token }" :style="'background:'+sw.hex" @click="setSv('bg_colour',sw.token)"></div>
+            </template>
+          </div>
+        </div>
+
+        <div class="ep-group">
+          <div class="ep-group-title">Image</div>
+          <div class="ep-toggle-row" style="margin-bottom:8px;">
+            <span class="ep-toggle-label">Show image</span>
+            <label class="ep-toggle"><input type="checkbox" :checked="asv.image_visible" @change="setSv('image_visible',$event.target.checked)"><span class="ep-toggle-slider"></span></label>
+          </div>
+          <div x-show="asv.image_visible">
+            <label class="ep-label" style="display:block;margin-bottom:4px;">Upload image</label>
+            <input type="file" accept="image/*" @change="uploadStoryImage($event)" style="font-size:11px;width:100%;">
+            <div x-show="asv.image_url" style="margin-top:6px;border-radius:6px;overflow:hidden;aspect-ratio:4/3;">
+              <img :src="asv.image_url" style="width:100%;height:100%;object-fit:cover;">
+            </div>
+          </div>
+          <div x-show="!asv.image_visible">
+            <div class="ep-label" style="display:flex;justify-content:space-between;">Image area background <span style="cursor:pointer;font-size:11px;color:var(--text-muted);" @click="setSv('image_bg_colour','--sage')" title="Reset">↺</span></div>
+            <div class="ep-swatches">
+              <template x-for="sw in fieldSwatches('--sage')" :key="sw.token">
+                <div class="ep-swatch" :class="{ active: asv.image_bg_colour===sw.token }" :style="'background:'+sw.hex" @click="setSv('image_bg_colour',sw.token)"></div>
+              </template>
+            </div>
+          </div>
+          {# V3-only: overlay + height #}
+          <div x-show="storyVariant==='3' && asv.image_visible" style="margin-top:8px;">
+            <div class="ep-label" style="display:flex;justify-content:space-between;">Overlay colour <span style="cursor:pointer;font-size:11px;color:var(--text-muted);" @click="setSv('overlay_colour','--forest')" title="Reset">↺</span></div>
+            <div class="ep-swatches">
+              <template x-for="sw in fieldSwatches('--forest')" :key="sw.token">
+                <div class="ep-swatch" :class="{ active: asv.overlay_colour===sw.token }" :style="'background:'+sw.hex" @click="setSv('overlay_colour',sw.token)"></div>
+              </template>
+            </div>
+            <div class="ep-label" style="margin-top:6px;">Overlay opacity: <span x-text="asv.overlay_opacity+'%'"></span></div>
+            <input type="range" min="0" max="90" step="5" :value="asv.overlay_opacity" @input="setSv('overlay_opacity',parseInt($event.target.value))" style="width:100%;">
+          </div>
+          <div x-show="storyVariant==='3'" style="margin-top:8px;">
+            <div class="ep-label">Image height</div>
+            <div class="ep-seg">
+              <template x-for="s in [{v:'30vh',l:'S'},{v:'40vh',l:'M'},{v:'55vh',l:'L'}]" :key="s.v">
+                <button class="ep-seg-btn" :class="{ active: asv.image_height===s.v }" @click="setSv('image_height',s.v)" x-text="s.l"></button>
+              </template>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      {# ── FOOTER CONTROLS ── #}
+      <div x-show="activeKey==='footer'">
+
+        <div class="ep-group">
+          <div class="ep-group-title">Navigation</div>
+          <div class="ep-toggle-row">
+            <span class="ep-toggle-label">Show category nav bar</span>
+            <label class="ep-toggle"><input type="checkbox" x-model="footer.nav_categories_visible"><span class="ep-toggle-slider"></span></label>
+          </div>
+        </div>
+
+        <div class="ep-group">
+          <div class="ep-group-title">Brand</div>
+          <div class="ep-label">Store Name</div>
+          <input class="ep-input" type="text" x-model="footer.store_name" placeholder="Mutisya">
+          <div class="ep-label">Tagline</div>
+          <input class="ep-input" type="text" x-model="footer.tagline" placeholder="Leave blank to hide">
+        </div>
+
+        <div class="ep-group">
+          <div class="ep-group-title">Social Links</div>
+          <div class="ep-label">Instagram URL</div>
+          <input class="ep-input" type="text" x-model="footer.ig_url" placeholder="https://instagram.com/…">
+          <div class="ep-label">TikTok URL</div>
+          <input class="ep-input" type="text" x-model="footer.tiktok_url" placeholder="https://tiktok.com/…">
+          <div class="ep-label">X (Twitter) URL</div>
+          <input class="ep-input" type="text" x-model="footer.x_url" placeholder="https://x.com/…">
+        </div>
+
+        <div class="ep-group">
+          <div class="ep-group-title">Shop Links</div>
+          <template x-for="(link, i) in footer.shop_links" :key="i">
+            <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;">
+              <label class="ep-toggle" style="flex-shrink:0;"><input type="checkbox" :checked="link.visible" @change="footer.shop_links[i]={...link,visible:$event.target.checked}"><span class="ep-toggle-slider"></span></label>
+              <input class="ep-input" style="flex:1;margin:0;" type="text" :value="link.label" @input="footer.shop_links[i]={...link,label:$event.target.value}" placeholder="Label">
+              <input class="ep-input" style="flex:1;margin:0;" type="text" :value="link.url" @input="footer.shop_links[i]={...link,url:$event.target.value}" placeholder="/url/">
+            </div>
+          </template>
+        </div>
+
+        <div class="ep-group">
+          <div class="ep-group-title">Help Links</div>
+          <template x-for="(link, i) in footer.help_links" :key="i">
+            <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;">
+              <label class="ep-toggle" style="flex-shrink:0;"><input type="checkbox" :checked="link.visible" @change="footer.help_links[i]={...link,visible:$event.target.checked}"><span class="ep-toggle-slider"></span></label>
+              <input class="ep-input" style="flex:1;margin:0;" type="text" :value="link.label" @input="footer.help_links[i]={...link,label:$event.target.value}" placeholder="Label">
+              <input class="ep-input" style="flex:1;margin:0;" type="text" :value="link.url" @input="footer.help_links[i]={...link,url:$event.target.value}" placeholder="/url/">
+            </div>
+          </template>
+        </div>
+
+        <div class="ep-group">
+          <div class="ep-group-title">Bottom Bar</div>
+          <div class="ep-label">Privacy Policy URL</div>
+          <input class="ep-input" type="text" x-model="footer.privacy_url" placeholder="/privacy/ (leave blank to hide)">
+          <div class="ep-label">Terms URL</div>
+          <input class="ep-input" type="text" x-model="footer.terms_url" placeholder="/terms/ (leave blank to hide)">
+        </div>
+
+      </div>
+
+    </div>{# end right-body #}
+
+    <div class="ep-right-foot">
+      <button class="btn btn-navy" style="width:100%;" @click="activeKey==='categories' ? saveCat() : activeKey==='featured' ? saveFeat() : activeKey==='deals' ? saveDeals() : activeKey==='bestsellers' ? saveBestsellers() : activeKey==='story' ? saveStory() : activeKey==='footer' ? saveFooter() : saveAll()" :disabled="saving">
+        <span x-text="saving?'Saving…':'Save Changes'"></span>
+      </button>
+    </div>
+  </div>
+
+  <div class="ep-toast" :class="{ show: toastVisible }" x-text="toastMsg"></div>
+
+</div>{# end editor-shell #}
+{% endblock %}
+{% block extra_js %}
+<script>
+function heroEditor() { try { return _heroEditor(); } catch(e) { console.error('[heroEditor] THREW:', e); return { activeKey:'hero', sectionVisibility:{}, v1:{}, v2:{}, v3:{}, scale:1, vpH:300, vpInnerH:600, toastMsg:'', toastVisible:false }; } }
+function _heroEditor() {
+  // Default state factory for a variant
+  function variantDefaults(overrides) {
+    return Object.assign({
+      hero_overline: '{{ settings.hero_overline|escapejs }}',
+      hero_headline: '{{ settings.hero_headline|escapejs }}',
+      hero_subheading: '{{ settings.hero_subheading|escapejs }}',
+      hero_cta1_text: '{{ settings.hero_cta1_text|escapejs }}',
+      hero_cta1_link: '{{ settings.hero_cta1_link|escapejs }}',
+      hero_cta2_text: '{{ settings.hero_cta2_text|escapejs }}',
+      hero_cta2_link: '{{ settings.hero_cta2_link|escapejs }}',
+      hero_show_deal_card: {{ saved_show_deal_card }},
+      hero_show_stats: {{ saved_show_stats }},
+      overline_colour: '{{ saved_overline_colour }}',
+      heading_bold: true,
+      heading_italic: false,
+      heading_underline: false,
+      bg_mode: '{{ hero_section.bg_mode }}',
+      bg_colour: '{{ hero_section.bg_colour }}',
+      bg_overlay_colour: '{{ hero_section.bg_overlay_colour }}',
+      bg_overlay_opacity: {{ hero_section.bg_overlay_opacity }},
+      heading_colour: '{{ hero_section.heading_colour }}',
+      heading_size: '{{ hero_section.heading_size }}',
+      heading_weight: '{{ hero_section.heading_weight }}',
+      body_colour: '{{ hero_section.body_colour }}',
+      body_size: '{{ hero_section.body_size }}',
+      btn1_enabled: {{ hero_section.btn1_enabled|yesno:'true,false' }},
+      btn1_style: '{{ hero_section.btn1_style }}',
+      btn1_colour: '{{ hero_section.btn1_colour }}',
+      btn2_enabled: {{ hero_section.btn2_enabled|yesno:'true,false' }},
+      btn2_style: '{{ hero_section.btn2_style }}',
+      btn2_colour: '{{ hero_section.btn2_colour }}',
+      bgImageFile: null,
+      bgImagePreview: '',
+      hasBgImage: false,
+    }, overrides || {});
+  }
+
+  return {
+    activeKey: 'hero',
+    sectionVisibility: { {% for section in sections %}'{{ section.pk }}': {{ section.is_visible|lower }}{% if not forloop.last %}, {% endif %}{% endfor %} },
+    _dragPk: null,
+    activeVariant: '{{ hero_section.variant }}',
+    catVariant: '{{ cat_section.variant }}',
+    catProducts: {{ cat_products_json|safe }},
+    _csv: {{ cat_saved_variants_json|safe }},
+    featVariant: '{{ feat_section.variant|default:"1" }}',
+    featProducts: {{ feat_products_json|safe }},
+    featSearch: '',
+    _fsv: {{ feat_saved_variants_json|safe }},
+    fv1: {overline:'Handpicked',heading:'Featured Products',subheading:'',heading_size:'38px',heading_colour:'--forest',overline_colour:'--gold-muted',bg_colour:'--surface',subheading_colour:'--text',view_all_colour:'--forest',view_all_link:'/products/',product_ids:[]},
+    fv2: {overline:'Handpicked',heading:'Featured Products',subheading:'',heading_size:'38px',heading_colour:'--forest',overline_colour:'--gold-muted',bg_colour:'--surface',subheading_colour:'--text',view_all_colour:'--forest',view_all_link:'/products/',hero_product_id:null,product_ids:[]},
+    fv3: {overline:'Handpicked',heading:'Featured Products',subheading:'',heading_size:'38px',heading_colour:'--forest',overline_colour:'--gold-muted',bg_colour:'--surface',subheading_colour:'--text',view_all_colour:'--forest',view_all_link:'',product_ids:[]},
+    get afv() { return this['fv' + this.featVariant]; },
+    dealsVariant: '{{ deals_section.variant|default:"1" }}',
+    dealsProducts: {{ deals_products_json|safe }},
+    dealsSearch: '',
+    _dsv: {{ deals_saved_json|safe }},
+    dv1: {heading:"Today's Deals",heading_size:'38px',heading_colour:'--surface',subheading:'',subheading_colour:'--surface',subheading_size:'16px',view_all_link:'/products/?sale=1',view_all_colour:'--surface',product_ids:[]},
+    dv2: {heading:"Today's Deals",heading_size:'38px',heading_colour:'--surface',subheading:'',subheading_colour:'--surface',subheading_size:'16px',view_all_link:'/products/?sale=1',view_all_colour:'--gold',product_ids:[],banner_label:'🔥 Flash Sale ends in:',banner_label_size:'16px',banner_label_visible:true,banner_bg:'--gold',banner_text:'--forest',timer_end:'',timer_size:'32px',timer_visible:true,timer_position:'banner',timer_align:'right'},
+    get adv() { return this['dv' + this.dealsVariant]; },
+    setDv(key, val) { const k='dv'+this.dealsVariant; this[k]={...this[k],[key]:val}; },
+    toggleDealProduct(pid) {
+      const k='dv'+this.dealsVariant; const cur=this[k];
+      const ids=cur.product_ids.includes(pid)?cur.product_ids.filter(id=>id!==pid):(cur.product_ids.length<8?[...cur.product_ids,pid]:cur.product_ids);
+      this[k]={...cur,product_ids:ids};
+    },
+    bsProducts: {{ bs_products_json|safe }},
+    bsSearch: '',
+    bs: {{ bs_saved_json|safe }},
+    storyVariant: '{{ story_section.variant|default:"1" }}',
+    sv1: {{ sv_saved_json|safe }}.sv1,
+    sv2: {{ sv_saved_json|safe }}.sv2,
+    sv3: {{ sv_saved_json|safe }}.sv3,
+    get asv() { return this['sv' + this.storyVariant]; },
+    footer: {
+      store_name: '{{ settings.store_name|escapejs }}',
+      tagline: '{{ settings.footer_tagline|escapejs }}',
+      ig_url: '{{ settings.footer_ig_url|escapejs }}',
+      tiktok_url: '{{ settings.footer_tiktok_url|escapejs }}',
+      x_url: '{{ settings.footer_x_url|escapejs }}',
+      privacy_url: '{{ settings.footer_privacy_url|escapejs }}',
+      terms_url: '{{ settings.footer_terms_url|escapejs }}',
+      nav_categories_visible: {{ settings.nav_categories_visible|yesno:'true,false' }},
+      shop_links: {{ footer_shop_links_json|safe }},
+      help_links: {{ footer_help_links_json|safe }},
+    },
+    setSv(key, val) { const k='sv'+this.storyVariant; this[k]={...this[k],[key]:val}; },
+    setFv(key, val) { const k='fv'+this.featVariant; this[k]={...this[k],[key]:val}; },
+    toggleFeatProduct(pid) {
+      const k = 'fv'+this.featVariant;
+      const cur = this[k];
+      const max = this.featVariant==='2' ? 5 : 8;
+      let ids = cur.product_ids.includes(pid)
+        ? cur.product_ids.filter(id => id !== pid)
+        : (cur.product_ids.length < max ? [...cur.product_ids, pid] : cur.product_ids);
+      const heroId = (cur.hero_product_id && ids.includes(cur.hero_product_id)) ? cur.hero_product_id : null;
+      this[k] = {...cur, product_ids: ids, hero_product_id: heroId};
+    },
+    setFeatHero(val) {
+      const id = val ? parseInt(val) : null;
+      const k = 'fv'+this.featVariant;
+      const cur = this[k];
+      if (id) {
+        let ids = cur.product_ids.filter(x => x !== id);
+        ids.unshift(id);
+        if (ids.length > 5) ids = ids.slice(0, 5);
+        this[k] = {...cur, hero_product_id: id, product_ids: ids};
+      } else {
+        this[k] = {...cur, hero_product_id: null};
+      }
+    },
+    // Per-variant state factory
+    _cvDefaults(overrides) {
+      return Object.assign({
+        overline: 'Explore',
+        heading: 'Shop by Category',
+        heading_size: '38px',
+        heading_colour: '--forest',
+        overline_colour: '--gold-muted',
+        bg_colour: '{{ cat_section.bg_colour }}',
+        visible_categories: [0,1,2,3,4,5], // indices of visible categories
+        category_colors: [ // per-category bg and text colors for variants A, C, F
+          {bg:'--forest', text:'--surface', icon:'--gold'},
+          {bg:'--sage',   text:'--forest',  icon:'--gold'},
+          {bg:'--gold',   text:'--forest',  icon:'--forest'},
+          {bg:'--forest', text:'--surface', icon:'--gold'},
+          {bg:'--sage',   text:'--forest',  icon:'--gold'},
+          {bg:'--gold',   text:'--forest',  icon:'--forest'},
+        ],
+        category_settings: [ // per-category settings for variant B (first 5 used)
+          {bg_image:null,bg_color:'--forest', overlay_color:'--forest',overlay_opacity:55,text_color:'--surface'},
+          {bg_image:null,bg_color:'--sage',   overlay_color:'--forest',overlay_opacity:45,text_color:'--surface'},
+          {bg_image:null,bg_color:'--forest', overlay_color:'--forest',overlay_opacity:65,text_color:'--surface'},
+          {bg_image:null,bg_color:'--sage',   overlay_color:'--forest',overlay_opacity:45,text_color:'--surface'},
+          {bg_image:null,bg_color:'--gold',   overlay_color:'--forest',overlay_opacity:50,text_color:'--surface'},
+        ],
+      }, overrides);
+    },
+    cv1: {overline:'Explore',heading:'Shop by Category',heading_size:'38px',heading_colour:'--forest',overline_colour:'--gold-muted',bg_colour:'{{ cat_section.bg_colour }}'},
+    cv2: {overline:'Explore',heading:'Shop by Category',heading_size:'38px',heading_colour:'--forest',overline_colour:'--gold-muted',bg_colour:'{{ cat_section.bg_colour }}'},
+    cv3: {overline:'Explore',heading:'Shop by Category',heading_size:'38px',heading_colour:'--forest',overline_colour:'--gold-muted',bg_colour:'{{ cat_section.bg_colour }}'},
+    cv4: {overline:'Explore',heading:'Shop by Category',heading_size:'38px',heading_colour:'--forest',overline_colour:'--gold-muted',bg_colour:'{{ cat_section.bg_colour }}'},
+    cv5: {overline:'Explore',heading:'Shop by Category',heading_size:'38px',heading_colour:'--forest',overline_colour:'--gold-muted',bg_colour:'{{ cat_section.bg_colour }}'},
+    cv6: {overline:'Explore',heading:'Shop by Category',heading_size:'38px',heading_colour:'--forest',overline_colour:'--gold-muted',bg_colour:'{{ cat_section.bg_colour }}'},
+    get acv() { return this['cv' + this.catVariant]; },
+    saving: false,
+    toastVisible: false, toastMsg: '',
+
+    dealProducts: {{ deal_products_json|safe }},
+    selectedDealIds: {{ saved_deal_ids_json|safe }},
+
+    dealById(id) { return this.dealProducts.find(p => p.id === id) || null; },
+    setDealProduct(i, id) {
+      const ids = [...this.selectedDealIds];
+      ids[i] = id;
+      this.selectedDealIds = ids;
+    },
+
+    // Per-variant independent state (initialized in init())
+    _sv: {{ saved_variants_json|safe }},
+    v1: {},
+    v2: {},
+    v3: {},
+
+    // Computed: active variant's state object
+    get av() {
+      return this['v' + this.activeVariant];
+    },
+
+    // Scale preview to fit the middle column
+    scale: 1,
+    vpH: 300,
+    vpInnerH: 600,
+
+    swatches: [
+      {token:'--forest',      hex:'#1E2D22', label:'Forest'    },
+      {token:'--gold',        hex:'#C9A55A', label:'Gold'      },
+      {token:'--gold-muted',  hex:'#8A7A52', label:'Gold Muted'},
+      {token:'--sage',        hex:'#BECDC2', label:'Sage'      },
+      {token:'--base',        hex:'#FAF8F2', label:'Parchment' },
+      {token:'--surface',     hex:'#FFFFFF', label:'White'     },
+      {token:'--surface-alt', hex:'#EDEAE0', label:'Warm Grey' },
+      {token:'--text',        hex:'#1A1A1A', label:'Dark'      },
+    ],
+
+    fieldSwatches(defaultToken) {
+      const idx = this.swatches.findIndex(s => s.token === defaultToken);
+      if (idx <= 0) return this.swatches;
+      return [...this.swatches.slice(idx), ...this.swatches.slice(0, idx)];
+    },
+
+    init() {
+      // Init per-variant hero state
+      Object.assign(this.v1, variantDefaults({ btn2_enabled: {{ hero_section.btn2_enabled|yesno:'true,false' }} }));
+      Object.assign(this.v2, variantDefaults({ btn2_enabled: {{ hero_section.btn2_enabled|yesno:'true,false' }}, bg_colour: '--forest' }));
+      Object.assign(this.v3, variantDefaults({ btn2_enabled: false }));
+      
+      // Init per-variant cat state
+      for (let i = 1; i <= 6; i++) {
+        this['cv'+i] = this._cvDefaults(this._csv['cv'+i] || {});
+      }
+      // Init per-variant featured state
+      ['fv1','fv2','fv3'].forEach(k => {
+        this[k] = {...this[k], ...(this._fsv[k] || {})};
+      });
+      // Init per-variant deals state
+      ['dv1','dv2'].forEach(k => {
+        this[k] = {...this[k], ...(this._dsv[k] || {})};
+      });
+      // Restore saved per-variant hero state over defaults
+      ['v1','v2','v3'].forEach(k => {
+        if (this._sv[k]) Object.assign(this[k], this._sv[k]);
+      });
+      // Fallback: if v3 has no saved hasBgImage, use server value
+      if (!this._sv.v3) this.v3.hasBgImage = {{ hero_section.bg_image|yesno:'true,false' }};
+      this.$nextTick(() => this.calcScale());
+      window.addEventListener('resize', () => this.calcScale());
+    },
+
+    catIcon(name, size=16, color='currentColor') {
+      if (!name) return '';
+      if (!/^[\x00-\x7F]+$/.test(name)) return `<span style="font-size:${size}px;line-height:1;">${name}</span>`;
+      const fill = color.startsWith('--') ? `var(${color})` : color;
+      return `<svg width="${size}" height="${size}" fill="${fill}" aria-hidden="true"><use href="#ph-${name}"></use></svg>`;
+    },
+
+    btnClass(v, which) {
+      const style = v[which+'_style'] || 'filled';
+      const colour = (v[which+'_colour'] || '--forest').replace('--','').replace('-','');
+      return 'pv-btn ' + style + ' ' + colour;
+    },
+
+    calcScale() {
+      const mid = this.$el.querySelector('.ep-mid');
+      if (!mid) return;
+      const availW = mid.clientWidth - 40; // padding
+      this.scale = Math.min(availW / 1280, 1);
+      // Inner height = hero min-height (100vh approx 700px for preview)
+      this.vpInnerH = 700;
+      this.vpH = Math.round(700 * this.scale);
+    },
+
+    selectVariant(v) {
+      this.activeVariant = v;
+    },
+
+    v3BgStyle() {
+      const v = this.v3;
+      const imgUrl = v.bgImagePreview || (v.hasBgImage ? '{{ hero_section.bg_image.url|default:"" }}' : '');
+      if (imgUrl) {
+        const pct = v.bg_overlay_opacity;
+        const col = v.bg_overlay_colour;
+        return `background:linear-gradient(color-mix(in srgb,var(${col}) ${pct}%,transparent),color-mix(in srgb,var(${col}) ${pct}%,transparent)),url('${imgUrl}') center/cover no-repeat;`;
+      }
+      return '';
+    },
+
+    async saveAll() {
+      this.saving = true;
+      const csrf = document.cookie.match(/csrftoken=([^;]+)/)?.[1] || '';
+      const av = this.av;
+      try {
+        // Save section layout/style for active variant
+        const fd = new FormData();
+        fd.append('variant', this.activeVariant);
+        ['bg_mode','bg_colour','bg_overlay_colour','heading_colour','heading_size','heading_weight',
+         'body_colour','body_size','btn1_enabled','btn1_style','btn1_colour',
+         'btn2_enabled','btn2_style','btn2_colour'].forEach(k => fd.append(k, String(av[k])));
+        fd.append('bg_overlay_opacity', String(av.bg_overlay_opacity));
+        if (av.bgImageFile) fd.append('bg_image', av.bgImageFile);
+        // Save selected deal product IDs and all variant states into custom_content
+        const variantState = (v) => ({
+          bg_mode: v.bg_mode, bg_colour: v.bg_colour,
+          bg_overlay_colour: v.bg_overlay_colour, bg_overlay_opacity: v.bg_overlay_opacity,
+          heading_colour: v.heading_colour, heading_size: v.heading_size, heading_weight: v.heading_weight,
+          heading_bold: v.heading_bold, heading_italic: v.heading_italic, heading_underline: v.heading_underline,
+          body_colour: v.body_colour, body_size: v.body_size,
+          btn1_enabled: v.btn1_enabled, btn1_style: v.btn1_style, btn1_colour: v.btn1_colour,
+          btn2_enabled: v.btn2_enabled, btn2_style: v.btn2_style, btn2_colour: v.btn2_colour,
+          overline_colour: v.overline_colour, show_deal_card: v.hero_show_deal_card, show_stats: v.hero_show_stats,
+          hasBgImage: v.hasBgImage || !!v.bgImageFile,
+        });
+        fd.append('custom_content', JSON.stringify({
+          deal_product_ids: this.selectedDealIds.filter(id=>id),
+          overline_colour: av.overline_colour,
+          show_deal_card: av.hero_show_deal_card,
+          show_stats: av.hero_show_stats,
+          variants: { v1: variantState(this.v1), v2: variantState(this.v2), v3: variantState(this.v3) },
+        }));
+
+        const r1 = await fetch('/dashboard/homepage/section/{{ hero_section.pk }}/save/', {
+          method:'POST', headers:{'X-CSRFToken':csrf}, body:fd
+        });
+        if ((await r1.json()).status !== 'ok') { this.toast('Style save failed'); return; }
+
+        // Save hero content fields
+        const fd2 = new FormData();
+        ['hero_overline','hero_headline','hero_subheading',
+         'hero_cta1_text','hero_cta1_link','hero_cta2_text','hero_cta2_link'].forEach(k => fd2.append(k, av[k]||''));
+        const r2 = await fetch('/dashboard/settings/hero-content/', {
+          method:'POST', headers:{'X-CSRFToken':csrf}, body:fd2
+        });
+        if ((await r2.json()).status !== 'ok') { this.toast('Content save failed'); return; }
+
+        // If a bg image was uploaded, mark it as set and clear the file reference
+        if (av.bgImageFile) { av.hasBgImage = true; av.bgImageFile = null; }
+        this.toast('Saved');
+      } catch { this.toast('Network error'); }
+      finally { this.saving = false; }
+    },
+
+    async saveDeals() {
+      this.saving = true;
+      const csrf = document.cookie.match(/csrftoken=([^;]+)/)?.[1] || '';
+      try {
+        const fd = new FormData();
+        fd.append('variant', this.dealsVariant);
+        fd.append('bg_colour', '--forest');
+        const dvState = (v) => ({heading:v.heading,heading_size:v.heading_size,heading_colour:v.heading_colour,subheading:v.subheading||'',subheading_colour:v.subheading_colour||'--surface',subheading_size:v.subheading_size||'16px',view_all_link:v.view_all_link,view_all_colour:v.view_all_colour,product_ids:v.product_ids||[],banner_label:v.banner_label||'🔥 Flash Sale ends in:',banner_label_size:v.banner_label_size||'16px',banner_label_visible:v.banner_label_visible!==false,banner_bg:v.banner_bg||'--gold',banner_text:v.banner_text||'--forest',timer_end:v.timer_end||'',timer_size:v.timer_size||'32px',timer_visible:v.timer_visible!==false,timer_position:v.timer_position||'banner',timer_align:v.timer_align||'right'});
+        fd.append('custom_content', JSON.stringify({deal_variants:{dv1:dvState(this.dv1),dv2:dvState(this.dv2)}}));
+        const r = await fetch('/dashboard/homepage/section/{{ deals_section.pk }}/save/', {method:'POST',headers:{'X-CSRFToken':csrf},body:fd});
+        if ((await r.json()).status !== 'ok') { this.toast('Save failed'); return; }
+        this.toast('Saved');
+      } catch { this.toast('Network error'); }
+      finally { this.saving = false; }
+    },
+
+    async saveBestsellers() {
+      this.saving = true;
+      const csrf = document.cookie.match(/csrftoken=([^;]+)/)?.[1] || '';
+      try {
+        const fd = new FormData();
+        fd.append('bg_colour', this.bs.bg_colour);
+        fd.append('custom_content', JSON.stringify(this.bs));
+        const r = await fetch('/dashboard/homepage/section/{{ bs_section.pk }}/save/', {method:'POST',headers:{'X-CSRFToken':csrf},body:fd});
+        if ((await r.json()).status !== 'ok') { this.toast('Save failed'); return; }
+        this.toast('Saved');
+      } catch { this.toast('Network error'); }
+      finally { this.saving = false; }
+    },
+
+    async saveStory() {
+      this.saving = true;
+      const csrf = document.cookie.match(/csrftoken=([^;]+)/)?.[1] || '';
+      try {
+        const fd = new FormData();
+        fd.append('variant', this.storyVariant);
+        fd.append('bg_colour', this.asv.bg_colour);
+        fd.append('custom_content', JSON.stringify({sv1:this.sv1,sv2:this.sv2,sv3:this.sv3}));
+        const r = await fetch('/dashboard/homepage/section/{{ story_section.pk }}/save/', {method:'POST',headers:{'X-CSRFToken':csrf},body:fd});
+        if ((await r.json()).status !== 'ok') { this.toast('Save failed'); return; }
+        this.toast('Saved');
+      } catch { this.toast('Network error'); }
+      finally { this.saving = false; }
+    },
+
+    async uploadStoryImage(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      const csrf = document.cookie.match(/csrftoken=([^;]+)/)?.[1] || '';
+      const fd = new FormData();
+      fd.append('image', file);
+      try {
+        const r = await fetch('/dashboard/upload-story-image/', {method:'POST',headers:{'X-CSRFToken':csrf},body:fd});
+        const data = await r.json();
+        if (data.url) this.setSv('image_url', data.url);
+        else this.toast('Upload failed');
+      } catch { this.toast('Upload error'); }
+    },
+
+    toast(msg) { this.toastMsg=msg; this.toastVisible=true; setTimeout(()=>this.toastVisible=false, 2800); },
+
+    async saveFooter() {
+      this.saving = true;
+      const csrf = document.cookie.match(/csrftoken=([^;]+)/)?.[1] || '';
+      try {
+        const fd = new FormData();
+        fd.append('store_name', this.footer.store_name);
+        fd.append('footer_tagline', this.footer.tagline);
+        fd.append('footer_ig_url', this.footer.ig_url);
+        fd.append('footer_tiktok_url', this.footer.tiktok_url);
+        fd.append('footer_x_url', this.footer.x_url);
+        fd.append('footer_privacy_url', this.footer.privacy_url);
+        fd.append('footer_terms_url', this.footer.terms_url);
+        fd.append('nav_categories_visible', this.footer.nav_categories_visible ? 'true' : 'false');
+        fd.append('footer_shop_links', JSON.stringify(this.footer.shop_links));
+        fd.append('footer_help_links', JSON.stringify(this.footer.help_links));
+        const r = await fetch('/dashboard/settings/footer/', {method:'POST',headers:{'X-CSRFToken':csrf},body:fd});
+        if ((await r.json()).status !== 'ok') { this.toast('Save failed'); return; }
+        this.toast('Saved');
+      } catch { this.toast('Network error'); }
+      finally { this.saving = false; }
+    },
+
+    async toggleSectionVisibility(pk, btn) {
+      const newVal = !this.sectionVisibility[pk];
+      this.sectionVisibility[pk] = newVal;
+      const csrf = document.cookie.match(/csrftoken=([^;]+)/)?.[1] || '';
+      const fd = new FormData();
+      fd.append('is_visible', newVal ? 'true' : 'false');
+      await fetch(`/dashboard/homepage/section/${pk}/save/`, {method:'POST',headers:{'X-CSRFToken':csrf},body:fd});
+    },
+
+    dragStart(e, pk) { this._dragPk = pk; e.currentTarget.classList.add('dragging'); e.dataTransfer.effectAllowed='move'; },
+    dragOver(e) { e.currentTarget.classList.add('drag-over'); },
+    dragLeave(e) { e.currentTarget.classList.remove('drag-over'); },
+    dragEnd(e) { e.currentTarget.classList.remove('dragging'); document.querySelectorAll('.ep-row').forEach(r=>r.classList.remove('drag-over')); },
+    async drop(e) {
+      e.currentTarget.classList.remove('drag-over');
+      const targetPk = e.currentTarget.dataset.pk;
+      if (!this._dragPk || this._dragPk === targetPk) return;
+      const list = document.getElementById('ep-nav-list');
+      const rows = [...list.querySelectorAll('.ep-row')];
+      const dragEl = rows.find(r=>r.dataset.pk===this._dragPk);
+      const targetEl = rows.find(r=>r.dataset.pk===targetPk);
+      if (!dragEl || !targetEl) return;
+      list.insertBefore(dragEl, targetEl);
+      const order = [...list.querySelectorAll('.ep-row')].map(r=>r.dataset.pk);
+      const csrf = document.cookie.match(/csrftoken=([^;]+)/)?.[1] || '';
+      await fetch('/dashboard/homepage/section/reorder/', {method:'POST',headers:{'X-CSRFToken':csrf,'Content-Type':'application/json'},body:JSON.stringify({order})});
+      this.toast('Order saved');
+    },
+
+    async uploadCategoryImage(event, catIndex) {
+      const file = event.target.files[0];
+      if (!file) return;
+      
+      const fd = new FormData();
+      fd.append('image', file);
+      const csrf = document.cookie.match(/csrftoken=([^;]+)/)?.[1] || '';
+      
+      try {
+        const r = await fetch('/dashboard/upload-category-image/', {
+          method: 'POST',
+          headers: { 'X-CSRFToken': csrf },
+          body: fd
+        });
+        const data = await r.json();
+        if (data.url) {
+          if (!this.acv.category_settings[catIndex]) {
+            this.acv.category_settings[catIndex] = {bg_image:null,bg_color:'--forest',overlay_color:'--forest',overlay_opacity:65,text_color:'--surface'};
+          }
+          this.acv.category_settings[catIndex] = {...this.acv.category_settings[catIndex], bg_image: data.url};
+          this.acv.category_settings = [...this.acv.category_settings];
+          this.toast('Image uploaded');
+        } else {
+          this.toast('Upload failed');
+        }
+      } catch {
+        this.toast('Upload error');
+      }
+    },
+
+    async saveCat() {
+      this.saving = true;
+      const csrf = document.cookie.match(/csrftoken=([^;]+)/)?.[1] || '';
+      try {
+        const fd = new FormData();
+        fd.append('variant', this.catVariant);
+        fd.append('bg_colour', this.acv.bg_colour);
+        const cvState = (v) => ({
+          overline: v.overline, heading: v.heading,
+          heading_size: v.heading_size, heading_colour: v.heading_colour,
+          overline_colour: v.overline_colour, bg_colour: v.bg_colour,
+          visible_categories: v.visible_categories || [0,1,2,3,4,5],
+          category_colors: v.category_colors || [],
+          category_settings: v.category_settings || [],
+        });
+        fd.append('custom_content', JSON.stringify({
+          cat_variants: { cv1: cvState(this.cv1), cv2: cvState(this.cv2), cv3: cvState(this.cv3), cv4: cvState(this.cv4), cv5: cvState(this.cv5), cv6: cvState(this.cv6) },
+        }));
+        const r = await fetch('/dashboard/homepage/section/{{ cat_section.pk }}/save/', {
+          method: 'POST', headers: { 'X-CSRFToken': csrf }, body: fd
+        });
+        if ((await r.json()).status !== 'ok') { this.toast('Save failed'); return; }
+        this.toast('Saved');
+      } catch { this.toast('Network error'); }
+      finally { this.saving = false; }
+    },
+
+    async saveFeat() {
+      this.saving = true;
+      const csrf = document.cookie.match(/csrftoken=([^;]+)/)?.[1] || '';
+      try {
+        const fd = new FormData();
+        fd.append('variant', this.featVariant);
+        fd.append('bg_colour', this.afv.bg_colour);
+        const fvState = (v) => ({
+          overline: v.overline, heading: v.heading, subheading: v.subheading,
+          heading_size: v.heading_size, heading_colour: v.heading_colour,
+          overline_colour: v.overline_colour, bg_colour: v.bg_colour,
+          subheading_colour: v.subheading_colour || '--text',
+          view_all_link: v.view_all_link, view_all_colour: v.view_all_colour || '--forest',
+          hero_product_id: v.hero_product_id || null,
+          product_ids: v.product_ids || [],
+        });
+        fd.append('custom_content', JSON.stringify({
+          feat_variants: { fv1: fvState(this.fv1), fv2: fvState(this.fv2), fv3: fvState(this.fv3) },
+          product_ids: this.afv.product_ids || [],
+        }));
+        const r = await fetch('/dashboard/homepage/section/{{ feat_section.pk }}/save/', {
+          method: 'POST', headers: { 'X-CSRFToken': csrf }, body: fd
+        });
+        if ((await r.json()).status !== 'ok') { this.toast('Save failed'); return; }
+        this.toast('Saved');
+      } catch { this.toast('Network error'); }
+      finally { this.saving = false; }
+    },
+  };
+}
+</script>
+{% endblock %}

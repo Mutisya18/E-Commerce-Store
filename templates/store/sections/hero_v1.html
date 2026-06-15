@@ -1,0 +1,66 @@
+{% load humanize icon_tags %}
+<div class="hero-pattern"></div>
+<div class="hero-glow"></div>
+<div class="hero-content">
+  <div class="hero-text">
+    {% if settings.hero_overline %}
+      <div class="hero-overline" style="color:var({{ hero_overline_colour }});">{{ settings.hero_overline }}</div>
+    {% endif %}
+    <h1 class="hero-headline" style="color:var(--section-heading-color);font-size:var(--section-heading-size);font-weight:var(--section-heading-weight);">{{ settings.hero_headline }}</h1>
+    {% if settings.hero_subheading %}
+      <p class="hero-sub" style="color:var(--section-body-color);font-size:var(--section-body-size);">{{ settings.hero_subheading }}</p>
+    {% endif %}
+    <div class="hero-actions">
+      {% if section.btn1_enabled %}
+        <a href="{{ settings.hero_cta1_link }}" class="btn btn--{{ section.btn1_style }} btn--{{ section.btn1_colour|slice:'2:' }}">{{ settings.hero_cta1_text }} →</a>
+      {% endif %}
+      {% if section.btn2_enabled and settings.hero_cta2_text %}
+        <a href="{{ settings.hero_cta2_link }}" class="btn btn--{{ section.btn2_style }} btn--{{ section.btn2_colour|slice:'2:' }}">{{ settings.hero_cta2_text }}</a>
+      {% endif %}
+    </div>
+    {% if hero_show_stats %}<div class="hero-stats">
+      <div>
+        <div class="hero-stat-num">{{ settings.hero_stat1_num|default:"2,400+" }}</div>
+        <div class="hero-stat-label">{{ settings.hero_stat1_label|default:"Products" }}</div>
+      </div>
+      <div>
+        <div class="hero-stat-num">{{ settings.hero_stat2_num|default:"12K+" }}</div>
+        <div class="hero-stat-label">{{ settings.hero_stat2_label|default:"Happy Customers" }}</div>
+      </div>
+      <div>
+        <div class="hero-stat-num">{{ settings.hero_stat3_num|default:"4.8★" }}</div>
+        <div class="hero-stat-label">{{ settings.hero_stat3_label|default:"Avg Rating" }}</div>
+      </div>
+    </div>{% endif %}
+  </div>
+  {% if hero_show_deal_card %}
+  {% if hero_deals %}
+  <div style="display:flex;flex-direction:row;gap:12px;flex-shrink:0;align-items:flex-start;">
+    {% for deal in hero_deals %}
+    <a href="/products/{{ deal.slug }}/" class="hero-card" style="text-decoration:none;color:inherit;">
+      <div class="hero-card-badge">{% icon "fire" size=14 color="var(--gold)" css_class="icon--inline" %} Deal of the Day</div>
+      <div class="hero-card-img">
+        {% if deal.cover_image %}
+          <img src="{{ deal.cover_image.image.url }}" alt="{{ deal.name }}" style="width:100%;height:100%;object-fit:cover;border-radius:10px;">
+        {% else %}{% icon "shopping-bag-open" size=48 color="var(--text-muted)" %}{% endif %}
+      </div>
+      <div class="hero-card-name">{{ deal.name }}</div>
+      <div>
+        <span class="hero-card-price">KES {{ deal.effective_price|floatformat:0|intcomma }}</span>
+        {% if deal.sale_price and deal.base_price %}
+          <span class="hero-card-old">KES {{ deal.base_price|floatformat:0|intcomma }}</span>
+        {% endif %}
+      </div>
+    </a>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="hero-card">
+    <div class="hero-card-badge">{% icon "fire" size=14 color="var(--gold)" css_class="icon--inline" %} Deal of the Day</div>
+    <div class="hero-card-img">{% icon "shopping-bag-open" size=48 color="var(--text-muted)" %}</div>
+    <div class="hero-card-name">{{ settings.store_name }}</div>
+    <div><span class="hero-card-price">Shop Now</span></div>
+  </div>
+  {% endif %}
+  {% endif %}
+</div>

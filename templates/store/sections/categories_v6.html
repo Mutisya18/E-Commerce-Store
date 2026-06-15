@@ -1,0 +1,24 @@
+{% load icon_tags %}
+<div class="container">
+    <div class="section-header">
+    {% if cat_overline %}<div class="section-overline" style="color:var({{ cat_overline_colour }});">{{ cat_overline }}</div>{% endif %}
+    <h2 class="section-title" style="color:var({{ cat_heading_colour }});font-size:{{ cat_heading_size }};">{{ cat_heading }}</h2>
+  </div>
+  <div class="cat-f-grid">
+    {% if featured_categories %}
+      {% for cat in featured_categories %}
+      <a href="/categories/{{ cat.slug }}/" class="cat-f-tile" style="background:var({{ cat.border_color }});">
+        <div class="cat-f-icon">{% icon cat.icon_name size=32 color=cat.icon_color %}</div>
+        <div class="cat-f-name" style="color:var({{ cat.text_color }});">{{ cat.name }}</div>
+      </a>
+      {% endfor %}
+    {% else %}
+      <a href="#" class="cat-f-tile" style="background:var({{ cat_default_colors.0.bg }});"><div class="cat-f-icon">{% icon "device-mobile" size=32 %}</div><div class="cat-f-name" style="color:var({{ cat_default_colors.0.text }});">Phones</div></a>
+      <a href="#" class="cat-f-tile" style="background:var({{ cat_default_colors.1.bg }});"><div class="cat-f-icon">{% icon "laptop" size=32 %}</div><div class="cat-f-name" style="color:var({{ cat_default_colors.1.text }});">Laptops</div></a>
+      <a href="#" class="cat-f-tile" style="background:var({{ cat_default_colors.2.bg }});"><div class="cat-f-icon">{% icon "headphones" size=32 %}</div><div class="cat-f-name" style="color:var({{ cat_default_colors.2.text }});">Audio</div></a>
+      <a href="#" class="cat-f-tile" style="background:var({{ cat_default_colors.3.bg }});"><div class="cat-f-icon">{% icon "house-line" size=32 %}</div><div class="cat-f-name" style="color:var({{ cat_default_colors.3.text }});">Smart Home</div></a>
+      <a href="#" class="cat-f-tile" style="background:var({{ cat_default_colors.4.bg }});"><div class="cat-f-icon">{% icon "watch" size=32 %}</div><div class="cat-f-name" style="color:var({{ cat_default_colors.4.text }});">Wearables</div></a>
+      <a href="#" class="cat-f-tile" style="background:var({{ cat_default_colors.5.bg }});"><div class="cat-f-icon">{% icon "plug" size=32 %}</div><div class="cat-f-name" style="color:var({{ cat_default_colors.5.text }});">Accessories</div></a>
+    {% endif %}
+  </div>
+</div>

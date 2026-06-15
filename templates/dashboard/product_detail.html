@@ -1,0 +1,407 @@
+{% extends "dashboard/base_dashboard.html" %}
+{% load humanize icon_tags %}
+{% load static %}
+
+{% block title %}{{ product.name }} — Dashboard{% endblock %}
+{% block page_title %}Products{% endblock %}
+{% block nav_products %}active{% endblock %}
+
+{% block extra_styles %}
+.grid-main { display: grid; grid-template-columns: 1fr 320px; gap: 20px; align-items: start; }
+.card { background: var(--surface); border-radius: var(--r-lg); box-shadow: var(--shadow); padding: 24px; margin-bottom: 16px; }
+.card:last-child { margin-bottom: 0; }
+.card-title { font-size: 14px; font-weight: 700; color: var(--text); margin-bottom: 4px; }
+
+.review-section { margin-bottom: 20px; }
+.review-section:last-child { margin-bottom: 0; }
+.review-label { font-size: 10px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 10px; padding-bottom: 6px; border-bottom: 1px solid var(--border); }
+.review-row { display: flex; justify-content: space-between; align-items: center; padding: 7px 0; font-size: 13px; }
+.review-row:not(:last-child) { border-bottom: 1px solid var(--border); }
+.review-key { color: var(--text-muted); flex-shrink: 0; margin-right: 12px; }
+.review-val { font-weight: 600; color: var(--text); text-align: right; }
+
+.edit-input { width: 100%; height: 34px; border: 1.5px solid var(--border); border-radius: var(--r); padding: 0 10px; font-family: 'DM Sans', sans-serif; font-size: 13px; color: var(--text); background: var(--surface); outline: none; transition: border-color .15s; text-align: right; }
+.edit-input:focus { border-color: var(--navy); box-shadow: 0 0 0 3px var(--navy-light); }
+.edit-textarea { width: 100%; border: 1.5px solid var(--border); border-radius: var(--r); padding: 8px 10px; font-family: 'DM Sans', sans-serif; font-size: 13px; color: var(--text); background: var(--surface); outline: none; resize: vertical; min-height: 72px; transition: border-color .15s; }
+.edit-textarea:focus { border-color: var(--navy); }
+.edit-select { height: 34px; border: 1.5px solid var(--border); border-radius: var(--r); padding: 0 10px; font-family: 'DM Sans', sans-serif; font-size: 13px; color: var(--text); background: var(--surface); outline: none; cursor: pointer; }
+.edit-select:focus { border-color: var(--navy); }
+
+/* Toggle */
+.toggle { position: relative; width: 36px; height: 20px; flex-shrink: 0; display: inline-block; }
+.toggle input { opacity: 0; width: 0; height: 0; }
+.toggle-slider { position: absolute; inset: 0; background: var(--border); border-radius: 10px; cursor: pointer; transition: .2s; }
+.toggle-slider::before { content: ''; position: absolute; width: 14px; height: 14px; left: 3px; top: 3px; background: #fff; border-radius: 50%; transition: .2s; }
+.toggle input:checked + .toggle-slider { background: var(--emerald); }
+.toggle input:checked + .toggle-slider::before { transform: translateX(16px); }
+
+/* Spec tag builder */
+.spec-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; min-height: 32px; padding: 6px; border: 1.5px dashed var(--border); border-radius: var(--r); background: var(--base); }
+.spec-tag { display: inline-flex; align-items: center; gap: 5px; background: var(--navy-light); color: var(--navy); font-size: 12px; font-weight: 600; padding: 4px 8px; border-radius: 5px; }
+.spec-tag-del { cursor: pointer; opacity: .6; font-size: 14px; line-height: 1; }
+.spec-tag-del:hover { opacity: 1; }
+
+/* Image upload zone */
+.upload-zone { border: 2px dashed var(--border); border-radius: var(--r-lg); padding: 20px; text-align: center; cursor: pointer; transition: all .2s; background: var(--base); position: relative; margin-top: 12px; }
+.upload-zone:hover { border-color: var(--navy); background: var(--navy-light); }
+.upload-zone input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+
+/* Preview card */
+.product-preview-card { background: var(--surface); border: 1.5px solid var(--border); border-radius: var(--r-lg); overflow: hidden; }
+.preview-img { background: linear-gradient(135deg, var(--navy), #2d4a7a); aspect-ratio: 1; display: flex; align-items: center; justify-content: center; position: relative; overflow: hidden; }
+.preview-img img { width: 100%; height: 100%; object-fit: cover; }
+.preview-sale-badge { position: absolute; top: 10px; right: 10px; background: var(--danger); color: #fff; font-size: 10px; font-weight: 700; padding: 3px 7px; border-radius: 4px; }
+.preview-featured-badge { position: absolute; top: 10px; left: 10px; background: var(--gold); color: var(--navy); font-size: 9px; font-weight: 700; padding: 3px 7px; border-radius: 4px; }
+.preview-body { padding: 14px; }
+.preview-name { font-weight: 700; font-size: 14px; color: var(--text); margin-bottom: 4px; line-height: 1.3; }
+.preview-cat { font-size: 11px; color: var(--text-muted); margin-bottom: 8px; }
+.preview-price-main { font-family: 'Cormorant Garamond', serif; font-size: 20px; font-weight: 700; color: var(--navy); }
+.preview-price-orig { font-size: 12px; color: var(--text-muted); text-decoration: line-through; margin-left: 6px; }
+
+.badge { display: inline-flex; align-items: center; padding: 3px 8px; border-radius: 5px; font-size: 11px; font-weight: 700; letter-spacing: .04em; }
+.badge-emerald { background: var(--emerald-light); color: var(--emerald); }
+.badge-gray { background: var(--surface-alt); color: var(--text-muted); }
+.badge-gold { background: var(--gold-light); color: #7a5c1a; }
+.badge-warning { background: var(--warning-light); color: var(--warning); }
+.badge-navy { background: var(--navy-light); color: var(--navy); }
+
+.image-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 8px; }
+.img-thumb { aspect-ratio: 1; border-radius: var(--r); overflow: hidden; background: var(--surface-alt); border: 2px solid var(--border); }
+.img-thumb.primary { border-color: var(--navy); }
+.img-thumb img { width: 100%; height: 100%; object-fit: cover; }
+
+/* Always-live flag row */
+.flag-row { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; background: var(--base); border: 1.5px solid var(--border); border-radius: var(--r); margin-bottom: 8px; }
+.flag-row:last-child { margin-bottom: 0; }
+.flag-row.on { border-color: var(--emerald); background: var(--emerald-light); }
+
+.edit-mode-bar { display: none; background: var(--navy); color: #fff; padding: 10px 16px; font-size: 13px; font-weight: 500; align-items: center; gap: 10px; position: fixed; top: 60px; left: 240px; right: 0; z-index: 39; }
+.edit-mode-bar.visible { display: flex; }
+
+.page-content { animation: fadeUp .2s ease; }
+@keyframes fadeUp { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
+{% endblock %}
+
+{% block dashboard_content %}
+<div id="dashboard-root"
+     data-csrf="{{ csrf_token }}"
+     data-pk="{{ product.pk }}"
+     data-specs="{{ product.specs|escapejs }}"
+     style="display:none"></div>
+<div class="page-content">
+
+  <!-- Header -->
+  <div style="margin-bottom:16px">
+    <a href="/dashboard/products/" id="backBtn" style="font-size:13px;color:var(--text-muted);text-decoration:none;display:inline-flex;align-items:center;gap:4px;margin-bottom:8px">
+      {% icon "caret-left" size=14 %}
+      Back to Products
+    </a>
+    <div style="display:flex;align-items:center;justify-content:space-between">
+      <div>
+        <div style="font-family:'Cormorant Garamond',serif;font-size:28px;font-weight:700;color:var(--navy);line-height:1">{{ product.name }}</div>
+        <div style="font-size:12px;color:var(--text-muted);margin-top:3px">
+          <a href="/dashboard/products/" style="color:var(--text-muted);text-decoration:none">Products</a>
+          <span style="margin:0 6px">›</span>{{ product.name }}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Edit mode bar -->
+  <div class="edit-mode-bar" id="editBar">
+    {% icon "info" size=14 %}
+    Editing — changes are not saved until you click Save.
+    <div style="margin-left:auto;display:flex;gap:8px">
+      <button type="button" class="btn btn-ghost btn-sm" style="color:#fff;border-color:rgba(255,255,255,.3)" id="btn-cancel-edit-top">Cancel</button>
+      <button type="button" id="btn-submit-edit-top" class="btn btn-sm" style="background:var(--emerald);color:#fff">
+        {% icon "check" size=12 %}
+        Save Changes
+      </button>
+    </div>
+  </div>
+
+  <form id="editForm" method="post" action="/dashboard/products/{{ product.pk }}/edit/" enctype="multipart/form-data">
+    {% csrf_token %}
+    <!-- hidden specs JSON -->
+    <input type="hidden" name="specs_json" id="specsJson">
+
+    <div class="grid-main">
+      <!-- ── LEFT COLUMN ── -->
+      <div>
+        <div class="card">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+            <div class="card-title">Product Summary</div>
+            <button type="button" class="btn btn-navy btn-sm" id="editBtn">
+              {% icon "pencil-simple" size=12 %}
+              Edit
+            </button>
+          </div>
+
+          <!-- Basic Info -->
+          <div class="review-section">
+            <div class="review-label">Basic Information</div>
+            <div class="review-row">
+              <span class="review-key">Product Name</span>
+              <span class="view-mode review-val">{{ product.name }}</span>
+              <input class="edit-mode edit-input" name="name" value="{{ product.name }}" style="display:none">
+            </div>
+            <div class="review-row">
+              <span class="review-key">Category</span>
+              <span class="view-mode review-val">{{ product.category.name|default:"—" }}</span>
+              <select class="edit-mode edit-select" name="category" style="display:none">
+                <option value="">— None —</option>
+                {% for cat in categories %}
+                <option value="{{ cat.pk }}" {% if product.category_id == cat.pk %}selected{% endif %}>{{ cat.name }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="review-row">
+              <span class="review-key">SKU</span>
+              <span class="view-mode review-val">{{ product.sku|default:"—" }}</span>
+              <input class="edit-mode edit-input" name="sku" value="{{ product.sku }}" style="display:none">
+            </div>
+            <div class="review-row">
+              <span class="review-key">Visibility</span>
+              <span class="view-mode review-val">
+                {% if product.is_visible %}<span class="badge badge-emerald">Visible</span>{% else %}<span class="badge badge-gray">Hidden</span>{% endif %}
+              </span>
+              <div class="edit-mode" style="display:none">
+                <label class="toggle">
+                  <input type="checkbox" name="is_visible" {% if product.is_visible %}checked{% endif %}>
+                  <span class="toggle-slider"></span>
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <!-- Pricing -->
+          <div class="review-section">
+            <div class="review-label">Pricing</div>
+            <div class="review-row">
+              <span class="review-key">Base Price</span>
+              <span class="view-mode review-val">KES {{ product.base_price|floatformat:0|intcomma }}</span>
+              <div class="edit-mode" style="display:none;align-items:center;gap:6px">
+                <span style="font-size:12px;color:var(--text-muted)">KES</span>
+                <input class="edit-input" name="base_price" type="number" step="0.01" value="{{ product.base_price }}" style="width:110px">
+              </div>
+            </div>
+            <div class="review-row">
+              <span class="review-key">Offer Price</span>
+              <span class="view-mode review-val">
+                {% if product.sale_price %}
+                  <span style="color:var(--emerald)">KES {{ product.sale_price|floatformat:0|intcomma }}</span>
+                  {% if product.discount_percent %}<span class="badge badge-gold" style="margin-left:6px">{{ product.discount_percent }}% off</span>{% endif %}
+                {% else %}
+                  <span style="color:var(--text-muted)">0.00</span>
+                {% endif %}
+              </span>
+              <div class="edit-mode" style="display:none;align-items:center;gap:6px">
+                <span style="font-size:12px;color:var(--text-muted)">KES</span>
+                <input class="edit-input" name="sale_price" type="number" step="0.01" min="0"
+                       value="{{ product.sale_price|default:'0' }}" style="width:110px"
+                       placeholder="0.00">
+              </div>
+            </div>
+            <div class="review-row">
+              <span class="review-key">Deal End Date</span>
+              <span class="view-mode review-val">{% if product.deal_end_date %}{{ product.deal_end_date|date:"d M Y, H:i" }}{% else %}No countdown{% endif %}</span>
+              <input class="edit-mode edit-input" name="deal_end_date" type="datetime-local"
+                     value="{% if product.deal_end_date %}{{ product.deal_end_date|date:'Y-m-d' }}T{{ product.deal_end_date|date:'H:i' }}{% endif %}"
+                     style="display:none;width:auto;text-align:left">
+            </div>
+          </div>
+
+          <!-- Inventory -->
+          <div class="review-section">
+            <div class="review-label">Inventory</div>
+            <div class="review-row">
+              <span class="review-key">Stock Quantity</span>
+              <span class="view-mode review-val" style="{% if product.stock == 0 %}color:var(--danger){% elif product.is_low_stock %}color:var(--warning){% else %}color:var(--emerald){% endif %}">{{ product.stock }} unit{{ product.stock|pluralize }}</span>
+              <input class="edit-mode edit-input" name="stock" type="number" min="0" value="{{ product.stock }}" style="display:none;width:90px">
+            </div>
+            <div class="review-row">
+              <span class="review-key">Low Stock Alert At</span>
+              <span class="view-mode review-val">{{ product.low_stock_threshold }} unit{{ product.low_stock_threshold|pluralize }}</span>
+              <input class="edit-mode edit-input" name="low_stock_threshold" type="number" min="0" value="{{ product.low_stock_threshold }}" style="display:none;width:90px">
+            </div>
+          </div>
+
+          <!-- Images -->
+          <div class="review-section">
+            <div class="review-label">Images</div>
+            {% with images=product.images.all %}
+            {% if images %}
+            <!-- View mode: static grid -->
+            <div class="image-grid view-mode">
+              {% for img in images %}
+              <div class="img-thumb {% if img.is_cover %}primary{% endif %}">
+                <img src="{{ img.image.url }}" alt="{{ product.name }}">
+              </div>
+              {% endfor %}
+            </div>
+            <!-- Edit mode: draggable grid -->
+            <div class="image-grid edit-mode" id="imgEditGrid" style="display:none">
+              {% for img in images %}
+              <div class="img-thumb {% if img.is_cover %}primary{% endif %}" draggable="true" data-id="{{ img.id }}" style="cursor:grab;position:relative">
+                <img src="{{ img.image.url }}" alt="{{ product.name }}" style="pointer-events:none">
+                {% if not img.is_cover %}
+                <button type="button" class="img-overlay" class="btn-set-cover" data-img-id="{{ img.id }}" style="position:absolute;bottom:4px;left:0;right:0;margin:0 4px;font-size:10px;font-weight:700;background:rgba(0,0,0,.55);color:#fff;border:none;border-radius:3px;padding:2px 0;cursor:pointer">Set Primary</button>
+                {% else %}
+                <div class="img-overlay" style="position:absolute;top:4px;left:4px;font-size:9px;font-weight:700;background:var(--navy);color:#fff;padding:2px 6px;border-radius:3px;text-transform:uppercase;pointer-events:none">Primary</div>
+                {% endif %}
+              </div>
+              {% endfor %}
+            </div>
+            {% else %}
+            <div style="font-size:13px;color:var(--text-muted);padding:8px 0">No images uploaded.</div>
+            {% endif %}
+            {% endwith %}
+            <!-- Upload zone — edit mode only -->
+            <div class="edit-mode upload-zone" style="display:none" id="uploadZone">
+              <input type="file" name="new_images" id="newImagesInput" multiple accept="image/*" >
+              {% icon "upload-simple" size=20 color="var(--navy)" %}
+              <div style="font-size:12px;font-weight:600;color:var(--text)">Upload new images</div>
+              <div style="font-size:11px;color:var(--text-muted);margin-top:2px">PNG, JPG, WebP · existing images are kept</div>
+            </div>
+            <div class="edit-mode image-grid" id="newImagesPreview" style="display:none;margin-top:8px"></div>
+          </div>
+
+          <!-- Specifications -->
+          <div class="review-section">
+            <div class="review-label">Specifications</div>
+            <!-- View mode: render key:value tags -->
+            <div class="view-mode">
+              {% if product.specs %}
+                <div style="display:flex;flex-wrap:wrap;gap:6px">
+                {% for line in product.specs.splitlines %}
+                  {% if ':' in line %}
+                  <span class="spec-tag">{{ line }}</span>
+                  {% endif %}
+                {% endfor %}
+                </div>
+              {% else %}
+                <span style="font-size:13px;color:var(--text-muted)">No specifications added.</span>
+              {% endif %}
+            </div>
+            <!-- Edit mode: tag builder -->
+            <div class="edit-mode" style="display:none">
+              <div style="font-size:11px;color:var(--text-muted);margin-bottom:8px">Key specs shown in the product detail table (e.g. "RAM: 8GB").</div>
+              <div style="display:flex;gap:8px;margin-bottom:8px">
+                <input class="edit-input" id="specKey" placeholder="Label (e.g. RAM)" style="text-align:left;flex:1">
+                <input class="edit-input" id="specVal" placeholder="Value (e.g. 8GB)" style="text-align:left;flex:1">
+                <button type="button" class="btn btn-navy btn-sm" id="btn-add-spec" style="flex-shrink:0">+ Add</button>
+              </div>
+              <div class="spec-tags" id="specTags">
+                <span style="font-size:11px;color:var(--text-muted)" id="specPlaceholder">Specs will appear here…</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Description -->
+          <div class="review-section">
+            <div class="review-label">Description</div>
+            <div class="view-mode" style="font-size:13px;color:var(--text-sub);line-height:1.7;white-space:pre-line">{{ product.description|default:"—" }}</div>
+            <textarea class="edit-mode edit-textarea" name="description" style="display:none">{{ product.description }}</textarea>
+          </div>
+
+        </div><!-- /card -->
+      </div><!-- /left -->
+
+      <!-- ── RIGHT COLUMN ── -->
+      <div>
+
+        <!-- Storefront Preview -->
+        <div class="card">
+          <div class="card-title">Storefront Preview</div>
+          <div style="font-size:11px;color:var(--text-muted);margin-bottom:14px">How this product looks to shoppers.</div>
+          <div class="product-preview-card">
+            <div class="preview-img">
+              {% with cover=product.cover_image %}
+              {% if cover %}<img src="{{ cover.image.url }}" alt="{{ product.name }}">
+              {% else %}<span style="font-size:11px;color:rgba(255,255,255,0.5)">Product Image</span>{% endif %}
+              {% endwith %}
+              {% if product.sale_price %}<div class="preview-sale-badge">SALE</div>{% endif %}
+              {% if product.is_featured %}<div class="preview-featured-badge">FEATURED</div>{% endif %}
+            </div>
+            <div class="preview-body">
+              <div class="preview-name">{{ product.name }}</div>
+              <div class="preview-cat">{{ product.category.name|default:"—" }}</div>
+              <div>
+                <span class="preview-price-main">KES {{ product.effective_price|floatformat:0|intcomma }}</span>
+                {% if product.sale_price %}<span class="preview-price-orig">KES {{ product.base_price|floatformat:0|intcomma }}</span>{% endif %}
+              </div>
+            </div>
+          </div>
+          <div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--border)">
+            <div style="font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text-muted);margin-bottom:8px">Appears in</div>
+            <div style="display:flex;flex-wrap:wrap;gap:6px">
+              <span class="badge badge-navy">All Products</span>
+              {% if product.category %}<span class="badge badge-gray">{{ product.category.name }}</span>{% endif %}
+              {% if product.is_featured %}<span class="badge badge-gold">⭐ Featured</span>{% endif %}
+              {% if product.sale_price %}<span class="badge badge-warning">{% icon "fire" size=12 %} Deals</span>{% endif %}
+            </div>
+          </div>
+        </div>
+
+        <!-- Homepage Flags — always live, no edit mode needed -->
+        <div class="card">
+          <div class="card-title" style="margin-bottom:14px">Homepage Flags</div>
+          <div class="flag-row {% if product.is_featured %}on{% endif %}" id="flagFeatured">
+            <div>
+              <div style="font-size:13px;font-weight:600;color:var(--text)">⭐ Mark as Featured</div>
+              <div style="font-size:11px;color:var(--text-muted);margin-top:1px">Appears in Featured Products on homepage</div>
+            </div>
+            <label class="toggle" >
+              <input type="checkbox" id="chkFeatured" {% if product.is_featured %}checked{% endif %}
+                     class="flag-toggle" data-field="is_featured" data-row="flagFeatured">
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+          <div class="flag-row {% if product.is_visible %}on{% endif %}" id="flagVisible">
+            <div>
+              <div style="font-size:13px;font-weight:600;color:var(--text)">{% icon "eye" size=13 css_class="icon--inline" %} Visible on Store</div>
+              <div style="font-size:11px;color:var(--text-muted);margin-top:1px">Show in listings and search</div>
+            </div>
+            <label class="toggle" >
+              <input type="checkbox" id="chkVisible" {% if product.is_visible %}checked{% endif %}
+                     class="flag-toggle" data-field="is_visible" data-row="flagVisible">
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="card">
+          <div class="card-title" style="margin-bottom:14px">Actions</div>
+          <div style="display:flex;flex-direction:column;gap:8px">
+            <a href="/store/products/{{ product.slug }}/" target="_blank" class="btn btn-ghost" style="justify-content:center">
+              {% icon "arrow-up-right" size=14 %}
+              View on Store
+            </a>
+            <div style="height:1px;background:var(--border)"></div>
+            <button type="button" class="btn btn-danger" style="width:100%;justify-content:center"
+                    id="btn-delete-product" data-name="{{ product.name|escapejs }}">
+              {% icon "trash" size=14 %}
+              Delete Product
+            </button>
+          </div>
+        </div>
+
+        <!-- Save/Cancel card — edit mode only -->
+        <div class="card edit-mode" style="display:none;border:2px solid var(--navy)">
+          <div style="display:flex;flex-direction:column;gap:8px">
+            <button type="button" id="btn-submit-edit-bottom" class="btn btn-emerald" style="justify-content:center">
+              {% icon "check" size=14 %}
+              Save Changes
+            </button>
+            <button type="button" id="btn-cancel-edit-bottom" class="btn btn-ghost" style="justify-content:center">Cancel</button>
+          </div>
+        </div>
+
+      </div><!-- /right -->
+    </div><!-- /grid-main -->
+  </form>
+</div><!-- /page-content -->
+{% endblock %}
+
+{% block extra_js %}{% endblock %}

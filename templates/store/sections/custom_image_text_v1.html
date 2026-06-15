@@ -1,0 +1,20 @@
+{% with c=section.custom_content %}
+<div class="container">
+  <div class="story-grid" style="{% if section.inline_image_pos == 'left' %}direction:rtl;{% endif %}">
+    <div style="direction:ltr;">
+      <h2 style="color:var(--section-heading-color);font-size:var(--section-heading-size);font-weight:var(--section-heading-weight);font-family:'Cormorant Garamond',serif;line-height:1.15;margin-bottom:16px;">{{ c.heading }}</h2>
+      <p style="color:var(--section-body-color);font-size:var(--section-body-size);font-weight:var(--section-body-weight);line-height:1.75;margin-bottom:24px;">{{ c.body }}</p>
+      {% if section.btn1_enabled and c.cta_text %}
+        <a href="{{ c.cta_link|default:'#' }}" class="btn btn--{{ section.btn1_style }} btn--{{ section.btn1_colour|slice:'2:' }}">{{ c.cta_text }}</a>
+      {% endif %}
+    </div>
+    <div style="direction:ltr;">
+      {% if section.inline_image %}
+        <img src="{{ section.inline_image.url }}" alt="{{ c.heading }}" style="width:100%;border-radius:14px;object-fit:cover;aspect-ratio:4/3;">
+      {% else %}
+        <div style="width:100%;aspect-ratio:4/3;background:var(--surface-alt);border-radius:14px;display:flex;align-items:center;justify-content:center;color:var(--text-muted);font-size:14px;">No image uploaded</div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endwith %}

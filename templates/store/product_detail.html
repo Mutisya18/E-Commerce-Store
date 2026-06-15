@@ -1,0 +1,330 @@
+{% extends "base.html" %}
+{% load humanize icon_tags %}
+{% block title %}{{ product.name }} — Mutisya{% endblock %}
+
+{% block extra_styles %}
+.detail-breadcrumb { font-size: 13px; color: var(--text-muted); display: flex; align-items: center; gap: 6px; padding: 20px 0; }
+.detail-breadcrumb a { color: var(--text-muted); text-decoration: none; }
+.detail-breadcrumb a:hover { color: var(--forest); }
+
+.detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 64px; align-items: start; padding-bottom: 64px; }
+@media(max-width:768px){ .detail-grid{ grid-template-columns:1fr; gap:32px; } }
+
+.detail-gallery {
+  position: sticky;
+  top: 90px;
+  align-self: start;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0;
+  height: calc(100vh - 90px);
+}
+.detail-gallery .detail-breadcrumb {
+  align-self: flex-start;
+  width: 100%;
+  padding-top: 0;
+}
+.detail-info {
+  padding-top: 8.3vh;
+}
+@media(max-width:768px){
+  .detail-gallery { position: static; min-height: 0; }
+}
+
+.gallery-main { width: 100%; max-height: calc(100vh - 220px); aspect-ratio: 1; border-radius: 14px; overflow: hidden; background: var(--surface-alt); display: flex; align-items: center; justify-content: center; font-size: 120px; margin-bottom: 14px; }
+.gallery-main img { width: 100%; height: 100%; object-fit: contain; padding: 16px; box-sizing: border-box; }
+.gallery-thumbs { display: flex; gap: 10px; flex-wrap: wrap; }
+.gallery-thumb { width: 72px; height: 72px; border-radius: 8px; background: var(--surface-alt); border: 2px solid transparent; cursor: pointer; overflow: hidden; display: flex; align-items: center; justify-content: center; font-size: 28px; transition: border-color 0.15s; flex-shrink: 0; }
+.gallery-thumb img { width: 100%; height: 100%; object-fit: cover; }
+.gallery-thumb.active { border-color: var(--forest); }
+
+.detail-cat-tag { display: inline-flex; background: var(--sage-light); color: var(--sage); font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; padding: 4px 10px; border-radius: 5px; margin-bottom: 12px; }
+.detail-name { font-family: 'Cormorant Garamond', serif; font-size: 24px; font-weight: 700; color: var(--forest); line-height: 1.15; margin-bottom: 14px; }
+.detail-rating { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; }
+.detail-rating .stars { font-size: 16px; color: var(--gold); }
+.detail-rating-score { font-weight: 700; color: var(--text); }
+.detail-rating-count { color: var(--text-muted); font-size: 14px; text-decoration: none; }
+.detail-rating-count:hover { color: var(--forest); }
+
+.detail-price { display: flex; align-items: baseline; gap: 12px; margin-bottom: 8px; }
+.detail-price-current { font-family: 'Cormorant Garamond', serif; font-size: 24px; font-weight: 700; color: var(--forest); }
+.detail-price-old { font-size: 15px; color: var(--text-muted); text-decoration: line-through; }
+.detail-save { font-size: 11px; color: var(--gold-muted); font-weight: 400; margin-bottom: 24px; }
+
+.stock-badge { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600; margin-bottom: 24px; padding: 6px 12px; border-radius: 6px; }
+.stock-badge.in { background: var(--sage-light); color: var(--sage); }
+.stock-badge.low { background: #FEF3E8; color: var(--warning); }
+.stock-badge.out { background: var(--danger-light); color: var(--danger); }
+
+.option-group { margin-bottom: 20px; }
+.option-label { font-size: 13px; font-weight: 600; color: var(--text-sub); margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
+.option-selected { color: var(--text); font-weight: 700; }
+.option-btns { display: flex; flex-wrap: wrap; gap: 8px; }
+.option-btn { min-width: 44px; height: 40px; padding: 0 14px; border: 1.5px solid var(--border); border-radius: 7px; background: white; font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 500; cursor: pointer; transition: all 0.15s; display: flex; align-items: center; gap: 6px; }
+.option-btn:hover:not([disabled]) { border-color: var(--forest); color: var(--forest); }
+.option-btn.active { background: var(--forest); color: white; border-color: var(--forest); }
+.option-btn.disabled { opacity: 0.35; cursor: not-allowed; text-decoration: line-through; }
+
+.qty-row { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
+.qty-label { font-size: 13px; font-weight: 600; color: var(--text-sub); }
+.qty-ctrl { display: flex; align-items: center; border: 1.5px solid var(--border); border-radius: 8px; overflow: hidden; }
+.qty-btn { width: 40px; height: 44px; border: none; background: var(--surface-alt); font-size: 18px; cursor: pointer; color: var(--text); transition: background 0.15s; }
+.qty-btn:hover { background: var(--border); }
+.qty-num { width: 52px; text-align: center; font-weight: 700; font-size: 16px; border: none; font-family: 'DM Sans', sans-serif; outline: none; background: white; }
+
+.detail-actions { display: flex; gap: 12px; margin-bottom: 24px; }
+.btn-primary-full { flex: 1; height: 52px; background: var(--forest); color: white; border: none; border-radius: var(--r-btn); font-family: 'DM Sans', sans-serif; font-size: 15px; font-weight: 700; cursor: pointer; transition: background 0.15s; display: flex; align-items: center; justify-content: center; gap: 8px; }
+.btn-primary-full:hover:not([disabled]) { background: var(--forest-hover); }
+.btn-primary-full[disabled] { background: var(--border); cursor: not-allowed; }
+.btn-secondary-full { flex: 1; height: 52px; background: transparent; color: var(--forest); border: 1.5px solid var(--forest); border-radius: var(--r-btn); font-family: 'DM Sans', sans-serif; font-size: 15px; font-weight: 600; cursor: pointer; transition: all 0.15s; }
+.btn-secondary-full:hover { background: var(--forest-hover); color: white; }
+
+.delivery-row { display: flex; align-items: center; gap: 20px; padding: 14px 0; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); margin-bottom: 16px; font-size: 13px; color: var(--text-sub); flex-wrap: wrap; }
+.delivery-item { display: flex; align-items: center; gap: 6px; }
+.delivery-item strong { color: var(--text); }
+.trust-badges { display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 20px; }
+.trust-badge { display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; color: var(--text-sub); }
+
+.tab-bar { display: flex; gap: 0; border-bottom: 1px solid var(--border); margin-bottom: 0; }
+.tab-btn { padding: 14px 20px; border: none; background: transparent; font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 500; color: var(--text-muted); cursor: pointer; border-bottom: 2px solid transparent; transition: all 0.15s; }
+.tab-btn.active { color: var(--forest); font-weight: 600; border-bottom-color: var(--forest); }
+
+.tab-panel p:first-child { margin-top: 0; }
+.tab-panel, .spec-table { margin-top: 0; }
+
+.spec-table { width: 100%; border-collapse: collapse; }
+.spec-table tr:nth-child(even) td { background: var(--surface-alt); }
+.spec-table td { padding: 10px 16px; font-size: 13px; border-bottom: 1px solid var(--border); }
+.spec-table td:first-child { font-weight: 600; color: var(--text); width: 40%; }
+.spec-table td:last-child { color: var(--text-sub); }
+
+.review-avatar { width: 28px; height: 28px; border-radius: 50%; background: var(--forest); color: white; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; flex-shrink: 0; }
+{% endblock %}
+
+{% block content %}
+<div style="max-width:1280px;margin:0 auto;padding:0 32px;">
+
+  {# Main two-column grid #}
+  <div class="detail-grid" x-data="productDetail">
+
+    {# ── LEFT: IMAGE GALLERY + BREADCRUMB (sticky) ── #}
+    <div class="detail-gallery">
+      <nav class="detail-breadcrumb" aria-label="breadcrumb">
+        <a href="/">Home</a>
+        {% if product.category %}
+          <span>›</span>
+          <a href="{% url 'store:category' product.category.slug %}">{{ product.category.name }}</a>
+        {% endif %}
+        <span>›</span>
+        <span style="color:var(--text);">{{ product.name }}</span>
+      </nav>
+      <div class="gallery-main">
+        {% for img in product.images.all %}
+          <img src="{{ img.image.url }}" alt="{{ img.alt_text|default:product.name }}"
+               x-show="activeImage === {{ forloop.counter0 }}"
+               style="{% if not forloop.first %}display:none;{% endif %}">
+        {% empty %}
+          {% icon "shopping-bag-open" size=64 color="var(--text-muted)" %}
+        {% endfor %}
+      </div>
+      {% if product.images.count > 1 %}
+      <div class="gallery-thumbs">
+        {% for img in product.images.all %}
+          <div class="gallery-thumb {% if forloop.first %}active{% endif %}"
+               :class="{ active: activeImage === {{ forloop.counter0 }} }"
+               @click="activeImage = {{ forloop.counter0 }}">
+            <img src="{{ img.image.url }}" alt="{{ img.alt_text|default:product.name }}">
+          </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+    </div>
+
+    {# ── RIGHT: PRODUCT INFO ── #}
+    <div class="detail-info">
+      {% if product.category %}
+        <span class="detail-cat-tag">{{ product.category.name }}</span>
+      {% endif %}
+
+      <h1 class="detail-name">{{ product.name }}</h1>
+
+      {% if product.average_rating %}
+      <div class="detail-rating">
+        <span class="stars">
+          {% for i in "12345"|make_list %}{% if forloop.counter <= product.average_rating|floatformat:0|add:"0" %}{% icon "star" size=16 color="var(--gold)" %}{% else %}{% icon "star-regular" size=16 color="var(--border)" %}{% endif %}{% endfor %}
+        </span>
+        <span class="detail-rating-score">{{ product.average_rating }}</span>
+        <a href="#reviews" class="detail-rating-count">{{ product.reviews.count }} review{{ product.reviews.count|pluralize }}</a>
+      </div>
+      {% endif %}
+
+      {# Price #}
+      <div class="detail-price">
+        {% if product.sale_price %}
+          <span class="detail-price-current" style="text-decoration:line-through;color:var(--text-muted)">KES {{ product.base_price|floatformat:0 }}</span>
+          <span style="font-size:24px;font-weight:700;color:var(--gold-muted);font-family:'Cormorant Garamond',serif">KES {{ product.sale_price|floatformat:0 }}</span>
+          <span style="background:var(--danger);color:#fff;font-size:11px;font-weight:700;padding:3px 8px;border-radius:4px;margin-left:4px">{{ product.discount_percent }}% off</span>
+        {% else %}
+          <span class="detail-price-current">KES {{ product.base_price|floatformat:0 }}</span>
+        {% endif %}
+      </div>
+      {% if product.sale_price %}
+        <div class="detail-save">{% icon "check" size=14 css_class="icon--inline" %} You save KES {{ savings|floatformat:0 }}</div>
+      {% endif %}
+
+      {# Stock indicator #}
+      {% if product.is_in_stock %}
+        <div class="stock-badge in">{% icon "check" size=14 css_class="icon--inline" %} In Stock — Ships within 24hrs</div>
+      {% else %}
+        <div class="stock-badge out">{% icon "x-circle" size=14 css_class="icon--inline" %} Out of Stock</div>
+      {% endif %}
+
+      {# CTA buttons #}
+      <div class="detail-actions"
+           x-data="cartControl" data-product-id="{{ product.id }}" data-max-stock="{{ product.stock }}"
+           x-init="init()">
+        <div style="width:95%;display:flex;align-items:stretch;gap:8px;">
+          <template x-if="quantity === 0">
+            <button class="btn-primary-full"
+                    type="button"
+                    @click="increment()"
+                    :disabled="{{ product.is_in_stock|yesno:'false,true' }}">
+              {% icon "shopping-cart" size=18 css_class="icon--inline" %} Add to Cart
+            </button>
+          </template>
+          <template x-if="quantity > 0">
+            <div style="display:flex;align-items:stretch;gap:4px;height:52px;width:100%;">
+              <button type="button" @click="decrement()"
+                      style="width:52px;height:52px;flex-shrink:0;border:1px solid #e2e8f0;border-radius:6px;background:white;color:#0f172a;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s;font-family:inherit;">−</button>
+              <div style="width:52px;height:52px;flex-shrink:0;border:1px solid #e2e8f0;border-radius:6px;background:#f8fafc;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:600;color:#0f172a;">
+                <span x-text="quantity"></span>
+              </div>
+              <button type="button" @click="increment()"
+                      style="width:52px;height:52px;flex-shrink:0;border:none;border-radius:8px;background:var(--forest);color:white;font-size:20px;font-weight:bold;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s;font-family:inherit;">+</button>
+              <a href="/cart/" class="btn-primary-full" style="text-decoration:none;flex:1;min-width:0;">View Cart</a>
+            </div>
+          </template>
+        </div>
+      </div>
+
+      {# Delivery info #}
+      <div class="delivery-row">
+        <div class="delivery-item">{% icon "package" size=14 css_class="icon--inline" %} <span>Delivery: <strong>KES {{ product.delivery_fee|floatformat:0 }}</strong></span></div>
+        <div class="delivery-item">⏱ <span>Est. <strong>{{ store_settings.delivery_timeframe }}</strong></span></div>
+      </div>
+
+      {# Trust badges #}
+      <div class="trust-badges">
+        <span class="trust-badge">{% icon "lock" size=13 css_class="icon--inline" %} Secure Payment</span>
+        <span class="trust-badge">↩ Easy Returns</span>
+        <span class="trust-badge">{% icon "check" size=13 css_class="icon--inline" %} Genuine Product</span>
+      </div>
+
+      {# ── TABS: Description / Specs / Reviews ── #}
+      <div style="margin-top:32px;padding-bottom:80px;" x-data="tabs" id="reviews">
+        <div class="tab-bar">
+          <button class="tab-btn active" :class="{ active: tab==='description' }" @click="tab='description'">Description</button>
+          {% if product.specs %}
+            <button class="tab-btn" :class="{ active: tab==='specs' }" @click="tab='specs'">Specifications</button>
+          {% endif %}
+          <button class="tab-btn" :class="{ active: tab==='reviews' }" @click="tab='reviews'">Reviews ({{ product.reviews.count }})</button>
+        </div>
+
+        <div class="tab-panels" style="display:grid;align-items:start;padding-top:20px;">
+        {# Description #}
+        <div class="tab-panel" style="grid-area:1/1;font-size:15px;color:var(--text-sub);line-height:1.8;"
+             x-show="tab==='description'">
+          {{ product.description|linebreaks }}
+        </div>
+
+        {# Specifications #}
+        {% if product.specs %}
+        <div style="grid-area:1/1;" x-show="tab==='specs'">
+          <table class="spec-table">
+            {% for key, value in spec_rows %}
+            <tr>
+              <td>{{ key }}</td>
+              <td>{{ value }}</td>
+            </tr>
+            {% endfor %}
+          </table>
+        </div>
+        {% endif %}
+
+        {# Reviews #}
+        <div style="grid-area:1/1;" x-show="tab==='reviews'"
+             id="review-section-root"
+             data-avg="{{ product.average_rating|default:'' }}"
+             data-count="{{ product.reviews.count }}"
+             data-slug="{{ product.slug }}"
+             x-data="reviewSection">
+
+          {# Newly submitted reviews prepended live #}
+          <template x-for="r in newReviews" :key="r.body">
+            <div style="border-bottom:1px solid var(--border);padding:20px 0;">
+              <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px;">
+                <div class="review-avatar" x-text="r.initials"></div>
+                <div style="flex:1;">
+                  <p style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:2px;" x-text="r.name"></p>
+                  <p style="font-size:11px;color:var(--text-muted);">Just now</p>
+                </div>
+                <span style="font-size:15px;">
+                  <template x-for="(filled,idx) in starsArray(r.rating)" :key="idx">
+                    <span :style="filled ? 'color:var(--gold)' : 'color:var(--border)'" x-text="'★'"></span>
+                  </template>
+                </span>
+              </div>
+              <p style="font-size:14px;color:var(--text-sub);line-height:1.7;" x-text="r.body"></p>
+            </div>
+          </template>
+
+          {# Server-rendered existing reviews #}
+          {% for review in reviews %}
+          <div style="border-bottom:1px solid var(--border);padding:14px 0;">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+              <div class="review-avatar">{{ review.user.first_name|first|upper }}{{ review.user.last_name|first|upper }}</div>
+              <span style="font-size:12px;font-weight:600;color:var(--text);">{{ review.user.get_full_name|default:review.user.email }}</span>
+              <span style="font-size:11px;color:var(--text-muted);">· {{ review.created_at|date:"d M Y" }}</span>
+              <span style="margin-left:auto;color:var(--gold);">{% for i in "12345"|make_list %}{% if forloop.counter <= review.rating %}{% icon "star" size=11 color="var(--gold)" %}{% else %}{% icon "star-regular" size=11 color="var(--border)" %}{% endif %}{% endfor %}</span>
+            </div>
+            <p style="font-size:13px;color:var(--text-sub);line-height:1.6;margin:0;">{{ review.body }}</p>
+          </div>
+          {% empty %}
+          <template x-if="newReviews.length === 0">
+            <p style="font-size:14px;color:var(--text-muted);padding:20px 0;">No reviews yet. Be the first!</p>
+          </template>
+          {% endfor %}
+
+          {% if user_can_review %}
+          <div x-show="!done" style="margin-top:28px;background:var(--surface-alt);border-radius:12px;padding:24px;">
+            <h3 style="font-size:15px;font-weight:700;color:var(--forest);margin-bottom:16px;">Write a Review</h3>
+            <div style="display:flex;gap:6px;margin-bottom:14px;">
+              {% for i in "12345"|make_list %}
+              <label style="cursor:pointer;" :style="rating >= {{ forloop.counter }} ? 'color:var(--gold)' : 'color:var(--border)'">
+                <input type="radio" name="rating" value="{{ forloop.counter }}"
+                       @click="rating = {{ forloop.counter }}" style="display:none;">
+                <svg class="icon" width="28" height="28" fill="currentColor" aria-hidden="true"><use href="#ph-star"></use></svg>
+              </label>
+              {% endfor %}
+            </div>
+            <textarea x-model="body" rows="4" placeholder="Share your experience…"
+                      style="width:100%;border:1.5px solid var(--border);border-radius:8px;padding:12px;font-size:14px;font-family:'DM Sans',sans-serif;outline:none;resize:vertical;margin-bottom:12px;background:white;box-sizing:border-box;"></textarea>
+            <p x-show="err" x-text="err" style="color:var(--danger);font-size:13px;margin-bottom:8px;"></p>
+            <button type="button" @click="submit()" :disabled="submitting"
+                    style="padding:10px 24px;background:var(--forest);color:white;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;">
+              Submit Review
+            </button>
+          </div>
+          {% endif %}
+        </div>
+        </div>{# end tab panels grid #}
+      </div>{# end tabs #}
+
+    </div>{# end detail-info #}
+  </div>{# end detail-grid #}
+
+</div>{# end container #}
+{% endblock %}
+
+{% block extra_js %}{% endblock %}

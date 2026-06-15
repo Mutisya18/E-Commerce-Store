@@ -1,0 +1,20 @@
+{% load icon_tags %}
+<div class="newsletter-content" x-data="newsletter">
+  <h2 class="newsletter-title" style="color:var(--section-heading-color);font-size:var(--section-heading-size);font-weight:var(--section-heading-weight);">{{ settings.section_heading_newsletter }}</h2>
+  {% if settings.section_subheading_newsletter %}
+    <p class="newsletter-sub">{{ settings.section_subheading_newsletter }}</p>
+  {% endif %}
+  <div class="newsletter-form" x-show="!sent">
+    <input class="newsletter-input" type="email" x-model="email" placeholder="your@email.com">
+    <button class="newsletter-btn" @click="
+      fetch('/newsletter/subscribe/', {
+        method:'POST',
+        headers:{'X-CSRFToken': document.cookie.match(/csrftoken=([^;]+)/)?.[1]||'','Content-Type':'application/x-www-form-urlencoded'},
+        body:'email='+encodeURIComponent(email)
+      }).then(r=>r.json()).then(d=>{ if(d.ok){sent=true}else{error=d.error} })
+    ">Subscribe</button>
+  </div>
+  <p x-show="error" x-text="error" style="color:rgba(255,255,255,0.8);font-size:13px;margin-top:8px;"></p>
+  <p x-show="sent" style="color:white;font-size:15px;font-weight:600;">{% icon "check" size=16 css_class="icon--inline" %} You're subscribed!</p>
+  <p class="newsletter-fine">{{ settings.section_newsletter_fine|default:"No spam. Unsubscribe any time." }}</p>
+</div>

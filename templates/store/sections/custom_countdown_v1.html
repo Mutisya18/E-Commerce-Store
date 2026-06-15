@@ -1,0 +1,23 @@
+{% with c=section.custom_content %}
+<div class="container" style="text-align:center;" x-data="dealCountdown" data-deadline="{{ c.end_date }}">
+  {% if c.heading %}
+    <h2 style="color:var(--section-heading-color);font-size:var(--section-heading-size);font-weight:var(--section-heading-weight);font-family:'Cormorant Garamond',serif;margin-bottom:12px;">{{ c.heading }}</h2>
+  {% endif %}
+  {% if c.subheading %}
+    <p style="color:var(--section-body-color);font-size:var(--section-body-size);margin-bottom:32px;">{{ c.subheading }}</p>
+  {% endif %}
+  <div x-show="!expired" style="display:flex;justify-content:center;gap:24px;margin-bottom:32px;">
+    {% for unit in "days,hrs,mins,secs"|split:"," %}{% endfor %}
+    <template x-for="(val, label) in [['days','Days'],['hours','Hrs'],['minutes','Mins'],['seconds','Secs']]" :key="label">
+      <div style="text-align:center;">
+        <div x-text="String(time[val]).padStart(2,'0')" style="font-family:'Cormorant Garamond',serif;font-size:56px;font-weight:700;color:var(--section-heading-color);line-height:1;"></div>
+        <div x-text="label" style="font-size:12px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--section-body-color);margin-top:4px;"></div>
+      </div>
+    </template>
+  </div>
+  <div x-show="expired" style="font-size:18px;color:var(--section-body-color);margin-bottom:32px;">{{ c.expired_message|default:"This offer has ended." }}</div>
+  {% if section.btn1_enabled and c.cta_text %}
+    <a href="{{ c.cta_link|default:'#' }}" class="btn btn--{{ section.btn1_style }} btn--{{ section.btn1_colour|slice:'2:' }}">{{ c.cta_text }}</a>
+  {% endif %}
+</div>
+{% endwith %}

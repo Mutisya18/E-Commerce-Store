@@ -1,0 +1,89 @@
+{% extends "dashboard/base_dashboard.html" %}
+{% load humanize icon_tags %}
+
+{% block title %}Categories — Dashboard{% endblock %}
+{% block page_title %}Categories{% endblock %}
+{% block nav_categories %}active{% endblock %}
+
+{% block extra_styles %}
+.table-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-lg); overflow: hidden; }
+table { width: 100%; border-collapse: collapse; }
+thead th { padding: 11px 16px; text-align: left; font-size: 11px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: .06em; background: var(--surface-alt); border-bottom: 1px solid var(--border); }
+tbody tr { border-bottom: 1px solid var(--border); transition: background .12s; }
+tbody tr:last-child { border-bottom: none; }
+tbody tr:hover { background: var(--surface-alt); }
+td { padding: 12px 16px; font-size: 13px; color: var(--text); vertical-align: middle; }
+.td-img { width: 40px; height: 40px; border-radius: 8px; background: var(--surface-alt); border: 1px solid var(--border); overflow: hidden; display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0; }
+.td-img img { width: 100%; height: 100%; object-fit: cover; }
+.td-name { font-weight: 600; color: var(--navy); }
+.btn { display: inline-flex; align-items: center; gap: 6px; padding: 0 14px; height: 34px; border-radius: var(--r); font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 500; cursor: pointer; border: none; text-decoration: none; transition: all .15s; }
+.btn-navy { background: var(--navy); color: #fff; }
+.btn-navy:hover { background: var(--navy-hover); }
+.btn-ghost { background: transparent; color: var(--text-sub); border: 1.5px solid var(--border); }
+.btn-ghost:hover { border-color: var(--navy); color: var(--navy); }
+.btn-danger { background: var(--danger-light); color: var(--danger); }
+.btn-danger:hover { background: var(--danger); color: #fff; }
+.empty-state { text-align: center; padding: 60px 20px; color: var(--text-muted); }
+.empty-state .icon { font-size: 40px; margin-bottom: 12px; }
+.empty-state p { font-size: 14px; }
+{% endblock %}
+
+{% block dashboard_content %}
+<div class="page-header">
+  <div>
+    <div class="page-title serif">Categories</div>
+    <div style="font-size:13px;color:var(--text-muted);margin-top:3px;">{{ categories|length }} categor{{ categories|length|pluralize:"y,ies" }}</div>
+  </div>
+  <a href="/dashboard/categories/add/" class="btn btn-navy">+ Add Category</a>
+</div>
+
+<div class="table-wrap">
+  <table>
+    <thead>
+      <tr>
+        <th>Image</th>
+        <th>Name</th>
+        <th>Slug</th>
+        <th>Parent</th>
+        <th>Products</th>
+        <th>Order</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for cat in categories %}
+      <tr>
+        <td>
+          <div class="td-img">
+            {% if cat.image %}<img src="{{ cat.image.url }}" alt="{{ cat.name }}">{% else %}{% icon cat.icon_name size=24 color="var(--text-muted)" %}{% endif %}
+          </div>
+        </td>
+        <td><div class="td-name">{{ cat.name }}</div></td>
+        <td style="color:var(--text-muted);font-size:12px;">{{ cat.slug }}</td>
+        <td style="color:var(--text-muted);">{{ cat.parent.name|default:"—" }}</td>
+        <td style="font-weight:600;">{{ cat.product_count }}</td>
+        <td style="color:var(--text-muted);">{{ cat.order }}</td>
+        <td>
+          <div style="display:flex;gap:6px;">
+            <a href="/dashboard/categories/{{ cat.pk }}/edit/" class="btn btn-ghost">Edit</a>
+            <form method="post" action="/dashboard/categories/{{ cat.pk }}/delete/" onsubmit="return confirm('Delete {{ cat.name }}?')">
+              {% csrf_token %}
+              <button type="submit" class="btn btn-danger">Delete</button>
+            </form>
+          </div>
+        </td>
+      </tr>
+      {% empty %}
+      <tr>
+        <td colspan="7">
+          <div class="empty-state">
+            <div class="icon">{% icon "rows" size=48 color="var(--text-muted)" %}</div>
+            <p>No categories yet. <a href="/dashboard/categories/add/" style="color:var(--navy);font-weight:600;">Add one</a>.</p>
+          </div>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

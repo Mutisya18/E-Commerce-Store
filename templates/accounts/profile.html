@@ -1,0 +1,286 @@
+{% extends "base.html" %}
+{% load humanize icon_tags %}
+{% block title %}My Account{% endblock %}
+
+{% block extra_styles %}
+<style>
+  .mp-root { }
+  .mp-page-title { font-family: 'Cormorant Garamond', serif; font-size: 26px; font-weight: 700; color: #1B2A4A; margin: 0 0 24px; display: flex; align-items: center; gap: 12px; }
+  .mp-page-title::after { content: ''; flex: 1; height: 1px; background: #E5E2DC; }
+  .mp-card { background: #fff; border: 1px solid #E5E2DC; border-radius: 12px; margin-bottom: 20px; overflow: hidden; }
+  .mp-card-header { padding: 18px 24px; border-bottom: 1px solid #F3F1ED; display: flex; align-items: center; justify-content: space-between; }
+  .mp-card-title { font-family: 'Cormorant Garamond', serif; font-size: 18px; font-weight: 700; color: #1B2A4A; }
+  .mp-btn { display: inline-flex; align-items: center; gap: 6px; padding: 7px 16px; border-radius: 7px; font-size: 13px; font-weight: 600; cursor: pointer; border: none; font-family: inherit; }
+  .mp-btn-primary { background: #1B2A4A; color: #fff; }
+  .mp-btn-primary:hover { background: #243660; }
+  .mp-btn-ghost { background: transparent; color: #1B2A4A; border: 1.5px solid #E5E2DC; }
+  .mp-btn-ghost:hover { background: #F3F1ED; }
+  .mp-hero { padding: 24px; display: flex; align-items: center; gap: 20px; flex-wrap: wrap; }
+  .mp-avatar { width: 72px; height: 72px; border-radius: 50%; background: linear-gradient(135deg, #1B2A4A, #243660); display: flex; align-items: center; justify-content: center; font-family: 'Cormorant Garamond', serif; font-size: 26px; font-weight: 700; color: #C9A84C; flex-shrink: 0; }
+  .mp-user-name { font-family: 'Cormorant Garamond', serif; font-size: 22px; font-weight: 700; color: #1B2A4A; margin: 0 0 4px; }
+  .mp-badge { display: inline-flex; align-items: center; gap: 5px; background: #EAF4F0; color: #1A5C45; font-size: 11px; font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase; padding: 3px 9px; border-radius: 5px; }
+  .mp-stats { margin-left: auto; display: flex; gap: 0; border-left: 1px solid #E5E2DC; padding-left: 24px; }
+  .mp-stat { text-align: center; padding: 0 20px; border-right: 1px solid #F3F1ED; }
+  .mp-stat:last-child { border-right: none; }
+  .mp-stat-num { font-family: 'Cormorant Garamond', serif; font-size: 24px; font-weight: 700; color: #1B2A4A; line-height: 1; }
+  .mp-stat-label { font-size: 11px; color: #9A9A9A; margin-top: 4px; white-space: nowrap; }
+  .mp-fields { padding: 8px 24px 24px; }
+  .mp-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0; }
+  .mp-field { padding: 18px 24px 18px 0; border-bottom: 1px solid #F3F1ED; }
+  .mp-grid .mp-field:nth-last-child(-n+3) { border-bottom: none; }
+  .mp-field-label { font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: #9A9A9A; margin-bottom: 7px; }
+  .mp-field-value { font-size: 15px; font-weight: 500; color: #1A1A1A; }
+  .mp-orders-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  .mp-orders-table th { font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: #9A9A9A; text-align: left; padding: 12px 24px; border-bottom: 1px solid #F3F1ED; background: #FAF8F5; }
+  .mp-orders-table td { padding: 14px 24px; border-bottom: 1px solid #F3F1ED; color: #1A1A1A; vertical-align: middle; }
+  .mp-orders-table tr:last-child td { border-bottom: none; }
+  .mp-orders-table tr:hover td { background: #FAF8F5; }
+  .mp-status { display: inline-flex; align-items: center; gap: 5px; padding: 3px 9px; border-radius: 5px; font-size: 11px; font-weight: 700; letter-spacing: 0.05em; }
+  .mp-status::before { content: ''; width: 5px; height: 5px; border-radius: 50%; background: currentColor; display: block; }
+  .mp-status-delivered { background: #EAF4F0; color: #1A5C45; }
+  .mp-status-processing { background: rgba(27,42,74,0.08); color: #1B2A4A; }
+  .mp-status-shipped { background: #FDF6E3; color: #8A6800; }
+  .mp-status-pending { background: #F3F1ED; color: #6B6B6B; }
+  .mp-status-cancelled { background: #FEF0EE; color: #C0392B; }
+  .mp-view-link { color: #1B2A4A; font-size: 13px; font-weight: 600; text-decoration: none; border-bottom: 1px solid #C9A84C; padding-bottom: 1px; }
+  .mp-modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 1000; align-items: center; justify-content: center; padding: 16px; }
+  .mp-modal-overlay.open { display: flex; }
+  .mp-modal { background: #fff; border-radius: 14px; padding: 36px; width: 100%; max-width: 460px; position: relative; }
+  .mp-modal-title { font-family: 'Cormorant Garamond', serif; font-size: 20px; font-weight: 700; color: #1B2A4A; margin: 0 0 24px; }
+  .mp-modal-close { position: absolute; top: 16px; right: 16px; background: none; border: none; font-size: 20px; cursor: pointer; color: #9A9A9A; line-height: 1; }
+  .mp-input-label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px; color: #1A1A1A; }
+  .mp-input { width: 100%; height: 44px; border: 1.5px solid #E5E2DC; border-radius: 8px; padding: 0 14px; font-size: 14px; outline: none; font-family: inherit; box-sizing: border-box; }
+  .mp-input:focus { border-color: #1B2A4A; }
+  .mp-input-group { margin-bottom: 16px; }
+  .mp-input-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px; }
+  .mp-error { background: #FDECEA; color: #C0392B; padding: 10px 14px; border-radius: 8px; font-size: 13px; margin-bottom: 16px; border-left: 3px solid #C0392B; }
+  .mp-empty { padding: 32px 24px; text-align: center; color: #9A9A9A; font-size: 14px; }
+  .mp-orders-footer { padding: 14px 24px; border-top: 1px solid #F3F1ED; text-align: right; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div style="width: 70%; max-width: 960px; margin: 40px auto; padding-bottom: 60px;">
+<div class="mp-root">
+  <div class="mp-page-title">My Account</div>
+
+  {# ── Hero Card ─────────────────────────────────────────────────────── #}
+  <div class="mp-card">
+    <div class="mp-hero">
+      <div class="mp-avatar">
+        {{ user.first_name|slice:":1"|upper }}{{ user.last_name|slice:":1"|upper }}
+      </div>
+      <div>
+        <div class="mp-user-name">@{{ user.username }}</div>
+        <div class="mp-badge">
+          {% icon "user-circle" size=9 %}
+          {{ user.get_full_name|default:"Member" }}
+        </div>
+      </div>
+      <div class="mp-stats">
+        <div class="mp-stat">
+          <div class="mp-stat-num">{{ total_orders }}</div>
+          <div class="mp-stat-label">Total Orders</div>
+        </div>
+        <div class="mp-stat">
+          <div class="mp-stat-num">KES {{ total_spent|floatformat:0|intcomma }}</div>
+          <div class="mp-stat-label">Total Spent</div>
+        </div>
+        <div class="mp-stat">
+          <div class="mp-stat-num">{{ user.date_joined|date:"M 'y" }}</div>
+          <div class="mp-stat-label">Member Since</div>
+        </div>
+      </div>
+      <button data-action="open-logout" title="Sign Out"
+        style="width:40px;height:40px;border-radius:8px;background:transparent;border:1.5px solid #E5E2DC;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#C0392B;flex-shrink:0;transition:background 0.15s;margin-left:24px;">
+        {% icon "sign-out" size=16 %}
+      </button>
+    </div>
+  </div>
+
+  {# ── Personal Information ──────────────────────────────────────────── #}
+  <div class="mp-card">
+    <div class="mp-card-header">
+      <div class="mp-card-title">Personal Information</div>
+      <button class="mp-btn mp-btn-primary" data-modal-open="personal-modal">
+        {% icon "pencil-simple" size=13 %}
+        Edit
+      </button>
+    </div>
+    <div class="mp-fields">
+      <div class="mp-grid">
+        <div class="mp-field">
+          <div class="mp-field-label">Username</div>
+          <div class="mp-field-value">@{{ user.username }}</div>
+        </div>
+        <div class="mp-field">
+          <div class="mp-field-label">First Name</div>
+          <div class="mp-field-value">{{ user.first_name|default:"—" }}</div>
+        </div>
+        <div class="mp-field">
+          <div class="mp-field-label">Last Name</div>
+          <div class="mp-field-value">{{ user.last_name|default:"—" }}</div>
+        </div>
+        <div class="mp-field">
+          <div class="mp-field-label">Email Address</div>
+          <div class="mp-field-value">{{ user.email }}</div>
+        </div>
+        <div class="mp-field">
+          <div class="mp-field-label">Phone Number</div>
+          <div class="mp-field-value">{{ user.phone_number|default:"—" }}</div>
+        </div>
+        <div class="mp-field">
+          <div class="mp-field-label">Account Status</div>
+          <div class="mp-field-value">
+            <span style="color:#1A5C45;font-weight:600;display:inline-flex;align-items:center;gap:5px;">
+              <span style="width:7px;height:7px;border-radius:50%;background:#1A5C45;display:inline-block;"></span>
+              Active
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {# ── Order Summary ────────────────────────────────────────────────── #}
+  <div class="mp-card">
+    <div class="mp-card-header">
+      <div class="mp-card-title">Order Summary</div>
+      <a href="{% url 'accounts:order_history' %}" class="mp-view-link">View All →</a>
+    </div>
+    <div style="padding: 24px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px;">
+      <div style="text-align: center;">
+        <div style="font-family: 'Cormorant Garamond', serif; font-size: 32px; font-weight: 700; color: #1B2A4A; line-height: 1;">{{ total_orders }}</div>
+        <div style="font-size: 12px; color: #9A9A9A; margin-top: 6px; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600;">Total Orders</div>
+      </div>
+      <div style="text-align: center;">
+        <div style="font-family: 'Cormorant Garamond', serif; font-size: 32px; font-weight: 700; color: #1B2A4A; line-height: 1;">KES {{ total_spent|floatformat:0|intcomma }}</div>
+        <div style="font-size: 12px; color: #9A9A9A; margin-top: 6px; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600;">Total Spent</div>
+      </div>
+      <div style="text-align: center;">
+        <div style="font-family: 'Cormorant Garamond', serif; font-size: 32px; font-weight: 700; color: #1B2A4A; line-height: 1;">{{ recent_orders|length }}</div>
+        <div style="font-size: 12px; color: #9A9A9A; margin-top: 6px; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600;">Recent Orders</div>
+      </div>
+    </div>
+  </div>
+
+  {# ── Delivery Address ──────────────────────────────────────────────── #}
+  <div class="mp-card">
+    <div class="mp-card-header">
+      <div class="mp-card-title">Delivery Address</div>
+      <button class="mp-btn mp-btn-ghost" data-modal-open="address-modal">
+        {% icon "pencil-simple" size=13 %}
+        Edit
+      </button>
+    </div>
+    <div class="mp-fields">
+      <div class="mp-grid">
+        <div class="mp-field">
+          <div class="mp-field-label">Street Address</div>
+          <div class="mp-field-value">{{ user.street_address|default:"—" }}</div>
+        </div>
+        <div class="mp-field">
+          <div class="mp-field-label">City</div>
+          <div class="mp-field-value">{{ user.city|default:"—" }}</div>
+        </div>
+        <div class="mp-field">
+          <div class="mp-field-label">County</div>
+          <div class="mp-field-value">{{ user.county|default:"—" }}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+{# ── Personal Info Modal ───────────────────────────────────────────────── #}
+<div id="personal-modal" class="mp-modal-overlay {% if open_modal == 'personal' %}open{% endif %}">
+  <div class="mp-modal">
+    <button class="mp-modal-close" data-modal-close="personal-modal">{% icon "x" size=16 %}</button>
+    <div class="mp-modal-title">Edit Personal Information</div>
+
+    {% if errors and open_modal == 'personal' %}
+      <div class="mp-error">{% for e in errors %}{{ e }}{% endfor %}</div>
+    {% endif %}
+
+    <form method="post">
+      {% csrf_token %}
+      <input type="hidden" name="form_type" value="personal">
+
+      <div class="mp-input-group">
+        <label class="mp-input-label">Username</label>
+        <input class="mp-input" type="text" name="username" id="profile-username-input"
+          value="{{ form_data.username|default:user.username }}" required>
+        <div id="profile-username-feedback" style="font-size:12px;margin-top:4px;min-height:18px;"></div>
+      </div>
+
+      <div class="mp-input-row">
+        <div>
+          <label class="mp-input-label">First Name</label>
+          <input class="mp-input" type="text" name="first_name"
+            value="{{ form_data.first_name|default:user.first_name }}" required>
+        </div>
+        <div>
+          <label class="mp-input-label">Last Name</label>
+          <input class="mp-input" type="text" name="last_name"
+            value="{{ form_data.last_name|default:user.last_name }}" required>
+        </div>
+      </div>
+
+      <div class="mp-input-group">
+        <label class="mp-input-label">Phone Number</label>
+        <input class="mp-input" type="tel" name="phone_number"
+          value="{{ form_data.phone_number|default:user.phone_number }}">
+      </div>
+
+      <div class="mp-input-group">
+        <label class="mp-input-label" style="color:#9A9A9A;">Email Address (cannot be changed)</label>
+        <input class="mp-input" type="email" value="{{ user.email }}" disabled
+          style="background:#FAF8F5;color:#9A9A9A;cursor:not-allowed;">
+      </div>
+
+      <button type="submit" class="mp-btn mp-btn-primary" style="width:100%;justify-content:center;height:44px;margin-top:8px;">
+        Save Changes
+      </button>
+    </form>
+  </div>
+</div>
+
+{# ── Address Modal ─────────────────────────────────────────────────────── #}
+<div id="address-modal" class="mp-modal-overlay {% if open_modal == 'address' %}open{% endif %}">
+  <div class="mp-modal">
+    <button class="mp-modal-close" data-modal-close="address-modal">{% icon "x" size=16 %}</button>
+    <div class="mp-modal-title">Edit Delivery Address</div>
+
+    <form method="post">
+      {% csrf_token %}
+      <input type="hidden" name="form_type" value="address">
+
+      <div class="mp-input-group">
+        <label class="mp-input-label">Street Address</label>
+        <input class="mp-input" type="text" name="street_address"
+          value="{{ user.street_address }}" placeholder="e.g. 14 Ngong Road, Kilimani">
+      </div>
+
+      <div class="mp-input-row">
+        <div>
+          <label class="mp-input-label">City</label>
+          <input class="mp-input" type="text" name="city"
+            value="{{ user.city }}" placeholder="e.g. Nairobi">
+        </div>
+        <div>
+          <label class="mp-input-label">County</label>
+          <input class="mp-input" type="text" name="county"
+            value="{{ user.county }}" placeholder="e.g. Nairobi County">
+        </div>
+      </div>
+
+      <button type="submit" class="mp-btn mp-btn-primary" style="width:100%;justify-content:center;height:44px;margin-top:8px;">
+        Save Address
+      </button>
+    </form>
+  </div>
+</div>
+</div>
+
+{% endblock %}

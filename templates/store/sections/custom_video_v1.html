@@ -1,0 +1,15 @@
+{% with c=section.custom_content %}
+<div class="container" style="text-align:center;">
+  {% if c.heading %}
+    <h2 style="color:var(--section-heading-color);font-size:var(--section-heading-size);font-weight:var(--section-heading-weight);font-family:'Cormorant Garamond',serif;margin-bottom:32px;">{{ c.heading }}</h2>
+  {% endif %}
+  {% if c.video_url %}
+    <div style="max-width:800px;margin:0 auto;aspect-ratio:16/9;border-radius:12px;overflow:hidden;">
+      <iframe src="{{ c.video_url }}" style="width:100%;height:100%;border:none;" allowfullscreen loading="lazy"></iframe>
+    </div>
+  {% else %}
+    <div style="max-width:800px;margin:0 auto;aspect-ratio:16/9;background:var(--surface-alt);border-radius:12px;display:flex;align-items:center;justify-content:center;color:var(--text-muted);font-size:14px;">No video URL set</div>
+  {% endif %}
+  {% if c.caption %}<p style="color:var(--section-body-color);font-size:var(--section-body-size);margin-top:16px;">{{ c.caption }}</p>{% endif %}
+</div>
+{% endwith %}

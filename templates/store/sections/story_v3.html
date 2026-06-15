@@ -1,0 +1,20 @@
+<div style="margin:-80px 0;padding:0;background:var({{ story_bg_colour }});">
+  {% if story_image_visible and story_image_url %}
+  <div style="position:relative;width:100%;height:{{ story_image_height }};overflow:hidden;">
+    <img src="{{ story_image_url }}" alt="{{ story_heading }}" style="width:100%;height:100%;object-fit:cover;">
+    <div style="position:absolute;inset:0;background:var({{ story_overlay_colour }});opacity:{{ story_overlay_opacity }}%;"></div>
+  </div>
+  {% else %}
+  <div style="width:100%;height:{{ story_image_height }};background:var({{ story_image_bg_colour }});"></div>
+  {% endif %}
+  <div class="container" style="text-align:center;max-width:780px;padding-top:48px;padding-bottom:80px;">
+    {% if story_overline_visible %}
+    <div class="story-overline" style="color:var({{ story_overline_colour }});justify-content:center;">{{ story_overline }}</div>
+    {% endif %}
+    <h2 class="story-headline" style="color:var({{ story_heading_colour }});font-size:{{ story_heading_size }};">{{ story_heading }}</h2>
+    <p class="story-body" style="color:var({{ story_body_colour }});font-size:{{ story_body_size }};max-width:680px;margin-left:auto;margin-right:auto;">{{ story_body }}</p>
+    {% if story_cta_visible %}
+    <a href="{{ story_cta_link }}" class="btn btn--{{ story_cta_style }} btn--{{ story_cta_colour|slice:'2:' }}">{{ story_cta_text }}</a>
+    {% endif %}
+  </div>
+</div>

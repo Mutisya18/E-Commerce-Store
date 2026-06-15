@@ -1,0 +1,10 @@
+{% with c=section.custom_content %}
+<div class="container" style="max-width:720px;margin:0 auto;text-align:center;">
+  {% if c.heading %}
+    <h2 style="color:var(--section-heading-color);font-size:var(--section-heading-size);font-weight:var(--section-heading-weight);font-family:'Cormorant Garamond',serif;margin-bottom:24px;">{{ c.heading }}</h2>
+  {% endif %}
+  {% if c.body %}
+    <div style="color:var(--section-body-color);font-size:var(--section-body-size);font-weight:var(--section-body-weight);line-height:1.8;text-align:left;">{{ c.body|linebreaks }}</div>
+  {% endif %}
+</div>
+{% endwith %}

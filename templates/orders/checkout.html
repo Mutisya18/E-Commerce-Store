@@ -1,0 +1,232 @@
+{% extends "base.html" %}
+{% load humanize icon_tags %}
+{% block title %}Checkout — Mutisya{% endblock %}
+
+{% block extra_styles %}
+.checkout-wrap { max-width: 1060px; margin: 48px auto; padding: 0 32px; display: grid; grid-template-columns: 1fr 340px; gap: 32px; align-items: start; }
+@media(max-width:768px){ .checkout-wrap{ grid-template-columns:1fr; padding:0 20px; } }
+.checkout-card { background: var(--surface); border-radius: var(--r-card); box-shadow: var(--shadow-card); padding: 32px; }
+.section-label { font-size: 11px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; color: var(--text-muted); margin-bottom: 16px; }
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+@media(max-width:480px){ .form-row{ grid-template-columns:1fr; } }
+.form-group { display: flex; flex-direction: column; gap: 6px; margin-bottom: 16px; }
+.form-label { font-size: 13px; font-weight: 600; color: var(--text-sub); }
+.form-input { height: 44px; border: 1.5px solid var(--border); border-radius: var(--r-input); padding: 0 14px; font-family: 'DM Sans', sans-serif; font-size: 14px; color: var(--text); background: var(--base); outline: none; transition: border-color 0.15s, box-shadow 0.15s; width: 100%; }
+.form-input:focus { border-color: var(--forest); box-shadow: 0 0 0 3px rgba(30,45,34,0.08); background: white; }
+.form-input.error { border-color: var(--danger); }
+.field-error { font-size: 12px; color: var(--danger); margin-top: 2px; }
+.pay-opts { display: flex; gap: 12px; margin-bottom: 20px; }
+.pay-opt { flex: 1; display: flex; align-items: center; gap: 12px; padding: 14px 16px; border: 2px solid var(--border); border-radius: 10px; cursor: pointer; transition: border-color 0.15s, background 0.15s; background: var(--base); }
+.pay-opt.active { border-color: var(--forest); background: var(--navy-light); }
+.pay-opt-icon { font-size: 22px; }
+.pay-opt-label { font-size: 14px; font-weight: 700; color: var(--forest); }
+.pay-opt-sub { font-size: 12px; color: var(--text-muted); }
+.mpesa-hint { font-size: 13px; color: var(--text-sub); margin-top: 6px; }
+.summary-row { display: flex; justify-content: space-between; font-size: 13px; color: var(--text-sub); margin-bottom: 10px; }
+.summary-total { display: flex; justify-content: space-between; padding-top: 14px; border-top: 1px solid var(--border); margin-top: 4px; }
+.divider { border: none; border-top: 1px solid var(--border); margin: 24px 0; }
+{% endblock %}
+
+{% block content %}
+<div style="max-width:1060px;margin:40px auto;padding:0 32px;">
+  <h1 class="serif" style="font-size:32px;color:var(--forest);margin-bottom:4px;">Checkout</h1>
+  <p style="font-size:14px;color:var(--text-muted);margin-bottom:0;">You're almost there.</p>
+</div>
+
+<form method="post" action="{% url 'payments:checkout' %}" id="checkout-form">
+{% csrf_token %}
+<div class="checkout-wrap">
+
+  {# ── LEFT COLUMN ── #}
+  <div>
+
+    {# Contact Info #}
+    <div class="checkout-card" style="margin-bottom:20px;">
+      <div class="section-label">Contact Info</div>
+      <div class="form-group">
+        <label class="form-label" for="id_full_name">Full Name</label>
+        <input class="form-input {% if errors.full_name %}error{% endif %}"
+               type="text" id="id_full_name" name="full_name"
+               value="{{ prefill.full_name|default:'' }}"
+               placeholder="Jane Wanjiku" required>
+        {% if errors.full_name %}<span class="field-error">{{ errors.full_name }}</span>{% endif %}
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label" for="id_email">Email</label>
+          <input class="form-input {% if errors.email %}error{% endif %}"
+                 type="email" id="id_email" name="email"
+                 value="{{ prefill.email|default:'' }}"
+                 placeholder="jane@email.com" required>
+          {% if errors.email %}<span class="field-error">{{ errors.email }}</span>{% endif %}
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="id_phone">Phone</label>
+          <input class="form-input {% if errors.phone %}error{% endif %}"
+                 type="tel" id="id_phone" name="phone"
+                 value="{{ prefill.phone|default:'' }}"
+                 placeholder="+254 7XX XXX XXX" required>
+          {% if errors.phone %}<span class="field-error">{{ errors.phone }}</span>{% endif %}
+        </div>
+      </div>
+    </div>
+
+    {# Delivery Address #}
+    <div class="checkout-card" style="margin-bottom:20px;">
+      <div class="section-label">Delivery Address</div>
+      <div class="form-group">
+        <label class="form-label" for="id_street">Street Address</label>
+        <input class="form-input {% if errors.address_street %}error{% endif %}"
+               type="text" id="id_street" name="address_street"
+               value="{{ prefill.address_street|default:'' }}"
+               placeholder="e.g. 12 Kimathi Street" required>
+        {% if errors.address_street %}<span class="field-error">{{ errors.address_street }}</span>{% endif %}
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label" for="id_city">Town / City</label>
+          <input class="form-input {% if errors.address_city %}error{% endif %}"
+                 type="text" id="id_city" name="address_city"
+                 value="{{ prefill.address_city|default:'' }}"
+                 placeholder="Nairobi" required>
+          {% if errors.address_city %}<span class="field-error">{{ errors.address_city }}</span>{% endif %}
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="id_county">County</label>
+          <select class="form-input {% if errors.address_county %}error{% endif %}"
+                  id="id_county" name="address_county" required>
+            <option value="">Select county…</option>
+            {% for county in counties %}
+              <option value="{{ county }}" {% if prefill.address_county == county %}selected{% endif %}>{{ county }}</option>
+            {% endfor %}
+          </select>
+          {% if errors.address_county %}<span class="field-error">{{ errors.address_county }}</span>{% endif %}
+        </div>
+      </div>
+    </div>
+
+    {# Payment Method #}
+    <div class="checkout-card" style="margin-bottom:20px;"
+         id="payment-section-root"
+         data-method="{{ prefill.payment_method|default:'mpesa' }}"
+         x-data="paymentSection">>
+      <div class="section-label">Payment Method</div>
+
+      <div class="pay-opts">
+        <div class="pay-opt" :class="method==='mpesa' ? 'active' : ''" @click="method='mpesa'">
+          <div class="pay-opt-icon">{% icon "device-mobile" size=22 %}</div>
+          <div>
+            <div class="pay-opt-label">M-Pesa</div>
+            <div class="pay-opt-sub">STK Push</div>
+          </div>
+        </div>
+        <div class="pay-opt" :class="method==='card' ? 'active' : ''" @click="method='card'">
+          <div class="pay-opt-icon">{% icon "credit-card" size=22 %}</div>
+          <div>
+            <div class="pay-opt-label">Card</div>
+            <div class="pay-opt-sub">Visa / Mastercard</div>
+          </div>
+        </div>
+      </div>
+
+      {# Hidden field synced by Alpine #}
+      <input type="hidden" name="payment_method" :value="method">
+      {% if errors.payment_method %}<span class="field-error">{{ errors.payment_method }}</span>{% endif %}
+
+      {# M-Pesa fields #}
+      <div x-show="method==='mpesa'" x-transition>
+        <div class="form-group">
+          <label class="form-label" for="id_mpesa">M-Pesa Number</label>
+          <input class="form-input {% if errors.mpesa_number %}error{% endif %}"
+                 type="tel" id="id_mpesa" name="mpesa_number"
+                 value="{{ prefill.mpesa_number|default:'' }}"
+                 placeholder="0712 345 678">
+          {% if errors.mpesa_number %}<span class="field-error">{{ errors.mpesa_number }}</span>{% endif %}
+        </div>
+        <p class="mpesa-hint">You'll receive an STK push to confirm payment on your phone.</p>
+        <div style="margin-top:12px;padding:12px 14px;background:var(--emerald-light);border-radius:8px;font-size:13px;color:var(--sage);font-weight:500;">
+          {% icon "lock" size=13 css_class="icon--inline" %} Mock mode — no real charge will be made.
+        </div>
+      </div>
+
+      {# Card fields #}
+      <div x-show="method==='card'" x-transition>
+        <div class="form-group">
+          <label class="form-label">Card Number</label>
+          <input class="form-input" type="text" placeholder="1234 5678 9012 3456" maxlength="19">
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Expiry</label>
+            <input class="form-input" type="text" placeholder="MM / YY" maxlength="7">
+          </div>
+          <div class="form-group">
+            <label class="form-label">CVV</label>
+            <input class="form-input" type="text" placeholder="123" maxlength="4">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Name on Card</label>
+          <input class="form-input" type="text" placeholder="Jane Wanjiku">
+        </div>
+        <div style="margin-top:4px;padding:12px 14px;background:var(--emerald-light);border-radius:8px;font-size:13px;color:var(--sage);font-weight:500;">
+          {% icon "lock" size=13 css_class="icon--inline" %} Mock mode — no real charge will be made.
+        </div>
+      </div>
+    </div>
+
+    {# Notes #}
+    <div class="checkout-card">
+      <div class="section-label">Order Notes <span style="font-weight:400;text-transform:none;letter-spacing:0;">(optional)</span></div>
+      <textarea class="form-input" name="notes" rows="3"
+                style="height:auto;padding:12px 14px;resize:vertical;"
+                placeholder="Special delivery instructions…">{{ prefill.notes|default:'' }}</textarea>
+    </div>
+
+  </div>
+
+  {# ── RIGHT COLUMN — Order Summary ── #}
+  <div style="position:sticky;top:88px;">
+    <div class="checkout-card">
+      <div class="section-label">Order Summary</div>
+
+      {% for item in cart_items %}
+      <div style="display:flex;gap:12px;align-items:center;margin-bottom:14px;">
+        {% if item.product.cover_image %}
+          <img src="{{ item.product.cover_image.image.url }}" alt="{{ item.product.name }}"
+               style="width:52px;height:52px;border-radius:8px;object-fit:cover;flex-shrink:0;">
+        {% else %}
+          <div style="width:52px;height:52px;border-radius:8px;background:var(--surface-alt);display:flex;align-items:center;justify-content:center;flex-shrink:0;">{% icon "shopping-bag-open" size=26 color="var(--text-muted)" %}</div>
+        {% endif %}
+        <div style="flex:1;min-width:0;">
+          <p style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ item.product.name }}</p>
+          <p style="font-size:12px;color:var(--text-muted);">Qty {{ item.quantity }}</p>
+        </div>
+        <p style="font-size:13px;font-weight:700;color:var(--forest);flex-shrink:0;">KES {{ item.line_total|floatformat:0|intcomma }}</p>
+      </div>
+      {% endfor %}
+
+      <hr class="divider">
+
+      <div class="summary-row"><span>Subtotal</span><span>KES {{ subtotal|floatformat:0|intcomma }}</span></div>
+      <div class="summary-row"><span>Delivery</span><span>KES {{ delivery|floatformat:0|intcomma }}</span></div>
+      <div class="summary-total">
+        <span style="font-size:15px;font-weight:700;color:var(--forest);">Total</span>
+        <span class="serif" style="font-size:22px;font-weight:700;color:var(--forest);">KES {{ total|floatformat:0|intcomma }}</span>
+      </div>
+
+      <button type="submit" id="place-order-btn"
+              style="margin-top:20px;width:100%;padding:15px;background:var(--forest);color:white;border:none;border-radius:var(--r-btn);font-size:15px;font-weight:700;cursor:pointer;">
+        Place Order →
+      </button>
+      <p style="font-size:12px;color:var(--text-muted);text-align:center;margin-top:10px;">
+        By placing your order you agree to our Terms of Service.
+      </p>
+    </div>
+  </div>
+
+</div>
+</form>
+{% endblock %}
+
+{% block extra_js %}{% endblock %}

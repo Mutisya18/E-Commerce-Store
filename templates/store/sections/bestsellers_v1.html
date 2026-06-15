@@ -1,0 +1,15 @@
+{% if best_sellers %}
+<div style="margin:-40px 0;padding:40px 0;background:var({{ bs_bg_colour }});">
+  <div class="container">
+    <div class="section-header">
+      <h2 class="section-title" style="color:var({{ bs_heading_colour }});font-size:{{ bs_heading_size }};">{{ bs_heading }}</h2>
+      {% if bs_subheading %}
+        <p class="section-sub" style="color:var({{ bs_subheading_colour }});font-size:{{ bs_subheading_size }};">{{ bs_subheading }}</p>
+      {% endif %}
+    </div>
+    <div class="product-grid">
+      {% for product in best_sellers %}{% include "store/_product_card.html" %}{% endfor %}
+    </div>
+  </div>
+</div>
+{% endif %}

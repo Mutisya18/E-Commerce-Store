@@ -1,0 +1,46 @@
+{% extends "dashboard/base_dashboard.html" %}
+{% load humanize %}
+{% block title %}Cart Abandonment — Dashboard{% endblock %}
+{% block page_title %}Cart Abandonment{% endblock %}
+{% block nav_analytics %}active{% endblock %}
+{% block extra_styles %}
+.report-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:20px; }
+.table-wrap { background:var(--surface); border:1px solid var(--border); border-radius:var(--r-lg); overflow:hidden; }
+table { width:100%; border-collapse:collapse; }
+thead th { padding:11px 16px; text-align:left; font-size:11px; font-weight:600; color:var(--text-muted); text-transform:uppercase; letter-spacing:.06em; background:var(--surface-alt); border-bottom:1px solid var(--border); }
+tbody tr { border-bottom:1px solid var(--border); }
+tbody tr:last-child { border-bottom:none; }
+tbody tr:hover { background:var(--surface-alt); }
+td { padding:11px 16px; font-size:13px; }
+.btn-export { display:inline-flex; align-items:center; gap:6px; padding:0 16px; height:34px; border-radius:var(--r); font-family:'DM Sans',sans-serif; font-size:13px; font-weight:500; cursor:pointer; border:none; background:var(--emerald); color:#fff; text-decoration:none; }
+.btn-export:hover { background:#14503b; }
+{% endblock %}
+{% block dashboard_content %}
+<div class="report-header">
+  <div>
+    <a href="/dashboard/analytics/" style="font-size:13px;color:var(--text-muted);text-decoration:none;">← Back to Analytics</a>
+    <div class="page-title serif" style="margin-top:6px;">Cart Abandonment</div>
+    <div style="font-size:13px;color:var(--text-muted);margin-top:3px;">Customers with items in cart who have never completed a paid order</div>
+  </div>
+  <a href="?export=1" class="btn-export">⬇ Export Excel</a>
+</div>
+<div class="table-wrap">
+  <table>
+    <thead><tr><th>#</th><th>Customer</th><th>Email</th><th style="text-align:right;">Items in Cart</th><th style="text-align:right;">Est. Value (KES)</th><th></th></tr></thead>
+    <tbody>
+      {% for r in rows %}
+      <tr>
+        <td style="color:var(--text-muted);">{{ forloop.counter }}</td>
+        <td style="font-weight:600;">{{ r.cart__user__first_name }} {{ r.cart__user__last_name }}</td>
+        <td style="color:var(--text-muted);font-size:12px;">{{ r.cart__user__email }}</td>
+        <td style="text-align:right;">{{ r.items }}</td>
+        <td style="text-align:right;font-weight:700;">{{ r.est_value|floatformat:0|intcomma }}</td>
+        <td><a href="/dashboard/customers/{{ r.cart__user__id }}/" style="font-size:12px;color:var(--navy);font-weight:600;text-decoration:none;">View →</a></td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="6" style="text-align:center;padding:40px;color:var(--text-muted);">No abandoned carts found.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

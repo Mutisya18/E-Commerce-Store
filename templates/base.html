@@ -1,0 +1,345 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}Mutisya{% endblock %}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,600&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{% static 'css/output.css' %}">
+  <style>
+    :root {
+      --forest: #1E2D22;
+      --forest-hover: #2C4232;
+      --gold-muted: #8A7A52;
+      --sage: #BECDC2;
+      --sage-light: #E8EFEC;
+      --base: #FAF8F2;
+      --surface: #FFFFFF;
+      --surface-alt: #EDEAE0;
+      --navy: #1B2A4A;
+      --navy-hover: #243660;
+      --navy-light: rgba(27,42,74,0.07);
+      --emerald: #1A5C45;
+      --emerald-light: #EAF4F0;
+      --gold: #C9A84C;
+      --gold-light: #FDF6E3;
+      --text: #1A1A1A;
+      --text-sub: #5A5A5A;
+      --text-muted: #9A9A9A;
+      --border: #E5E2DC;
+      --danger: #C0392B;
+      --danger-light: #FDECEA;
+      --warning: #D4750A;
+      --warning-light: #FEF3E8;
+      --shadow-card: 0 1px 3px rgba(0,0,0,0.05), 0 4px 14px rgba(0,0,0,0.04);
+      --shadow-hover: 0 6px 24px rgba(27,42,74,0.13);
+      --shadow-nav: 0 1px 0 #E5E2DC;
+      --r-card: 12px;
+      --r-btn: 8px;
+      --r-input: 8px;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--base);
+      color: var(--text);
+      font-size: 15px;
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+    }
+    .serif { font-family: 'Cormorant Garamond', serif; }
+
+    /* ── NAVBAR ── */
+    .navbar { position: sticky; top: 0; z-index: 100; background: var(--surface); box-shadow: var(--shadow-nav); }
+    .navbar--no-cats { box-shadow: 0 1px 0 var(--border); }
+    body[data-no-cats] .listing-layout { margin-top: 0; }
+    body[data-no-cats] .detail-breadcrumb { padding-top: 8px; }
+    .nav-main { max-width: 1280px; margin: 0 auto; padding: 0 32px; height: 68px; display: flex; align-items: center; gap: 24px; }
+    .nav-logo { font-family: 'Cormorant Garamond', serif; font-size: 26px; font-weight: 700; color: var(--forest); letter-spacing: -0.3px; text-decoration: none; white-space: nowrap; display: flex; align-items: center; gap: 8px; }
+    .nav-logo-dot { width: 6px; height: 6px; background: var(--gold); border-radius: 50%; }
+    .nav-search { flex: 1; max-width: 520px; position: relative; }
+    .nav-search input { width: 100%; height: 42px; border: 1.5px solid var(--border); border-radius: 21px; padding: 0 44px 0 18px; font-family: 'DM Sans', sans-serif; font-size: 14px; color: var(--text); background: var(--base); outline: none; transition: border-color 0.15s, box-shadow 0.15s; }
+    .nav-search input:focus { border-color: var(--forest); box-shadow: 0 0 0 3px rgba(30,45,34,0.08); background: white; }
+    .nav-search input::placeholder { color: var(--text-muted); }
+    .nav-search-icon { position: absolute; right: 14px; top: 50%; transform: translateY(-50%); color: var(--text-muted); pointer-events: none; }
+    .nav-actions { display: flex; align-items: center; gap: 6px; margin-left: auto; }
+    .nav-action-btn { position: relative; width: 40px; height: 40px; border-radius: 8px; background: transparent; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; color: var(--text); transition: background 0.15s, color 0.15s; text-decoration: none; }
+    .nav-action-btn:hover { background: var(--sage-light); color: var(--forest); }
+    .nav-badge { position: absolute; top: 4px; right: 4px; background: var(--forest); color: white; font-size: 10px; font-weight: 700; width: 17px; height: 17px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 2px solid white; }
+    .nav-account-btn { display: flex; align-items: center; gap: 8px; padding: 0 14px; height: 40px; background: var(--forest); color: white; border: none; border-radius: var(--r-btn); font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 600; cursor: pointer; text-decoration: none; transition: background 0.15s; }
+    .nav-account-btn:hover { background: var(--gold); color: var(--forest); }
+    .nav-secondary { background: var(--surface-alt); border-bottom: 1px solid var(--border); }
+    .nav-cats { max-width: 1280px; margin: 0 auto; padding: 0 32px; height: 40px; display: flex; align-items: center; gap: 4px; overflow-x: auto; }
+    .nav-cat { padding: 0 14px; height: 28px; border-radius: 6px; border: none; background: transparent; font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 500; color: var(--text-sub); cursor: pointer; transition: all 0.15s; white-space: nowrap; text-decoration: none; display: flex; align-items: center; }
+    .nav-cat:hover { background: var(--border); color: var(--text); }
+    .nav-cat.active { background: var(--forest); color: white; }
+    .nav-cat.deals { color: var(--gold-muted); font-weight: 600; }
+    .nav-cat.deals:hover { background: var(--sage-light); }
+
+    /* ── MESSAGES ── */
+    .messages { position: fixed; bottom: 20px; right: 20px; z-index: 2000; display: flex; flex-direction: column; gap: 8px; }
+    .msg { padding: 12px 18px; border-radius: var(--r-card); font-size: 14px; font-weight: 500; box-shadow: var(--shadow-hover); max-width: 360px; }
+    .msg-success { background: var(--emerald-light); color: var(--emerald); border-left: 3px solid var(--emerald); }
+    .msg-error { background: var(--danger-light); color: var(--danger); border-left: 3px solid var(--danger); }
+    .msg-warning { background: var(--warning-light); color: var(--warning); border-left: 3px solid var(--warning); }
+    .msg-info { background: var(--sage-light); color: var(--forest); border-left: 3px solid var(--forest); }
+
+    /* ── FOOTER ── */
+    .footer { background: var(--forest); color: rgba(255,255,255,0.7); padding: 64px 0 0; }
+    .footer-inner { max-width: 1280px; margin: 0 auto; padding: 0 32px; display: grid; grid-template-columns: 1.2fr 0.8fr 0.8fr 1.8fr; gap: 48px; }
+    .footer-logo { font-family: 'Cormorant Garamond', serif; font-size: 24px; font-weight: 700; color: white; display: flex; align-items: center; gap: 8px; text-decoration: none; margin-bottom: 12px; }
+    .footer-tagline { font-size: 13px; color: rgba(255,255,255,0.5); margin-bottom: 20px; }
+    .footer-heading { font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--gold-muted); margin-bottom: 16px; }
+    .footer-link { display: block; font-size: 13px; color: rgba(255,255,255,0.65); text-decoration: none; margin-bottom: 10px; transition: color 0.15s; }
+    .footer-link:hover { color: var(--gold); }
+    .footer-contact-item { display: flex; align-items: flex-start; gap: 8px; font-size: 13px; color: rgba(255,255,255,0.65); margin-bottom: 10px; }
+    .footer-bottom { border-top: 1px solid rgba(255,255,255,0.08); margin-top: 48px; padding: 20px 32px; max-width: 1280px; margin-left: auto; margin-right: auto; display: flex; align-items: center; justify-content: space-between; }
+    .footer-copy { font-size: 12px; color: rgba(255,255,255,0.35); }
+
+    /* ── CART BADGE ANIMATION ── */
+    @keyframes cartBump { 0%,100%{transform:scale(1)} 50%{transform:scale(1.35)} }
+    .cart-bump { animation: cartBump 0.3s ease; }
+
+    /* ── PRODUCT CARD ── */
+    .pc-card{background:var(--surface);border-radius:16px;box-shadow:0 10px 40px rgba(0,0,0,.1);transition:transform .3s,box-shadow .3s;overflow:hidden}
+    .pc-card:hover{transform:translateY(-2px);box-shadow:0 15px 50px rgba(0,0,0,.15)}
+    .pc-image-wrap{position:relative;height:160px;overflow:hidden}
+    .pc-image-wrap a{display:block;width:100%;height:100%}
+    .pc-img{width:100%;height:100%;object-fit:cover;transition:transform .3s}
+    .pc-img:hover{transform:scale(1.04)}
+    .pc-img-placeholder{width:100%;height:100%;background:linear-gradient(135deg,#e8edf5 0%,#f1f5f9 100%);display:flex;align-items:center;justify-content:center;font-size:40px}
+    .pc-badges{position:absolute;top:10px;left:10px;display:flex;flex-direction:column;gap:4px}
+    .pc-badge{font-size:10px;font-weight:700;padding:3px 8px;border-radius:5px;letter-spacing:.04em}
+    .pc-badge-sale{background:var(--forest);color:var(--gold)}
+    .pc-stock-badge{position:absolute;top:10px;right:10px;font-size:10px;font-weight:700;padding:4px 10px;border-radius:5px;letter-spacing:.04em}
+    .pc-stock-in{background:var(--sage-light);color:var(--forest)}
+    .pc-stock-low{background:var(--warning-light);color:var(--warning)}
+    .pc-stock-out{background:var(--surface-alt);color:var(--text-muted)}
+    .pc-body{padding:16px;display:flex;flex-direction:column;gap:4px}
+    .pc-brand{font-size:12px;color:#64748b;text-transform:uppercase;letter-spacing:.5px}
+    .pc-name{font-size:16px;font-weight:600;color:#0f172a;text-decoration:none;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;line-height:1.3}
+    .pc-name:hover{color:var(--forest)}
+    .pc-rating{display:flex;align-items:center;gap:3px;font-size:13px}
+    .pc-star{color:#e2e8f0}
+    .pc-star.on{color:#f59e0b}
+    .pc-rating-count{font-size:11px;color:var(--text-muted);margin-left:2px}
+    .pc-stock-text{font-size:12px;color:#64748b}
+    .pc-footer{display:flex;align-items:center;justify-content:space-between;margin-top:8px}
+    .pc-price{font-size:15px;font-weight:700;color:#0f172a;line-height:1.3}
+    .pc-cart{display:flex;align-items:center;justify-content:flex-end}
+    .pc-btn-add-full{height:36px;padding:0 10px;border:none;border-radius:8px;background:var(--forest);color:white;font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:6px;transition:background .2s;font-family:inherit;white-space:nowrap}
+    .pc-btn-add-full:hover:not(:disabled){background:#2d4f33;color:white}
+    .pc-btn-add-full:disabled{background:#cbd5e1;cursor:not-allowed}
+    .pc-stepper{display:flex;align-items:center;gap:6px}
+    .pc-btn-dec{width:36px;height:36px;border:1px solid #e2e8f0;border-radius:6px;background:white;color:#0f172a;font-size:18px;font-weight:bold;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s;flex-shrink:0;font-family:inherit}
+    .pc-btn-dec:hover{border-color:#cbd5e1;background:#f8fafc}
+    .pc-btn-inc{width:36px;height:36px;border:none;border-radius:6px;background:var(--forest);color:white;font-size:18px;font-weight:bold;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .2s;flex-shrink:0;font-family:inherit}
+    .pc-btn-inc:hover:not(:disabled){background:#2d4f33;color:white}
+    .pc-btn-inc:disabled{background:#cbd5e1;cursor:not-allowed}
+    .pc-qty{width:32px;height:36px;border:1px solid #e2e8f0;border-radius:6px;background:#f8fafc;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:600;color:#0f172a;flex-shrink:0;position:relative}
+    .pc-sync-dot{position:absolute;top:2px;right:2px;width:6px;height:6px;border-radius:50%;display:none}
+    .pc-sync-dot.pending{display:block;background:var(--warning);animation:pc-pulse 1.5s ease-in-out infinite}
+    .pc-sync-dot.error{display:block;background:var(--danger)}
+    @keyframes pc-pulse{0%,100%{opacity:1}50%{opacity:.5}}
+    /* toast */
+    .pc-toast{position:fixed;bottom:24px;right:24px;background:#ef4444;color:white;padding:14px 20px;border-radius:8px;font-size:14px;box-shadow:0 10px 30px rgba(0,0,0,.3);animation:pc-slide-in .3s ease;z-index:2000;pointer-events:none}
+    @keyframes pc-slide-in{from{transform:translateX(400px);opacity:0}to{transform:translateX(0);opacity:1}}
+
+    [x-cloak] { display: none !important; }
+    .icon { display:inline-block; flex-shrink:0; vertical-align:middle; }
+    .icon-emoji { display:inline-block; flex-shrink:0; vertical-align:middle; }
+    .icon--inline { vertical-align:-0.125em; margin-right:4px; }
+    .icon--muted { opacity:0.45; }
+    .icon--spin { animation:icon-spin 1s linear infinite; }
+    @keyframes icon-spin { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
+
+    {% block extra_styles %}{% endblock %}
+  </style>
+  {% block extra_head %}{% endblock %}
+</head>
+{% load icon_tags %}
+<body x-data="bodyRoot"
+  data-user-id="{{ request.user.id|default:'' }}"
+  data-cart-state="{% if user.is_authenticated %}{{ cart_state_json }}{% endif %}"
+  data-product-id="{% block product_id %}{% endblock %}"
+  data-trace-id="{{ request.trace_id|default:'' }}"
+  {% block body_attrs %}{% endblock %}
+  {% if not store_settings.nav_categories_visible %}data-no-cats{% endif %}>
+{% sprite %}
+  {# ── NAVBAR ── #}
+  <header class="navbar{% if not store_settings.nav_categories_visible %} navbar--no-cats{% endif %}" x-data="navbar">
+    <div class="nav-main">
+      <a href="/" class="nav-logo">
+        {{ store_settings.store_name }}<span class="nav-logo-dot"></span>
+      </a>
+
+      <form class="nav-search" action="/products/" method="get">
+        <input type="search" name="q" placeholder="Search products…" value="{{ request.GET.q|default:'' }}" autocomplete="off">
+        <span class="nav-search-icon">
+          {% icon "magnifying-glass" size=16 %}
+        </span>
+      </form>
+
+      <div class="nav-actions">
+        {% if user.is_staff %}
+          <a href="/dashboard/" class="nav-action-btn" title="Admin Dashboard">
+            {% icon "gear" size=20 %}
+          </a>
+        {% endif %}
+        
+        <a href="/cart/" class="nav-action-btn" title="Cart"
+           x-data="cartBadge"
+           @cart-updated.window="update($event)"
+           :class="{ 'cart-bump': bump }">
+          {% icon "shopping-cart" size=24 %}
+          <span class="nav-badge" x-show="count > 0" x-text="count"></span>
+        </a>
+
+        {% if user.is_authenticated %}
+          <div x-data="accountMenu" style="position:relative;">
+            <button @click="open=!open" @keydown.escape="open=false" class="nav-action-btn" title="My Account">
+              {% icon "user-circle" size=20 %}
+            </button>
+            <div x-show="open" @click.outside="open=false" x-transition x-cloak
+              style="position:absolute;right:0;top:48px;background:var(--surface);border:1px solid var(--border);border-radius:10px;box-shadow:var(--shadow-hover);min-width:160px;z-index:1001;overflow:hidden;">
+              <a href="{% url 'accounts:profile' %}"
+                style="display:block;padding:11px 16px;font-size:13px;font-weight:500;color:var(--text);text-decoration:none;">
+                View Profile
+              </a>
+              <a href="#" data-action="open-logout"
+                style="display:block;padding:11px 16px;font-size:13px;font-weight:500;color:var(--danger);text-decoration:none;border-top:1px solid var(--border);">
+                Log Out
+              </a>
+            </div>
+          </div>
+        {% else %}
+          <a href="{% url 'account_login' %}" class="nav-account-btn">Sign in</a>
+        {% endif %}
+      </div>
+    </div>
+
+    {# Category bar #}
+    {% if store_settings.nav_categories_visible %}
+    <div class="nav-secondary">
+      <nav class="nav-cats">
+        <a href="/products/" class="nav-cat {% if request.path == '/products/' and not request.GET.category %}active{% endif %}">All</a>
+        {% for cat in nav_categories %}
+          <a href="/products/?category={{ cat.slug }}"
+             class="nav-cat {% if request.GET.category == cat.slug %}active{% endif %}">
+            {{ cat.name }}
+          </a>
+        {% endfor %}
+        <a href="/products/?sale=1" class="nav-cat deals">Deals {% icon "fire" size=14 color="var(--gold)" %}</a>
+      </nav>
+    </div>
+    {% endif %}
+  </header>
+
+  {# ── MESSAGES ── #}
+  {% if messages %}
+    <div class="messages" x-data="messages" x-show="show">
+      {% for message in messages %}
+        <div class="msg msg-{{ message.tags }}" x-data="message" x-show="visible">
+          {{ message }}
+          <button @click="visible = false" style="float:right;background:none;border:none;cursor:pointer;margin-left:12px;opacity:0.5;">{% icon "x" size=14 %}</button>
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+
+  {# ── MAIN CONTENT ── #}
+  <main>
+    {% block content %}{% endblock %}
+  </main>
+
+  {# ── FOOTER ── #}
+  <footer class="footer">
+    <div class="footer-inner">
+      {# Brand column #}
+      <div>
+        <a href="/" class="footer-logo">{{ store_settings.store_name }}<span style="width:5px;height:5px;background:var(--gold);border-radius:50%;display:inline-block;margin-left:4px;"></span></a>
+        {% if store_settings.footer_tagline %}<p class="footer-tagline">{{ store_settings.footer_tagline }}</p>{% endif %}
+        {# Social icons #}
+        {% if store_settings.footer_ig_url or store_settings.footer_tiktok_url or store_settings.footer_x_url %}
+        <div style="display:flex;gap:12px;margin-top:16px;">
+          {% if store_settings.footer_ig_url %}<a href="{{ store_settings.footer_ig_url }}" class="footer-link" style="margin:0;" target="_blank" rel="noopener">{% icon "instagram-logo" size=18 %}</a>{% endif %}
+          {% if store_settings.footer_tiktok_url %}<a href="{{ store_settings.footer_tiktok_url }}" class="footer-link" style="margin:0;" target="_blank" rel="noopener">{% icon "tiktok-logo" size=18 %}</a>{% endif %}
+          {% if store_settings.footer_x_url %}<a href="{{ store_settings.footer_x_url }}" class="footer-link" style="margin:0;" target="_blank" rel="noopener">{% icon "x-logo" size=18 %}</a>{% endif %}
+        </div>
+        {% endif %}
+      </div>
+      {# Shop column #}
+      {% if store_settings.footer_shop_links %}
+      <div>
+        <p class="footer-heading">Shop</p>
+        {% for link in store_settings.footer_shop_links %}{% if link.visible %}<a href="{{ link.url }}" class="footer-link">{{ link.label }}</a>{% endif %}{% endfor %}
+      </div>
+      {% endif %}
+      {# Help column #}
+      {% if store_settings.footer_help_links %}
+      <div>
+        <p class="footer-heading">Help</p>
+        {% for link in store_settings.footer_help_links %}{% if link.visible %}<a href="{{ link.url }}" class="footer-link">{{ link.label }}</a>{% endif %}{% endfor %}
+      </div>
+      {% endif %}
+      {# Contact column #}
+      {% if store_settings.contact_email or store_settings.contact_phone or store_settings.physical_address %}
+      <div>
+        <p class="footer-heading">Contact</p>
+        {% if store_settings.physical_address %}<div class="footer-contact-item">{% icon "map-pin" size=14 css_class="icon--inline" %} {{ store_settings.physical_address }}</div>{% endif %}
+        {% if store_settings.contact_phone %}<div class="footer-contact-item">{% icon "phone" size=14 css_class="icon--inline" %} {{ store_settings.contact_phone }}</div>{% endif %}
+        {% if store_settings.contact_email %}<div class="footer-contact-item">{% icon "envelope-simple" size=14 css_class="icon--inline" %} {{ store_settings.contact_email }}</div>{% endif %}
+        {% if store_settings.whatsapp_number %}<a href="https://wa.me/{{ store_settings.whatsapp_number }}" class="footer-link" target="_blank" rel="noopener">{% icon "whatsapp-logo" size=14 css_class="icon--inline" %} WhatsApp</a>{% endif %}
+      </div>
+      {% endif %}
+      {# Newsletter column #}
+      <div x-data="newsletter" style="grid-column: 4;">
+        <p class="footer-heading">Stay in the loop</p>
+        <p style="font-size:13px;color:rgba(255,255,255,0.5);margin-bottom:12px;">Get deals and new arrivals straight to your inbox.</p>
+        <div x-show="!sent" style="display:flex;gap:8px;">
+          <input type="email" x-model="email" placeholder="your@email.com"
+            style="flex:1;min-width:0;padding:8px 20px;border-radius:6px;border:1px solid rgba(255,255,255,0.2);background:rgba(255,255,255,0.08);color:white;font-size:13px;outline:none;">
+          <button @click="submit()"
+            style="align-self:flex-start;padding:8px 20px;border-radius:6px;border:none;background:var(--gold);color:var(--forest);font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap;">Subscribe</button>
+        </div>
+        <p x-show="error" x-text="error" style="color:rgba(255,255,255,0.7);font-size:12px;margin-top:6px;"></p>
+        <p x-show="sent" style="color:white;font-size:13px;font-weight:600;margin-top:6px;">{% icon "check" size=14 css_class="icon--inline" %} You're subscribed!</p>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span class="footer-copy">© {% now "Y" %} {{ store_settings.store_name }}. All rights reserved.{% if store_settings.footer_privacy_url %} · <a href="{{ store_settings.footer_privacy_url }}" style="color:inherit;text-decoration:none;">Privacy Policy</a>{% endif %}{% if store_settings.footer_terms_url %} · <a href="{{ store_settings.footer_terms_url }}" style="color:inherit;text-decoration:none;">Terms</a>{% endif %}</span>
+      <span class="footer-copy">M-Pesa · Visa · Mastercard</span>
+    </div>
+  </footer>
+
+  <script src="{% static 'js/journey-logger.js' %}"></script>
+  <div id="cart-toast-container" style="position:fixed;bottom:24px;right:24px;z-index:2000;display:flex;flex-direction:column;gap:8px;pointer-events:none;"></div>
+
+  {# ── LOGOUT MODAL ── #}
+  <div id="logout-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:3000;align-items:center;justify-content:center;padding:16px;">
+    <div style="background:var(--surface);border-radius:14px;padding:36px;width:100%;max-width:400px;text-align:center;position:relative;">
+      <button data-action="close-logout"
+        style="position:absolute;top:16px;right:16px;background:none;border:none;cursor:pointer;color:var(--text-muted);line-height:1;padding:4px;">{% icon "x" size=20 %}</button>
+      <h2 style="font-family:'Cormorant Garamond',serif;font-size:24px;font-weight:700;color:var(--forest);margin:0 0 12px;">Sign out?</h2>
+      <p style="color:var(--text-muted);font-size:14px;margin-bottom:28px;">You'll need to sign in again to access your account.</p>
+      <form method="post" action="{% url 'account_logout' %}">
+        {% csrf_token %}
+        <button type="submit"
+          style="width:100%;height:44px;background:var(--forest);color:white;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;margin-bottom:12px;font-family:inherit;">
+          Yes, sign out
+        </button>
+      </form>
+      <button data-action="close-logout"
+        style="background:none;border:none;font-size:13px;color:var(--text-muted);cursor:pointer;font-family:inherit;">
+        Cancel
+      </button>
+    </div>
+  </div>
+
+  <script src="{% static 'js/store.js' %}"></script>
+  <script defer src="{% static 'js/alpine.min.js' %}"></script>
+  {% block extra_js %}{% endblock %}
+</body>
+</html>

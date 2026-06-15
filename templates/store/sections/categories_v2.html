@@ -1,0 +1,52 @@
+{% load icon_tags %}
+<div class="container">
+    <div class="section-header">
+    {% if cat_overline %}<div class="section-overline" style="color:var({{ cat_overline_colour }});">{{ cat_overline }}</div>{% endif %}
+    <h2 class="section-title" style="color:var({{ cat_heading_colour }});font-size:{{ cat_heading_size }};">{{ cat_heading }}</h2>
+  </div>
+  <div class="cat-b-grid">
+    {% if featured_categories %}
+      {% for cat in featured_categories %}
+        {% if forloop.first %}
+        <a href="/categories/{{ cat.slug }}/" class="cat-b-tile cat-b-tile-hero">
+          {% if cat.bg_image %}
+          <img src="{{ cat.bg_image }}" class="cat-b-bg-img">
+          {% else %}
+          <svg class="cat-b-svg" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
+            <rect width="400" height="400" fill="var({{ cat.bg_color }})"/><rect width="400" height="400" fill="var({{ cat.bg_color }})" opacity=".7"/><circle cx="320" cy="80" r="180" fill="#000" opacity=".15"/><circle cx="60" cy="340" r="120" fill="#000" opacity=".1"/><rect x="60" y="90" width="280" height="220" rx="16" fill="#fff" opacity=".04"/><rect x="100" y="130" width="200" height="140" rx="10" fill="#fff" opacity=".03"/><line x1="0" y1="200" x2="400" y2="200" stroke="#fff" stroke-width=".4" opacity=".08"/><line x1="200" y1="0" x2="200" y2="400" stroke="#fff" stroke-width=".4" opacity=".08"/><rect x="130" y="155" width="140" height="90" rx="8" fill="none" stroke="var(--gold)" stroke-width="1" opacity=".25"/><circle cx="200" cy="200" r="22" fill="var(--gold)" opacity=".15"/><rect x="30" y="30" width="50" height="50" rx="8" fill="#fff" opacity=".04"/><circle cx="80" cy="80" r="8" fill="var(--gold)" opacity=".2"/>
+          </svg>
+          {% endif %}
+          <div class="cat-b-scrim" style="background:linear-gradient(160deg,var({{ cat.overlay_color }}) 0%,var({{ cat.overlay_color }}) 100%);opacity:{{ cat.overlay_opacity|default:65 }}%;"></div>
+          <div class="cat-b-content">
+            <div class="cat-b-name" style="color:var({{ cat.settings_text_color }});">{{ cat.name }}</div>
+            <div class="cat-b-sub" style="color:var({{ cat.settings_text_color }});opacity:0.7;">{{ cat.product_count|default:0 }} products</div>
+            <div class="cat-b-arrow">{% icon "caret-right" size=12 %}</div>
+          </div>
+        </a>
+        {% elif forloop.counter <= 5 %}
+        <a href="/categories/{{ cat.slug }}/" class="cat-b-tile cat-b-tile-sm">
+          {% if cat.bg_image %}
+          <img src="{{ cat.bg_image }}" class="cat-b-bg-img">
+          {% else %}
+          <svg class="cat-b-svg" viewBox="0 0 300 200" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
+            <rect width="300" height="200" fill="var({{ cat.bg_color }})"/><rect width="300" height="200" fill="var({{ cat.bg_color }})" opacity=".8"/><circle cx="240" cy="40" r="100" fill="#000" opacity=".2"/><circle cx="30" cy="180" r="80" fill="#000" opacity=".15"/><rect x="50" y="30" width="200" height="140" rx="10" fill="#fff" opacity=".03"/><rect x="80" y="50" width="140" height="100" rx="8" fill="#000" opacity=".1"/><path d="M110 100 L140 70 L170 90 L190 75" stroke="var(--gold)" stroke-width="1.5" fill="none" opacity=".3" stroke-linecap="round"/><circle cx="110" cy="100" r="3" fill="var(--gold)" opacity=".4"/><rect x="20" y="20" width="30" height="30" rx="5" fill="#fff" opacity=".03"/>
+          </svg>
+          {% endif %}
+          <div class="cat-b-scrim" style="background:linear-gradient(160deg,var({{ cat.overlay_color }}) 0%,var({{ cat.overlay_color }}) 100%);opacity:{{ cat.overlay_opacity|default:65 }}%;"></div>
+          <div class="cat-b-content">
+            <div class="cat-b-name" style="color:var({{ cat.settings_text_color }});">{{ cat.name }}</div>
+            <div class="cat-b-sub" style="color:var({{ cat.settings_text_color }});opacity:0.7;">{{ cat.product_count|default:0 }} products</div>
+            <div class="cat-b-arrow">{% icon "caret-right" size=12 %}</div>
+          </div>
+        </a>
+        {% endif %}
+      {% endfor %}
+    {% else %}
+      <a href="#" class="cat-b-tile cat-b-tile-hero"><svg class="cat-b-svg" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice"><rect width="400" height="400" fill="var(--forest)"/><circle cx="320" cy="80" r="180" fill="#000" opacity=".15"/><circle cx="60" cy="340" r="120" fill="#000" opacity=".1"/></svg><div class="cat-b-scrim" style="background:var(--forest);opacity:0.55;"></div><div class="cat-b-content"><div class="cat-b-name">Phones</div><div class="cat-b-sub">— products</div><div class="cat-b-arrow"><svg viewBox="0 0 12 12"><polyline points="4,2 8,6 4,10" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div></div></a>
+      <a href="#" class="cat-b-tile cat-b-tile-sm"><svg class="cat-b-svg" viewBox="0 0 300 200" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice"><rect width="300" height="200" fill="var(--sage)"/><circle cx="240" cy="40" r="100" fill="#000" opacity=".2"/></svg><div class="cat-b-scrim" style="background:var(--forest);opacity:0.45;"></div><div class="cat-b-content"><div class="cat-b-name">Laptops</div><div class="cat-b-sub">— products</div><div class="cat-b-arrow"><svg viewBox="0 0 12 12"><polyline points="4,2 8,6 4,10" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div></div></a>
+      <a href="#" class="cat-b-tile cat-b-tile-sm"><svg class="cat-b-svg" viewBox="0 0 300 200" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice"><rect width="300" height="200" fill="var(--forest)"/><circle cx="260" cy="160" r="110" fill="#000" opacity=".15"/></svg><div class="cat-b-scrim" style="background:var(--forest);opacity:0.65;"></div><div class="cat-b-content"><div class="cat-b-name">Audio</div><div class="cat-b-sub">— products</div><div class="cat-b-arrow"><svg viewBox="0 0 12 12"><polyline points="4,2 8,6 4,10" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div></div></a>
+      <a href="#" class="cat-b-tile cat-b-tile-sm"><svg class="cat-b-svg" viewBox="0 0 300 200" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice"><rect width="300" height="200" fill="var(--sage)"/><circle cx="50" cy="30" r="70" fill="#000" opacity=".1"/></svg><div class="cat-b-scrim" style="background:var(--forest);opacity:0.45;"></div><div class="cat-b-content"><div class="cat-b-name">Smart Home</div><div class="cat-b-sub">— products</div><div class="cat-b-arrow"><svg viewBox="0 0 12 12"><polyline points="4,2 8,6 4,10" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div></div></a>
+      <a href="#" class="cat-b-tile cat-b-tile-sm"><svg class="cat-b-svg" viewBox="0 0 300 200" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice"><rect width="300" height="200" fill="var(--gold)"/><circle cx="150" cy="100" r="60" fill="#000" opacity=".12"/></svg><div class="cat-b-scrim" style="background:var(--forest);opacity:0.50;"></div><div class="cat-b-content"><div class="cat-b-name">Wearables</div><div class="cat-b-sub">— products</div><div class="cat-b-arrow"><svg viewBox="0 0 12 12"><polyline points="4,2 8,6 4,10" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div></div></a>
+    {% endif %}
+  </div>
+</div>

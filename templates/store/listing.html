@@ -1,0 +1,146 @@
+{% extends "base.html" %}
+{% load icon_tags %}
+{% block title %}{% if category %}{{ category.name }}{% else %}All Products{% endif %} — Mutisya{% endblock %}
+
+{% block extra_styles %}
+.listing-layout { display: grid; grid-template-columns: 240px 1fr; gap: 32px; max-width: 1280px; margin: 40px auto; padding: 0 32px; }
+.filter-sidebar { position: sticky; top: 120px; align-self: start; }
+@media(max-width:768px){ .listing-layout{grid-template-columns:1fr;} .filter-sidebar{display:none;} }
+.product-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 24px; }
+@media(max-width:1024px){ .product-grid{grid-template-columns:repeat(2,1fr);} }
+@media(max-width:480px){ .product-grid{grid-template-columns:1fr;} }
+.filter-section { margin-bottom: 24px; }
+.filter-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-muted); margin-bottom: 10px; }
+.filter-pill { display:inline-flex;align-items:center;gap:6px;padding:4px 10px;background:var(--forest);color:white;border-radius:20px;font-size:12px;font-weight:600;margin:0 4px 4px 0;text-decoration:none; }
+.filter-pill a { color:rgba(255,255,255,0.7);text-decoration:none;margin-left:2px; }
+{% endblock %}
+
+{% block content %}
+<div class="listing-layout">
+
+  {# ── FILTER SIDEBAR ── #}
+  <aside class="filter-sidebar">
+    <form method="get" id="filter-form">
+      <div style="background:var(--surface);border-radius:12px;box-shadow:var(--shadow-card);padding:20px;">
+        <p style="font-size:15px;font-weight:700;color:var(--forest);margin-bottom:20px;">Filters</p>
+
+        <div class="filter-section">
+          <p class="filter-label">Search</p>
+          <input type="text" name="q" value="{{ active_filters.q|default:'' }}" placeholder="Search products…"
+                 style="width:100%;height:40px;border:1.5px solid var(--border);border-radius:8px;padding:0 12px;font-size:13px;outline:none;">
+        </div>
+
+        <div class="filter-section">
+          <p class="filter-label">Category</p>
+          {% for cat in categories %}
+            <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text-sub);margin-bottom:8px;cursor:pointer;">
+              <input type="radio" name="category" value="{{ cat.slug }}" {% if active_filters.category == cat.slug %}checked{% endif %}>
+              {{ cat.name }}
+            </label>
+          {% endfor %}
+        </div>
+
+        <div class="filter-section">
+          <p class="filter-label">Price Range</p>
+          <div style="display:flex;gap:8px;">
+            <input type="number" name="min_price" value="{{ active_filters.min_price|default:'' }}" placeholder="Min"
+                   style="width:50%;height:36px;border:1.5px solid var(--border);border-radius:6px;padding:0 8px;font-size:13px;outline:none;">
+            <input type="number" name="max_price" value="{{ active_filters.max_price|default:'' }}" placeholder="Max"
+                   style="width:50%;height:36px;border:1.5px solid var(--border);border-radius:6px;padding:0 8px;font-size:13px;outline:none;">
+          </div>
+        </div>
+
+        <div class="filter-section">
+          <label style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;cursor:pointer;">
+            <input type="checkbox" name="in_stock" value="1" {% if active_filters.in_stock %}checked{% endif %}>
+            In Stock Only
+          </label>
+        </div>
+
+        <div class="filter-section">
+          <p class="filter-label">Sort By</p>
+          <select name="sort"
+                  style="width:100%;height:36px;border:1.5px solid var(--border);border-radius:6px;padding:0 8px;font-size:13px;outline:none;background:white;">
+            <option value="newest" {% if active_filters.sort == 'newest' or not active_filters.sort %}selected{% endif %}>Newest</option>
+            <option value="price_asc" {% if active_filters.sort == 'price_asc' %}selected{% endif %}>Price: Low → High</option>
+            <option value="price_desc" {% if active_filters.sort == 'price_desc' %}selected{% endif %}>Price: High → Low</option>
+            <option value="rating" {% if active_filters.sort == 'rating' %}selected{% endif %}>Best Rated</option>
+          </select>
+        </div>
+
+        <button type="submit" style="width:100%;height:38px;background:var(--forest);color:white;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;">Apply</button>
+        {% if active_filters %}
+          <a href="?" style="display:block;text-align:center;margin-top:10px;font-size:12px;color:var(--text-muted);text-decoration:none;">Clear all filters</a>
+        {% endif %}
+      </div>
+    </form>
+  </aside>
+
+  {# ── PRODUCT GRID ── #}
+  <div>
+    {# Header #}
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
+      <div>
+        <h1 class="serif" style="font-size:28px;color:var(--forest);">{% if category %}{{ category.name }}{% else %}All Products{% endif %}</h1>
+        <p style="font-size:13px;color:var(--text-muted);margin-top:2px;">Showing {{ page_obj.start_index }}–{{ page_obj.end_index }} of {{ total_count }} products</p>
+      </div>
+      {# Mobile filter button #}
+      <button id="mobile-filter-btn" style="display:none;padding:8px 16px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;font-weight:600;background:white;cursor:pointer;">
+        Filters {% if active_filters %}({{ active_filters|length }}){% endif %}
+      </button>
+    </div>
+
+    {# Active filter pills #}
+    {% if active_filters %}
+    <div style="margin-bottom:16px;display:flex;flex-wrap:wrap;gap:4px;align-items:center;">
+      <span style="font-size:12px;color:var(--text-muted);margin-right:4px;">Active:</span>
+      {% for key, val in active_filters.items %}
+        {% if key != 'sort' and key != 'page' %}
+          <span class="filter-pill">
+            {{ key }}: {{ val }}
+            <a href="?{% for k,v in active_filters.items %}{% if k != key and k != 'page' %}{{ k }}={{ v }}&{% endif %}{% endfor %}">{% icon "x" size=12 %}</a>
+          </span>
+        {% endif %}
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    {# Grid #}
+    {% if page_obj.object_list %}
+      <div class="product-grid">
+        {% for product in page_obj %}
+          {% include "store/_product_card.html" %}
+        {% endfor %}
+      </div>
+    {% else %}
+      <div style="text-align:center;padding:80px 20px;background:var(--surface);border-radius:12px;box-shadow:var(--shadow-card);">
+        <div style="font-size:48px;margin-bottom:16px;">{% icon "magnifying-glass" size=48 color="var(--text-muted)" %}</div>
+        <p style="font-size:16px;color:var(--text-sub);margin-bottom:20px;">No products found.</p>
+        <a href="?" style="display:inline-block;padding:10px 24px;background:var(--forest);color:white;border-radius:8px;font-weight:600;text-decoration:none;font-size:13px;">Clear Filters</a>
+      </div>
+    {% endif %}
+
+    {# Pagination #}
+    {% if page_obj.has_other_pages %}
+    <div style="display:flex;justify-content:center;align-items:center;gap:6px;margin-top:40px;">
+      {% if page_obj.has_previous %}
+        <a href="?{% for k,v in active_filters.items %}{{ k }}={{ v }}&{% endfor %}page={{ page_obj.previous_page_number }}"
+           style="padding:8px 14px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;text-decoration:none;color:var(--forest);">← Prev</a>
+      {% endif %}
+      {% for num in page_obj.paginator.page_range %}
+        {% if num == page_obj.number %}
+          <span style="padding:8px 14px;background:var(--forest);color:white;border-radius:8px;font-size:13px;font-weight:600;">{{ num }}</span>
+        {% elif num >= page_obj.number|add:'-2' and num <= page_obj.number|add:'2' %}
+          <a href="?{% for k,v in active_filters.items %}{{ k }}={{ v }}&{% endfor %}page={{ num }}"
+             style="padding:8px 14px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;text-decoration:none;color:var(--forest);">{{ num }}</a>
+        {% endif %}
+      {% endfor %}
+      {% if page_obj.has_next %}
+        <a href="?{% for k,v in active_filters.items %}{{ k }}={{ v }}&{% endfor %}page={{ page_obj.next_page_number }}"
+           style="padding:8px 14px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;text-decoration:none;color:var(--forest);">Next →</a>
+      {% endif %}
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

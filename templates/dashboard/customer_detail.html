@@ -1,0 +1,209 @@
+{% extends "dashboard/base_dashboard.html" %}
+{% load humanize icon_tags %}
+
+{% block title %}{{ customer.get_full_name|default:customer.email }} — Dashboard{% endblock %}
+{% block page_title %}Customer Profile{% endblock %}
+{% block nav_customers %}active{% endblock %}
+
+{% block extra_styles %}
+.profile-header { display:flex; align-items:flex-start; gap:16px; background:var(--surface); border:1px solid var(--border); border-radius:var(--r-lg); padding:20px; margin-bottom:16px; }
+.profile-avatar { width:56px; height:56px; border-radius:50%; background:var(--navy); color:#fff; font-size:18px; font-weight:700; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+.profile-name { font-family:'Cormorant Garamond',serif; font-size:22px; font-weight:700; color:var(--navy); }
+.profile-meta { font-size:12px; color:var(--text-muted); margin-top:3px; }
+.stat-card { background:var(--surface); border:1px solid var(--border); border-radius:var(--r-lg); padding:16px; text-align:center; }
+.stat-label { font-size:11px; color:var(--text-muted); margin-bottom:4px; }
+.stat-val { font-family:'Cormorant Garamond',serif; font-size:24px; font-weight:700; color:var(--navy); }
+.card { background:var(--surface); border:1px solid var(--border); border-radius:var(--r-lg); padding:20px; margin-bottom:16px; }
+.card-title { font-size:13px; font-weight:700; color:var(--navy); margin-bottom:14px; }
+.action-card { background:var(--surface); border:1px solid var(--border); border-radius:var(--r-lg); padding:16px; margin-bottom:12px; }
+.action-title { font-size:12px; font-weight:700; color:var(--text-sub); text-transform:uppercase; letter-spacing:.06em; margin-bottom:10px; }
+.danger-zone { background:var(--danger-light); border:1px solid #f5c6c2; border-radius:var(--r-lg); padding:16px; }
+.danger-title { font-size:12px; font-weight:700; color:var(--danger); text-transform:uppercase; letter-spacing:.06em; margin-bottom:10px; }
+.badge { display:inline-flex; align-items:center; padding:3px 10px; border-radius:20px; font-size:11px; font-weight:600; }
+.badge-emerald { background:var(--emerald-light); color:var(--emerald); }
+.badge-danger { background:var(--danger-light); color:var(--danger); }
+.badge-warning { background:var(--warning-light); color:var(--warning); }
+.badge-navy { background:var(--navy-light); color:var(--navy); }
+.btn { display:inline-flex; align-items:center; justify-content:center; gap:6px; padding:0 14px; height:34px; border-radius:var(--r); font-family:'DM Sans',sans-serif; font-size:13px; font-weight:500; cursor:pointer; border:none; text-decoration:none; transition:all .15s; width:100%; }
+.btn-ghost { background:transparent; color:var(--text-sub); border:1.5px solid var(--border); }
+.btn-ghost:hover { border-color:var(--navy); color:var(--navy); }
+.btn-warning { background:var(--warning-light); color:var(--warning); border:1px solid var(--warning); }
+.btn-warning:hover { background:var(--warning); color:#fff; }
+.btn-danger { background:var(--danger); color:#fff; }
+.btn-danger:hover { background:#a93226; }
+.btn-emerald { background:var(--emerald); color:#fff; }
+.btn-emerald:hover { background:#14503b; }
+.form-textarea { width:100%; border:1.5px solid var(--border); border-radius:var(--r); padding:10px 12px; font-family:'DM Sans',sans-serif; font-size:13px; color:var(--text); background:var(--surface); outline:none; resize:vertical; transition:border-color .15s; }
+.form-textarea:focus { border-color:var(--navy); }
+.note-item { padding:10px 0; border-bottom:1px solid var(--border); font-size:13px; color:var(--text-sub); }
+.note-item:last-child { border-bottom:none; }
+.note-time { font-size:11px; color:var(--text-muted); margin-top:3px; }
+{% endblock %}
+
+{% block dashboard_content %}
+<div style="margin-bottom:16px;">
+  <a href="/dashboard/customers/" style="font-size:13px;color:var(--text-muted);text-decoration:none;">← Back to Customers</a>
+</div>
+
+<div class="profile-header">
+  <div class="profile-avatar">{{ customer.first_name|first|upper }}{{ customer.last_name|first|upper }}</div>
+  <div style="flex:1;">
+    <div class="profile-name">{{ customer.get_full_name|default:customer.email }}</div>
+    <div class="profile-meta">{{ customer.email }}{% if customer.phone_number %} · {{ customer.phone_number }}{% endif %}</div>
+    <div class="profile-meta">Joined {{ customer.date_joined|date:"d M Y" }}{% if last_order %} · Last order {{ last_order.created_at|date:"d M Y" }}{% endif %}</div>
+  </div>
+  {% if customer.is_banned %}
+    <span class="badge badge-danger">Banned</span>
+  {% else %}
+    <span class="badge badge-emerald">Active</span>
+  {% endif %}
+</div>
+
+<div style="display:grid;grid-template-columns:1fr 280px;gap:16px;align-items:start;">
+
+  {# ── LEFT ── #}
+  <div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px;">
+      <div class="stat-card">
+        <div class="stat-label">Total Orders</div>
+        <div class="stat-val">{{ order_count }}</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Total Spent</div>
+        <div class="stat-val" style="font-size:20px;">KES {{ total_spent|floatformat:0|intcomma }}</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Avg Order</div>
+        <div class="stat-val" style="font-size:20px;">KES {{ avg_order|floatformat:0|intcomma }}</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Order History</div>
+      {% if page_obj %}
+      <table style="width:100%;border-collapse:collapse;font-size:13px;">
+        <thead>
+          <tr>
+            <th style="text-align:left;padding:6px 0;border-bottom:1px solid var(--border);font-size:11px;color:var(--text-muted);font-weight:600;">Order</th>
+            <th style="text-align:left;padding:6px 0;border-bottom:1px solid var(--border);font-size:11px;color:var(--text-muted);font-weight:600;">Date</th>
+            <th style="text-align:right;padding:6px 0;border-bottom:1px solid var(--border);font-size:11px;color:var(--text-muted);font-weight:600;">Total</th>
+            <th style="text-align:right;padding:6px 0;border-bottom:1px solid var(--border);font-size:11px;color:var(--text-muted);font-weight:600;">Status</th>
+            <th style="padding:6px 0;border-bottom:1px solid var(--border);"></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for order in page_obj %}
+          <tr>
+            <td style="padding:9px 0;border-bottom:1px solid var(--border);font-weight:700;color:var(--navy);">{{ order.order_number }}</td>
+            <td style="padding:9px 0;border-bottom:1px solid var(--border);color:var(--text-sub);font-size:12px;">{{ order.created_at|date:"d M Y" }}</td>
+            <td style="padding:9px 0;border-bottom:1px solid var(--border);text-align:right;font-weight:700;">KES {{ order.total|floatformat:0|intcomma }}</td>
+            <td style="padding:9px 0;border-bottom:1px solid var(--border);text-align:right;">
+              {% if order.status == 'delivered' %}<span class="badge badge-emerald">Delivered</span>
+              {% elif order.status == 'pending' %}<span class="badge badge-warning">Pending</span>
+              {% elif order.status == 'cancelled' %}<span class="badge badge-danger">Cancelled</span>
+              {% else %}<span class="badge badge-navy">{{ order.get_status_display }}</span>{% endif %}
+            </td>
+            <td style="padding:9px 0;border-bottom:1px solid var(--border);text-align:right;">
+              <a href="/dashboard/orders/{{ order.order_number }}/" style="font-size:12px;color:var(--navy);font-weight:600;text-decoration:none;">View</a>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% if page_obj.has_other_pages %}
+      <div style="display:flex;align-items:center;justify-content:space-between;padding-top:12px;border-top:1px solid var(--border);margin-top:8px;font-size:12px;color:var(--text-muted);">
+        <span>Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+        <div style="display:flex;gap:6px;">
+          {% if page_obj.has_previous %}
+            <a href="?page={{ page_obj.previous_page_number }}" style="padding:4px 10px;border:1px solid var(--border);border-radius:var(--r);color:var(--navy);text-decoration:none;font-weight:500;">← Prev</a>
+          {% endif %}
+          {% if page_obj.has_next %}
+            <a href="?page={{ page_obj.next_page_number }}" style="padding:4px 10px;border:1px solid var(--border);border-radius:var(--r);color:var(--navy);text-decoration:none;font-weight:500;">Next →</a>
+          {% endif %}
+        </div>
+      </div>
+      {% endif %}
+      {% else %}
+      <p style="font-size:13px;color:var(--text-muted);">No orders yet.</p>
+      {% endif %}
+    </div>
+
+    {# Notes history #}
+    {% if notes %}
+    <div class="card">
+      <div class="card-title">Internal Notes</div>
+      {% for note in notes %}
+      <div class="note-item">
+        <div>{{ note.body }}</div>
+        <div class="note-time">{{ note.created_at|date:"d M Y, H:i" }}</div>
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+  </div>
+
+  {# ── RIGHT SIDEBAR ── #}
+  <div>
+    {# Note #}
+    <div class="action-card" x-data="{ saving: false, saved: false }">
+      <div class="action-title">Internal Note</div>
+      <form method="post" action="/dashboard/customers/{{ customer.pk }}/note/"
+            @submit.prevent="
+              saving = true;
+              fetch('/dashboard/customers/{{ customer.pk }}/note/', {
+                method:'POST',
+                headers:{'X-CSRFToken':'{{ csrf_token }}','Content-Type':'application/x-www-form-urlencoded'},
+                body:'body='+encodeURIComponent($refs.noteBody.value)
+              }).then(r=>r.json()).then(d=>{
+                if(d.id){ $refs.noteBody.value=''; saved=true; setTimeout(()=>saved=false,2000); }
+                saving=false;
+              });
+            ">
+        <textarea class="form-textarea" x-ref="noteBody" name="body" rows="3" placeholder="Add note about this customer…" style="margin-bottom:8px;"></textarea>
+        <button type="submit" class="btn btn-ghost" :disabled="saving">
+          <span x-text="saved ? 'Saved' : (saving ? 'Saving…' : 'Save Note')"></span>
+        </button>
+      </form>
+    </div>
+
+    {# Reset password #}
+    <div class="action-card">
+      <div class="action-title">Reset Password</div>
+      <div style="font-size:12px;color:var(--text-sub);margin-bottom:10px;">Send a reset link to {{ customer.email }}</div>
+      <form method="post" action="/accounts/password/reset/">
+        {% csrf_token %}
+        <input type="hidden" name="email" value="{{ customer.email }}">
+        <button type="submit" class="btn btn-ghost">Send Reset Email</button>
+      </form>
+    </div>
+
+    {# Danger zone #}
+    <div class="danger-zone">
+      <div class="danger-title">Danger Zone</div>
+      {% if customer.is_banned %}
+        <form method="post" action="/dashboard/customers/{{ customer.pk }}/unban/" style="margin-bottom:8px;">
+          {% csrf_token %}
+          <button type="submit" class="btn btn-emerald">Unban — Restore Access</button>
+        </form>
+      {% else %}
+        <form method="post" action="/dashboard/customers/{{ customer.pk }}/ban/" style="margin-bottom:8px;"
+              x-data="{ reason: '' }" @submit.prevent="
+                if(!reason.trim()){ alert('Enter a ban reason.'); return; }
+                $el.submit();
+              ">
+          {% csrf_token %}
+          <input type="text" name="reason" x-model="reason" placeholder="Ban reason…"
+                 style="width:100%;height:34px;border:1px solid var(--warning);border-radius:var(--r);padding:0 10px;font-size:12px;font-family:'DM Sans',sans-serif;margin-bottom:8px;outline:none;">
+          <button type="submit" class="btn btn-warning">Soft Ban — Block Login</button>
+        </form>
+      {% endif %}
+      <form method="post" action="/dashboard/customers/{{ customer.pk }}/delete/"
+            onsubmit="return confirm('Permanently delete {{ customer.get_full_name|default:customer.email }}? This cannot be undone.')">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-danger">Hard Delete — Remove All Data</button>
+      </form>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

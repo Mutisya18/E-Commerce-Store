@@ -1,0 +1,21 @@
+{% load icon_tags %}
+<div class="container">
+    <div class="section-header">
+    {% if cat_overline %}<div class="section-overline" style="color:var({{ cat_overline_colour }});">{{ cat_overline }}</div>{% endif %}
+    <h2 class="section-title" style="color:var({{ cat_heading_colour }});font-size:{{ cat_heading_size }};">{{ cat_heading }}</h2>
+  </div>
+  <div class="cat-a-strip">
+    {% if featured_categories %}
+      {% for cat in featured_categories %}
+      <a href="/categories/{{ cat.slug }}/" class="cat-a-pill" style="background:var({{ cat.border_color }});color:var({{ cat.text_color }});">{% icon cat.icon_name size=16 css_class="icon--inline" %} {{ cat.name }}</a>
+      {% endfor %}
+    {% else %}
+      <a href="#" class="cat-a-pill" style="background:var(--forest);color:var(--surface);">Phones</a>
+      <a href="#" class="cat-a-pill" style="background:var(--sage);color:var(--forest);">Laptops</a>
+      <a href="#" class="cat-a-pill" style="background:var(--gold);color:var(--forest);">Audio</a>
+      <a href="#" class="cat-a-pill" style="background:var(--forest);color:var(--surface);">Smart Home</a>
+      <a href="#" class="cat-a-pill" style="background:var(--sage);color:var(--forest);">Wearables</a>
+      <a href="#" class="cat-a-pill" style="background:var(--gold);color:var(--forest);">Accessories</a>
+    {% endif %}
+  </div>
+</div>

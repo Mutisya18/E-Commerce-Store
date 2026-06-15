@@ -1,0 +1,504 @@
+{% extends "dashboard/base_dashboard.html" %}
+{% load static icon_tags %}
+
+{% block title %}Add Product — Dashboard{% endblock %}
+{% block page_title %}Add New Product{% endblock %}
+{% block nav_products %}active{% endblock %}
+
+{% block extra_styles %}
+/* Stepper */
+.stepper{display:flex;align-items:center;margin-bottom:28px;background:var(--surface);border-radius:var(--r-lg);box-shadow:var(--shadow);padding:20px 28px}
+.step{display:flex;align-items:center;gap:12px;flex:1;position:relative}
+.step:not(:last-child)::after{content:'';position:absolute;top:50%;left:calc(36px + 12px);right:0;height:1px;background:var(--border);transform:translateY(-50%);z-index:0;transition:background .3s}
+.step.completed:not(:last-child)::after{background:var(--emerald)}
+.step-circle{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex-shrink:0;position:relative;z-index:1;transition:all .3s;border:2px solid var(--border);background:var(--surface);color:var(--text-muted)}
+.step.active .step-circle{background:var(--navy);border-color:var(--navy);color:#fff;box-shadow:0 0 0 4px var(--navy-light)}
+.step.completed .step-circle{background:var(--emerald);border-color:var(--emerald);color:#fff}
+.step-label{font-size:12px;font-weight:600;color:var(--text-muted);white-space:nowrap}
+.step.active .step-label{color:var(--navy)}
+.step.completed .step-label{color:var(--emerald)}
+.step-sub{font-size:11px;color:var(--text-muted);margin-top:1px}
+
+/* Form */
+.grid-main{display:grid;grid-template-columns:1fr 320px;gap:20px;align-items:start}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.form-card{background:var(--surface);border-radius:var(--r-lg);box-shadow:var(--shadow);padding:24px;margin-bottom:16px}
+.form-card:last-child{margin-bottom:0}
+.card-title{font-size:14px;font-weight:700;color:var(--text);margin-bottom:4px}
+.card-sub{font-size:12px;color:var(--text-muted);margin-bottom:20px}
+.card-divider{height:1px;background:var(--border);margin:20px 0}
+.form-group{margin-bottom:18px}
+.form-group:last-child{margin-bottom:0}
+.form-label{font-size:11px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:var(--text-muted);display:block;margin-bottom:5px}
+.form-label .req{color:var(--danger);margin-left:2px}
+.form-input{width:100%;height:40px;border:1.5px solid var(--border);border-radius:var(--r);padding:0 12px;font-family:'DM Sans',sans-serif;font-size:13px;color:var(--text);outline:none;background:var(--surface);transition:all .15s}
+.form-input:focus{border-color:var(--navy);box-shadow:0 0 0 3px var(--navy-light)}
+.form-input.error{border-color:var(--danger);box-shadow:0 0 0 3px var(--danger-light)}
+select.form-input{cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%239A9A9A' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;padding-right:32px}
+.form-textarea{width:100%;border:1.5px solid var(--border);border-radius:var(--r);padding:10px 12px;font-family:'DM Sans',sans-serif;font-size:13px;color:var(--text);outline:none;background:var(--surface);resize:vertical;min-height:96px;transition:all .15s;line-height:1.6}
+.form-textarea:focus{border-color:var(--navy);box-shadow:0 0 0 3px var(--navy-light)}
+.form-hint{font-size:11px;color:var(--text-muted);margin-top:4px}
+.input-prefix{display:flex;align-items:center;border:1.5px solid var(--border);border-radius:var(--r);overflow:hidden;transition:all .15s;background:var(--surface)}
+.input-prefix:focus-within{border-color:var(--navy);box-shadow:0 0 0 3px var(--navy-light)}
+.input-prefix-label{padding:0 12px;height:40px;display:flex;align-items:center;font-size:13px;font-weight:600;color:var(--text-muted);background:var(--surface-alt);border-right:1.5px solid var(--border);white-space:nowrap;flex-shrink:0}
+.input-prefix input{border:none;outline:none;padding:0 12px;height:40px;font-family:'DM Sans',sans-serif;font-size:13px;color:var(--text);flex:1;background:transparent;width:100%}
+.input-wrap{position:relative}
+.char-count{position:absolute;right:10px;bottom:8px;font-size:10px;color:var(--text-muted)}
+.tip{display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;border-radius:50%;background:var(--surface-alt);color:var(--text-muted);font-size:10px;font-weight:700;cursor:help;margin-left:4px}
+
+/* Spec tags */
+.spec-input-row{display:flex;gap:8px;margin-bottom:8px}
+.spec-tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;min-height:32px;padding:6px;border:1.5px dashed var(--border);border-radius:var(--r);background:var(--base)}
+.spec-tag{display:inline-flex;align-items:center;gap:5px;background:var(--navy-light);color:var(--navy);font-size:12px;font-weight:600;padding:4px 8px;border-radius:5px}
+.spec-tag-del{cursor:pointer;opacity:.6;font-size:14px;line-height:1}
+.spec-tag-del:hover{opacity:1}
+
+/* Toggle row */
+.toggle-row{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;background:var(--base);border:1.5px solid var(--border);border-radius:var(--r);cursor:pointer;transition:all .15s;margin-bottom:10px}
+.toggle-row:last-child{margin-bottom:0}
+.toggle-row:hover{border-color:var(--navy);background:var(--navy-light)}
+.toggle-row.on{border-color:var(--emerald);background:var(--emerald-light)}
+.toggle{position:relative;width:40px;height:22px;flex-shrink:0}
+.toggle input{opacity:0;width:0;height:0}
+.toggle-slider{position:absolute;inset:0;background:var(--border);border-radius:10px;cursor:pointer;transition:.2s}
+.toggle-slider::before{content:'';position:absolute;width:16px;height:16px;left:3px;top:3px;background:#fff;border-radius:50%;transition:.2s;box-shadow:0 1px 3px rgba(0,0,0,.2)}
+.toggle input:checked+.toggle-slider{background:var(--emerald)}
+.toggle input:checked+.toggle-slider::before{transform:translateX(18px)}
+.toggle-label{font-size:13px;font-weight:600;color:var(--text)}
+.toggle-desc{font-size:11px;color:var(--text-muted);margin-top:1px}
+
+/* Stock meter */
+.stock-meter{background:var(--base);border:1.5px solid var(--border);border-radius:var(--r);padding:12px 14px}
+.stock-meter-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+.stock-meter-bar{height:6px;background:var(--border);border-radius:3px;overflow:hidden}
+.stock-meter-fill{height:100%;border-radius:3px;transition:width .4s,background .4s}
+
+/* Preview card */
+.product-preview-card{background:var(--surface);border:1.5px solid var(--border);border-radius:var(--r-lg);overflow:hidden}
+.preview-img{background:linear-gradient(135deg,var(--navy),#2d4a7a);aspect-ratio:1;display:flex;align-items:center;justify-content:center;position:relative;background-size:cover;background-position:center}
+.preview-sale-badge{position:absolute;top:10px;right:10px;background:var(--danger);color:#fff;font-size:10px;font-weight:700;padding:3px 7px;border-radius:4px}
+.preview-body{padding:14px}
+.preview-name{font-weight:700;font-size:14px;color:var(--text);margin-bottom:4px;line-height:1.3}
+.preview-cat{font-size:11px;color:var(--text-muted);margin-bottom:8px}
+.preview-price-main{font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:700;color:var(--navy)}
+.preview-price-orig{font-size:12px;color:var(--text-muted);text-decoration:line-through;margin-left:6px}
+.preview-stock-bar{flex:1;height:4px;background:var(--border);border-radius:2px}
+.preview-stock-fill{height:100%;border-radius:2px;background:var(--emerald)}
+
+/* Image upload */
+.upload-zone{border:2px dashed var(--border);border-radius:var(--r-lg);padding:32px;text-align:center;cursor:pointer;transition:all .2s;background:var(--base);position:relative}
+.upload-zone:hover,.upload-zone.dragover{border-color:var(--navy);background:var(--navy-light)}
+.upload-zone input{position:absolute;inset:0;opacity:0;cursor:pointer}
+.upload-zone-icon{width:48px;height:48px;border-radius:var(--r-lg);background:var(--navy-light);display:flex;align-items:center;justify-content:center;margin:0 auto 12px}
+.image-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:16px}
+.img-thumb{aspect-ratio:1;border-radius:var(--r);overflow:hidden;position:relative;background:var(--surface-alt);border:2px solid var(--border)}
+.img-thumb.primary{border-color:var(--navy);box-shadow:0 0 0 2px var(--navy-light)}
+.img-thumb img{width:100%;height:100%;object-fit:cover}
+.img-thumb-overlay{position:absolute;inset:0;background:rgba(27,42,74,.7);display:none;align-items:center;justify-content:center;gap:6px;flex-direction:column}
+.img-thumb:hover .img-thumb-overlay{display:flex}
+.img-primary-badge{position:absolute;top:6px;left:6px;background:var(--navy);color:#fff;font-size:9px;font-weight:700;padding:2px 6px;border-radius:3px;text-transform:uppercase}
+.img-action-btn{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);color:#fff;border-radius:5px;padding:4px 8px;font-size:11px;font-weight:600;cursor:pointer}
+.img-action-btn:hover{background:rgba(255,255,255,.25)}
+.img-action-btn.del{background:rgba(192,57,43,.8)}
+
+/* Review */
+.review-section{margin-bottom:20px}
+.review-label{font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--text-muted);margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid var(--border)}
+.review-row{display:flex;justify-content:space-between;align-items:center;padding:7px 0;font-size:13px}
+.review-row:not(:last-child){border-bottom:1px solid var(--border)}
+.review-key{color:var(--text-muted)}
+.review-val{font-weight:600;color:var(--text);text-align:right;max-width:60%}
+
+/* Badge */
+.badge{display:inline-flex;align-items:center;padding:3px 8px;border-radius:5px;font-size:11px;font-weight:700;letter-spacing:.04em}
+.badge-emerald{background:var(--emerald-light);color:var(--emerald)}
+.badge-navy{background:var(--navy-light);color:var(--navy)}
+.badge-gold{background:var(--gold-light);color:#7a5c1a}
+.badge-warning{background:var(--warning-light);color:var(--warning)}
+.badge-gray{background:var(--surface-alt);color:var(--text-muted)}
+
+/* Bottom nav */
+.bottom-nav{background:var(--surface);border-top:1px solid var(--border);padding:16px 28px;display:flex;justify-content:space-between;align-items:center;position:sticky;bottom:0;z-index:30}
+
+/* Toast */
+.toast{position:fixed;top:20px;right:20px;background:var(--navy);color:#fff;padding:12px 20px;border-radius:var(--r-lg);font-size:13px;font-weight:600;box-shadow:var(--shadow-hover);z-index:999;display:none;align-items:center;gap:8px}
+.toast.show{display:flex}
+
+.page-content{animation:fadeUp .2s ease}
+@keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+{% endblock %}
+
+{% block dashboard_content %}
+
+<!-- Page header -->
+<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px">
+  <div>
+    <div style="font-family:'Cormorant Garamond',serif;font-size:28px;font-weight:700;color:var(--navy)">Add New Product</div>
+    <div style="font-size:13px;color:var(--text-muted);margin-top:2px">Fill in the details below to list a new product in your store.</div>
+  </div>
+  <a href="/dashboard/products/" class="btn btn-ghost">{% icon "x" size=14 css_class="icon--inline" %} Discard</a>
+</div>
+
+<!-- Stepper -->
+<div class="stepper">
+  <div class="step active" id="step-indicator-1">
+    <div class="step-circle" id="step-circle-1">1</div>
+    <div><div class="step-label">Basic Info</div><div class="step-sub">Name, pricing, stock</div></div>
+  </div>
+  <div class="step" id="step-indicator-2">
+    <div class="step-circle" id="step-circle-2">2</div>
+    <div><div class="step-label">Images</div><div class="step-sub">Photos &amp; gallery</div></div>
+  </div>
+  <div class="step" id="step-indicator-3">
+    <div class="step-circle" id="step-circle-3">3</div>
+    <div><div class="step-label">Review &amp; Publish</div><div class="step-sub">Confirm and go live</div></div>
+  </div>
+</div>
+
+<!-- The actual form wraps all steps — submitted only on step 3 -->
+<form id="productForm" method="post" action="/dashboard/products/add/" enctype="multipart/form-data"
+      data-catmap='{ {% for cat in categories %}"{{ cat.pk }}":"{{ cat.name|escapejs }}"{% if not forloop.last %},{% endif %}{% endfor %} }'>
+  {% csrf_token %}
+  <input type="hidden" name="specs_json" id="specsJson">
+
+  <!-- ═══ STEP 1 ═══ -->
+  <div id="step-1" class="page-content">
+    <div class="grid-main">
+      <!-- LEFT -->
+      <div>
+        <div class="form-card">
+          <div class="card-title">Product Details</div>
+          <div class="card-sub">The essential information about this product.</div>
+
+          <div class="form-group">
+            <label class="form-label">Product Name <span class="req">*</span></label>
+            <div class="input-wrap">
+              <input class="form-input" name="name" id="inp-name" placeholder="e.g. MacBook Air 13″ M2" maxlength="120" >
+              <span class="char-count" id="cnt-name">0/120</span>
+            </div>
+          </div>
+
+          <div class="grid-2">
+            <div class="form-group">
+              <label class="form-label">Category <span class="req">*</span></label>
+              <select class="form-input" name="category" id="inp-cat">
+                <option value="">— Select category —</option>
+                {% for cat in categories %}
+                <option value="{{ cat.pk }}">{{ cat.name }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">SKU / Product Code</label>
+              <input class="form-input" name="sku" id="inp-sku" placeholder="e.g. MBA-M2-001">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Description <span class="req">*</span></label>
+            <div class="input-wrap">
+              <textarea class="form-textarea" name="description" id="inp-desc" placeholder="Describe the product…" maxlength="2000" style="min-height:100px"></textarea>
+              <span class="char-count" style="bottom:12px" id="cnt-desc">0/2000</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Specs -->
+        <div class="form-card">
+          <div class="card-title">Specifications</div>
+          <div class="card-sub">Key specs shown in the product detail table (e.g. "RAM: 8GB").</div>
+          <div class="spec-input-row">
+            <input class="form-input" id="spec-key" placeholder="Label (e.g. RAM)" style="flex:1">
+            <input class="form-input" id="spec-val" placeholder="Value (e.g. 8GB)" style="flex:1">
+            <button type="button" id="btn-add-spec" class="btn btn-navy btn-sm" style="flex-shrink:0">+ Add</button>
+          </div>
+          <div class="spec-tags" id="spec-tags">
+            <span style="font-size:11px;color:var(--text-muted)">Specs will appear here…</span>
+          </div>
+        </div>
+
+        <!-- Pricing -->
+        <div class="form-card">
+          <div class="card-title">Pricing</div>
+          <div class="card-sub">Set the regular price and an optional offer price.</div>
+          <div class="grid-2">
+            <div class="form-group">
+              <label class="form-label">Base Price <span class="req">*</span></label>
+              <div class="input-prefix">
+                <span class="input-prefix-label">KES</span>
+                <input type="number" name="base_price" id="inp-price" placeholder="0" min="0">
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Offer Price <span class="tip" title="Optional. Leave blank for no discount.">?</span></label>
+              <div class="input-prefix">
+                <span class="input-prefix-label">KES</span>
+                <input type="number" name="sale_price" id="inp-sale" placeholder="0" min="0">
+              </div>
+              <div class="form-hint" id="discount-hint"></div>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Deal Countdown End Date <span class="tip" title="Optional. Shows countdown on homepage deals.">?</span></label>
+            <input type="datetime-local" class="form-input" name="deal_end_date" id="inp-deal">
+            <div class="form-hint">Leave blank for no countdown.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- RIGHT -->
+      <div>
+        <!-- Status & Visibility -->
+        <div class="form-card">
+          <div class="card-title">Status &amp; Visibility</div>
+          <div class="card-sub">Control how this product appears in your store.</div>
+          <div class="form-group">
+            <label class="form-label">Publish Status</label>
+            <select class="form-input" name="publish_status" id="inp-status">
+              <option value="active">Active — visible on storefront</option>
+              <option value="draft">Draft — hidden from storefront</option>
+            </select>
+          </div>
+          <div class="card-divider"></div>
+          <div class="toggle-row" id="toggle-featured">
+            <div>
+              <div class="toggle-label">⭐ Mark as Featured</div>
+              <div class="toggle-desc">Appears in Featured Products on homepage</div>
+            </div>
+            <label class="toggle">
+              <input type="checkbox" name="is_featured" id="chk-featured">
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+          <div class="toggle-row" id="toggle-visible">
+            <div>
+              <div class="toggle-label">{% icon "eye" size=14 css_class="icon--inline" %} Visible on Store</div>
+              <div class="toggle-desc">Show in listings and search</div>
+            </div>
+            <label class="toggle">
+              <input type="checkbox" name="is_visible" id="chk-visible" checked>
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Inventory -->
+        <div class="form-card">
+          <div class="card-title">Inventory</div>
+          <div class="card-sub">Track stock levels and set restock alerts.</div>
+          <div class="form-group">
+            <label class="form-label">Stock Quantity <span class="req">*</span></label>
+            <input type="number" class="form-input" name="stock" id="inp-stock" placeholder="0" min="0">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Low Stock Alert Threshold <span class="tip" title="Alert when stock falls at or below this number.">?</span></label>
+            <input type="number" class="form-input" name="low_stock_threshold" id="inp-threshold" placeholder="5" min="0">
+          </div>
+          <div class="stock-meter">
+            <div class="stock-meter-row">
+              <span style="font-size:11px;font-weight:600;color:var(--text-muted)">Stock Level</span>
+              <span style="font-size:12px;font-weight:700" id="meter-status">—</span>
+            </div>
+            <div class="stock-meter-bar">
+              <div class="stock-meter-fill" id="meter-fill" style="width:0%;background:var(--border)"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Live Preview -->
+        <div class="form-card">
+          <div class="card-title" style="margin-bottom:4px">Live Preview</div>
+          <div style="font-size:11px;color:var(--text-muted);margin-bottom:14px">How this product will appear in listings.</div>
+          <div class="product-preview-card">
+            <div class="preview-img" id="preview-img">
+              <span style="font-size:11px;color:rgba(255,255,255,.5);font-weight:500" id="preview-img-text">Product Image</span>
+              <div class="preview-sale-badge" id="preview-sale-badge" style="display:none">SALE</div>
+            </div>
+            <div class="preview-body">
+              <div class="preview-name" id="preview-name" style="color:var(--text-muted);font-weight:400">Product name will appear here</div>
+              <div class="preview-cat" id="preview-cat">— No category —</div>
+              <div style="display:flex;align-items:baseline;gap:8px">
+                <div class="preview-price-main" id="preview-price">KES —</div>
+                <div class="preview-price-orig" id="preview-orig" style="display:none"></div>
+              </div>
+              <div style="display:flex;align-items:center;gap:5px;margin-top:8px">
+                <div class="preview-stock-bar"><div class="preview-stock-fill" id="preview-stock-fill" style="width:0%"></div></div>
+                <span style="font-size:11px;color:var(--text-muted);white-space:nowrap" id="preview-stock-label">— in stock</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ STEP 2 ═══ -->
+  <div id="step-2" style="display:none" class="page-content">
+    <div class="grid-main">
+      <div>
+        <div class="form-card">
+          <div class="card-title">Product Images</div>
+          <div class="card-sub">Upload up to 8 images. The first (or primary) will be the main listing image.</div>
+          <div class="upload-zone" id="drop-zone">
+            <input type="file" name="images" multiple accept="image/*" id="imgInput">
+            <div class="upload-zone-icon">
+              {% icon "upload-simple" size=22 color="#1B2A4A" %}
+            </div>
+            <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:4px">Click to upload or drag &amp; drop</div>
+            <div style="font-size:11px;color:var(--text-muted)">PNG, JPG, WebP · Max 5MB · Up to 8 images</div>
+          </div>
+          <div class="image-grid" id="image-grid"></div>
+        </div>
+        <div class="form-card" style="background:var(--navy-light);border:1.5px solid var(--navy-light);box-shadow:none">
+          <div style="display:flex;gap:12px;align-items:flex-start">
+            <div style="width:32px;height:32px;border-radius:var(--r);background:var(--navy);display:flex;align-items:center;justify-content:center;flex-shrink:0">
+              {% icon "info" size=14 color="#fff" %}
+            </div>
+            <div>
+              <div style="font-size:13px;font-weight:600;color:var(--navy);margin-bottom:3px">Image Tips</div>
+              <div style="font-size:12px;color:var(--navy);opacity:.75;line-height:1.6">Use a clean white or neutral background. Include multiple angles. Minimum recommended: <strong>800×800px</strong>.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div>
+        <div class="form-card">
+          <div class="card-title">Image Order</div>
+          <div class="card-sub">Hover an image to set it as primary or delete it.</div>
+          <div id="image-order-list" style="display:flex;flex-direction:column;gap:6px">
+            <div style="font-size:12px;color:var(--text-muted);padding:12px;text-align:center;border:1.5px dashed var(--border);border-radius:var(--r)">No images uploaded yet</div>
+          </div>
+        </div>
+        <div class="form-card">
+          <div class="card-title">Upload Progress</div>
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+            <span style="font-size:13px;color:var(--text-sub)" id="img-count-label">0 / 8 images</span>
+            <span class="badge badge-gray" id="img-count-badge">0 uploaded</span>
+          </div>
+          <div style="height:6px;background:var(--border);border-radius:3px;overflow:hidden">
+            <div id="img-progress-bar" style="height:100%;width:0%;background:var(--emerald);border-radius:3px;transition:width .3s"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ STEP 3 ═══ -->
+  <div id="step-3" style="display:none" class="page-content">
+    <div class="grid-main">
+      <div>
+        <div class="form-card">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+            <div>
+              <div class="card-title">Product Summary</div>
+              <div style="font-size:12px;color:var(--text-muted);margin-top:2px">Review everything before publishing.</div>
+            </div>
+            <button type="button" id="btn-edit-details" class="btn btn-ghost btn-sm">← Edit Details</button>
+          </div>
+          <div class="review-section">
+            <div class="review-label">Basic Information</div>
+            <div class="review-row"><span class="review-key">Product Name</span><span class="review-val" id="rv-name">—</span></div>
+            <div class="review-row"><span class="review-key">Category</span><span class="review-val" id="rv-cat">—</span></div>
+            <div class="review-row"><span class="review-key">SKU</span><span class="review-val" id="rv-sku">—</span></div>
+            <div class="review-row"><span class="review-key">Status</span><span class="review-val" id="rv-status">—</span></div>
+          </div>
+          <div class="review-section">
+            <div class="review-label">Pricing</div>
+            <div class="review-row"><span class="review-key">Base Price</span><span class="review-val" id="rv-price">—</span></div>
+            <div class="review-row"><span class="review-key">Offer Price</span><span class="review-val" id="rv-sale">—</span></div>
+            <div class="review-row"><span class="review-key">Discount</span><span class="review-val" id="rv-discount">—</span></div>
+            <div class="review-row"><span class="review-key">Deal End Date</span><span class="review-val" id="rv-deal">—</span></div>
+          </div>
+          <div class="review-section">
+            <div class="review-label">Inventory</div>
+            <div class="review-row"><span class="review-key">Stock Quantity</span><span class="review-val" id="rv-stock">—</span></div>
+            <div class="review-row"><span class="review-key">Low Stock Alert At</span><span class="review-val" id="rv-threshold">—</span></div>
+          </div>
+          <div class="review-section">
+            <div class="review-label">Homepage Flags</div>
+            <div class="review-row"><span class="review-key">Mark as Featured</span><span class="review-val" id="rv-featured">—</span></div>
+            <div class="review-row"><span class="review-key">Visible on Store</span><span class="review-val" id="rv-visible">—</span></div>
+          </div>
+          <div class="review-section">
+            <div class="review-label">Images</div>
+            <div class="review-row"><span class="review-key">Images Uploaded</span><span class="review-val" id="rv-images">—</span></div>
+          </div>
+        </div>
+
+        <!-- Publish card -->
+        <div class="form-card" style="border:2px solid var(--navy)">
+          <div style="display:flex;gap:14px;align-items:flex-start">
+            <div style="width:40px;height:40px;border-radius:var(--r);background:var(--navy);display:flex;align-items:center;justify-content:center;flex-shrink:0;">{% icon "rocket-launch" size=20 color="#fff" %}</div>
+            <div style="flex:1">
+              <div style="font-size:15px;font-weight:700;color:var(--navy);margin-bottom:4px">Ready to publish?</div>
+              <div style="font-size:12px;color:var(--text-sub);margin-bottom:14px;line-height:1.6">Publishing will make this product live on your storefront immediately (if Active). You can always edit or unpublish it later.</div>
+              <div style="display:flex;gap:10px">
+                <button type="submit" name="publish_status" value="active" class="btn btn-emerald btn-lg" style="flex:1;justify-content:center">
+                  {% icon "check" size=16 %}
+                  Publish Product
+                </button>
+                <button type="submit" name="publish_status" value="draft" class="btn btn-ghost btn-lg">Save as Draft</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- RIGHT: preview -->
+      <div>
+        <div class="form-card">
+          <div class="card-title">Storefront Preview</div>
+          <div style="font-size:11px;color:var(--text-muted);margin-bottom:14px">How this product will look to shoppers.</div>
+          <div class="product-preview-card">
+            <div class="preview-img" id="preview-img-3">
+              <span style="font-size:11px;color:rgba(255,255,255,.5)" id="preview-img-3-text">Product Image</span>
+              <div class="preview-sale-badge" id="preview-sale-3" style="display:none">SALE</div>
+              <div style="position:absolute;top:10px;left:10px;display:none" id="preview-featured-3">
+                <span style="background:var(--gold);color:var(--navy);font-size:9px;font-weight:700;padding:3px 7px;border-radius:4px">FEATURED</span>
+              </div>
+            </div>
+            <div class="preview-body">
+              <div class="preview-name" id="review-preview-name">—</div>
+              <div class="preview-cat" id="review-preview-cat">—</div>
+              <div style="display:flex;align-items:baseline;gap:8px">
+                <div class="preview-price-main" id="review-preview-price">KES —</div>
+                <div class="preview-price-orig" id="review-preview-orig" style="display:none"></div>
+              </div>
+            </div>
+          </div>
+          <div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--border)">
+            <div style="font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text-muted);margin-bottom:8px">Sections this product will appear in</div>
+            <div id="section-tags" style="display:flex;flex-wrap:wrap;gap:6px">
+              <span class="badge badge-navy">All Products</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</form>
+
+<!-- Bottom Nav -->
+<div class="bottom-nav">
+  <div style="display:flex;align-items:center;gap:8px">
+    <span style="font-size:13px;color:var(--text-muted)">Step <strong id="current-step-label" style="color:var(--navy)">1</strong> of <strong style="color:var(--navy)">3</strong></span>
+    <span style="color:var(--border)">·</span>
+    <span style="font-size:13px;color:var(--text-sub)" id="step-name-label">Basic Info</span>
+  </div>
+  <div style="display:flex;gap:10px">
+    <button type="button" class="btn btn-ghost" id="btn-back" style="display:none">← Back</button>
+    <button type="button" class="btn btn-navy" id="btn-next">Continue to Images →</button>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast">
+  {% icon "check" size=14 %}
+  <span id="toast-msg">Done</span>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+{% endblock %}

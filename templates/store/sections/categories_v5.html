@@ -1,0 +1,30 @@
+{% load icon_tags %}
+<div class="container">
+    <div class="section-header">
+    {% if cat_overline %}<div class="section-overline" style="color:var({{ cat_overline_colour }});">{{ cat_overline }}</div>{% endif %}
+    <h2 class="section-title" style="color:var({{ cat_heading_colour }});font-size:{{ cat_heading_size }};">{{ cat_heading }}</h2>
+  </div>
+  <div class="cat-e-wrap">
+    {% if featured_categories %}
+      {% for cat in featured_categories %}
+      {% if forloop.counter == 1 %}<a href="/categories/{{ cat.slug }}/" class="cat-e-row"><div class="cat-e-left"><div class="cat-e-icon" style="background:var(--sage-light);">
+      {% elif forloop.counter == 2 %}<a href="/categories/{{ cat.slug }}/" class="cat-e-row"><div class="cat-e-left"><div class="cat-e-icon" style="background:var(--sage-light);">
+      {% elif forloop.counter == 3 %}<a href="/categories/{{ cat.slug }}/" class="cat-e-row"><div class="cat-e-left"><div class="cat-e-icon" style="background:var(--sage-light);">
+      {% elif forloop.counter == 4 %}<a href="/categories/{{ cat.slug }}/" class="cat-e-row"><div class="cat-e-left"><div class="cat-e-icon" style="background:var(--sage-light);">
+      {% elif forloop.counter == 5 %}<a href="/categories/{{ cat.slug }}/" class="cat-e-row"><div class="cat-e-left"><div class="cat-e-icon" style="background:var(--sage-light);">
+      {% else %}<a href="/categories/{{ cat.slug }}/" class="cat-e-row"><div class="cat-e-left"><div class="cat-e-icon" style="background:var(--sage-light);">{% endif %}
+          {% if cat.image %}<img src="{{ cat.image.url }}" alt="{{ cat.name }}">{% else %}{% icon cat.icon_name size=24 %}{% endif %}
+        </div><div class="cat-e-name">{{ cat.name }}</div></div>
+        <div class="cat-e-right"><span class="cat-e-badge">{{ cat.product_count|default:0 }}</span><span class="cat-e-arrow">{% icon "caret-right" size=14 %}</span></div>
+      </a>
+      {% endfor %}
+    {% else %}
+      <a href="#" class="cat-e-row"><div class="cat-e-left"><div class="cat-e-icon" style="background:var(--sage-light);">{% icon "device-mobile" size=24 %}</div><div class="cat-e-name">Phones</div></div><div class="cat-e-right"><span class="cat-e-badge">—</span><span class="cat-e-arrow">{% icon "caret-right" size=14 %}</span></div></a>
+      <a href="#" class="cat-e-row"><div class="cat-e-left"><div class="cat-e-icon" style="background:var(--sage-light);">{% icon "laptop" size=24 %}</div><div class="cat-e-name">Laptops</div></div><div class="cat-e-right"><span class="cat-e-badge">—</span><span class="cat-e-arrow">{% icon "caret-right" size=14 %}</span></div></a>
+      <a href="#" class="cat-e-row"><div class="cat-e-left"><div class="cat-e-icon" style="background:var(--sage-light);">{% icon "headphones" size=24 %}</div><div class="cat-e-name">Audio</div></div><div class="cat-e-right"><span class="cat-e-badge">—</span><span class="cat-e-arrow">{% icon "caret-right" size=14 %}</span></div></a>
+      <a href="#" class="cat-e-row"><div class="cat-e-left"><div class="cat-e-icon" style="background:var(--sage-light);">{% icon "house-line" size=24 %}</div><div class="cat-e-name">Smart Home</div></div><div class="cat-e-right"><span class="cat-e-badge">—</span><span class="cat-e-arrow">{% icon "caret-right" size=14 %}</span></div></a>
+      <a href="#" class="cat-e-row"><div class="cat-e-left"><div class="cat-e-icon" style="background:var(--sage-light);">{% icon "watch" size=24 %}</div><div class="cat-e-name">Wearables</div></div><div class="cat-e-right"><span class="cat-e-badge">—</span><span class="cat-e-arrow">{% icon "caret-right" size=14 %}</span></div></a>
+      <a href="#" class="cat-e-row"><div class="cat-e-left"><div class="cat-e-icon" style="background:var(--sage-light);">{% icon "plug" size=24 %}</div><div class="cat-e-name">Accessories</div></div><div class="cat-e-right"><span class="cat-e-badge">—</span><span class="cat-e-arrow">{% icon "caret-right" size=14 %}</span></div></a>
+    {% endif %}
+  </div>
+</div>

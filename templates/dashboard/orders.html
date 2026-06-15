@@ -1,0 +1,438 @@
+{% extends "dashboard/base_dashboard.html" %}
+{% load humanize icon_tags %}
+{% load static %}
+
+{% block title %}Orders — Dashboard{% endblock %}
+{% block page_title %}Orders{% endblock %}
+{% block nav_orders %}active{% endblock %}
+
+{% block extra_styles %}
+/* ── FILTER BAR ── */
+.filter-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--base);
+  padding: 12px 0 20px;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+/* Status tabs */
+.status-tabs {
+  display: inline-flex;
+  background: var(--surface-alt);
+  border-radius: 20px;
+  padding: 4px;
+  gap: 2px;
+}
+.status-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 16px;
+  border-radius: 20px;
+  border: none;
+  background: transparent;
+  font-size: 14px;
+  font-weight: 400;
+  color: var(--text-sub);
+  cursor: pointer;
+  transition: all .15s;
+  white-space: nowrap;
+}
+.status-tab:hover { color: var(--text); }
+.status-tab.active {
+  background: #fff;
+  color: var(--text);
+  font-weight: 500;
+  box-shadow: 0 1px 4px rgba(0,0,0,.10);
+}
+.tab-badge {
+  background: var(--warning-light);
+  color: var(--warning);
+  font-size: 11px;
+  font-weight: 600;
+  border-radius: 10px;
+  padding: 1px 7px;
+  line-height: 1.6;
+}
+
+/* Right controls */
+.bar-right { display: flex; align-items: center; gap: 8px; }
+.search-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #fff;
+  border: 1.5px solid var(--border);
+  border-radius: 20px;
+  padding: 0 14px;
+  width: 240px;
+  height: 38px;
+  transition: border-color .15s;
+}
+.search-wrap:focus-within { border-color: var(--navy); }
+.search-wrap input {
+  border: none;
+  background: none;
+  outline: none;
+  font-size: 13px;
+  color: var(--text);
+  width: 100%;
+  font-family: 'DM Sans', sans-serif;
+}
+.search-wrap input::placeholder { color: var(--text-muted); }
+
+.view-toggle {
+  display: flex;
+  border-radius: 8px;
+  overflow: hidden;
+}
+.view-btn {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 7px 14px;
+  border: 1.5px solid var(--border);
+  background: transparent;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-sub);
+  cursor: pointer;
+  transition: all .15s;
+  font-family: 'DM Sans', sans-serif;
+}
+.view-btn:first-child { border-right-width: 0; border-radius: 8px 0 0 8px; }
+.view-btn:last-child  { border-radius: 0 8px 8px 0; }
+.view-btn:hover { background: var(--surface-alt); }
+.view-btn.active {
+  border-color: var(--navy);
+  background: #fff;
+  color: var(--navy);
+}
+
+/* ── LIST VIEW ── */
+.orders-table-wrap {
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: var(--shadow);
+  border: 1px solid var(--border);
+  overflow: hidden;
+}
+.orders-table-wrap table {
+  width: 100%;
+  border-collapse: collapse;
+  box-shadow: none;
+  table-layout: fixed;
+}
+.orders-table-wrap th {
+  background: var(--surface-alt);
+  padding: 10px 24px;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+.orders-table-wrap td {
+  padding: 16px 24px;
+  font-size: 12px;
+  border-bottom: 1px solid var(--border);
+  vertical-align: middle;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+/* BUYER column may wrap — don't clip it */
+.orders-table-wrap td.col-buyer {
+  white-space: normal;
+  overflow: visible;
+  text-overflow: clip;
+}
+.orders-table-wrap tr:last-child td { border-bottom: none; }
+.orders-table-wrap tr.o-row { cursor: pointer; transition: background .15s; }
+.orders-table-wrap tr.o-row:hover td { background: var(--surface-alt); }
+.orders-table-wrap tr.o-row.hidden { display: none; }
+
+.o-num { color: var(--navy); font-weight: 600; }
+.o-total { font-weight: 700; }
+.o-date { color: var(--text-muted); }
+.o-method { color: var(--text-sub); }
+.o-items { color: var(--text-sub); }
+
+/* Status badges */
+.s-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+.s-badge::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.s-pending    { background: #F0F0F0; color: var(--text-sub); }
+.s-pending::before    { background: #A0A0A0; }
+.s-processing { background: var(--warning-light); color: var(--warning); }
+.s-processing::before { background: var(--warning); }
+.s-shipped    { background: #EBF1FF; color: #2C4FA0; }
+.s-shipped::before    { background: #2C4FA0; }
+.s-delivered  { background: var(--emerald-light); color: var(--emerald); }
+.s-delivered::before  { background: var(--emerald); }
+.s-cancelled  { background: var(--danger-light); color: var(--danger); }
+.s-cancelled::before  { background: var(--danger); }
+
+/* Empty state */
+.empty-state {
+  text-align: center;
+  padding: 64px 0;
+}
+.empty-state .empty-icon { font-size: 48px; margin-bottom: 12px; }
+.empty-state .empty-heading { font-size: 16px; font-weight: 600; color: var(--text); margin-bottom: 6px; }
+.empty-state .empty-sub { font-size: 13px; color: var(--text-muted); }
+
+/* Pagination */
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px;
+  padding: 16px 24px;
+}
+.pg-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 32px;
+  height: 32px;
+  padding: 0 8px;
+  border-radius: 6px;
+  border: none;
+  background: transparent;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-sub);
+  cursor: pointer;
+  text-decoration: none;
+  transition: background .15s;
+  font-family: 'DM Sans', sans-serif;
+}
+.pg-btn:hover { background: var(--surface-alt); }
+.pg-btn.current { background: var(--navy); color: #fff; }
+.pg-btn.nav { color: var(--navy); font-weight: 500; }
+.pg-btn.nav:disabled,
+.pg-btn.nav[aria-disabled="true"] { color: var(--text-muted); cursor: not-allowed; pointer-events: none; }
+
+/* ── KANBAN VIEW ── */
+.kanban-board {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  width: 100%;
+  min-width: 0;
+}
+.k-col {
+  min-width: 0;
+  background: var(--surface-alt);
+  border-radius: 12px;
+  padding: 12px;
+  min-height: 400px;
+}
+.k-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 12px;
+}
+.k-title { font-size: 15px; font-weight: 600; color: var(--text); }
+.k-count {
+  background: #fff;
+  color: var(--text-sub);
+  font-size: 12px;
+  font-weight: 600;
+  border-radius: 10px;
+  padding: 2px 8px;
+}
+.k-cards { display: flex; flex-direction: column; gap: 8px; }
+.k-card {
+  background: #fff;
+  border-radius: 10px;
+  padding: 14px 16px;
+  box-shadow: 0 1px 3px rgba(0,0,0,.06);
+  cursor: pointer;
+  transition: box-shadow .15s, transform .15s;
+  text-decoration: none;
+  display: block;
+}
+.k-card:hover {
+  box-shadow: var(--shadow-hover);
+  transform: translateY(-1px);
+}
+.k-num { font-size: 13px; font-weight: 600; color: var(--navy); margin-bottom: 4px; }
+.k-name { font-size: 14px; font-weight: 500; color: var(--text); margin-bottom: 8px; }
+.k-meta { display: flex; justify-content: space-between; font-size: 12px; }
+.k-amount { font-weight: 600; color: var(--text); }
+.k-time { color: var(--text-muted); }
+.k-empty { font-size: 13px; color: var(--text-muted); text-align: center; padding: 24px 0; }
+
+/* Responsive */
+@media (max-width: 1024px) {
+  .kanban-board { grid-template-columns: repeat(4, minmax(220px, 1fr)); overflow-x: auto; }
+  .orders-table-wrap { overflow-x: auto; }
+}
+@media (max-width: 768px) {
+  .status-tabs { overflow-x: auto; max-width: 100%; }
+  .filter-bar { flex-direction: column; align-items: stretch; }
+  .bar-right { flex-wrap: wrap; }
+  .search-wrap { width: 100%; }
+}
+@media (max-width: 640px) {
+  .col-method, .col-items { display: none; }
+}
+{% endblock %}
+
+{% block dashboard_content %}
+
+<!-- Filter Bar -->
+<div class="filter-bar">
+  <!-- Status tabs -->
+  <div class="status-tabs" id="statusTabs">
+    <button class="status-tab active" data-filter="all">All</button>
+    <button class="status-tab" data-filter="pending">
+      Pending
+      {% if pending_count %}<span class="tab-badge">{{ pending_count }}</span>{% endif %}
+    </button>
+    <button class="status-tab" data-filter="processing">
+      Processing
+      {% if processing_count %}<span class="tab-badge">{{ processing_count }}</span>{% endif %}
+    </button>
+    <button class="status-tab" data-filter="shipped">Shipped</button>
+    <button class="status-tab" data-filter="delivered">Delivered</button>
+  </div>
+
+  <!-- Search + view toggle -->
+  <div class="bar-right">
+    <div class="search-wrap">
+      {% icon "magnifying-glass" size=14 color="var(--text-muted)" %}
+      <input type="text" id="orderSearch" placeholder="Search orders…" autocomplete="off">
+    </div>
+    <div class="view-toggle">
+      <button class="view-btn active" id="btnList"  title="List view">
+        {% icon "list" size=14 %}
+      </button>
+      <button class="view-btn" id="btnKanban"  title="Kanban view">
+        {% icon "grid-four" size=14 %}
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ── LIST VIEW ── -->
+<div id="listView">
+  <div class="orders-table-wrap">
+    <table>
+      <colgroup>
+        <col style="width:110px"><!-- Order # -->
+        <col style="width:160px"><!-- Buyer — takes remaining space -->
+        <col class="col-items" style="width:80px"><!-- Items -->
+        <col style="width:120px"><!-- Total -->
+        <col class="col-method" style="width:100px"><!-- Method -->
+        <col style="width:120px"><!-- Date -->
+        <col style="width:130px"><!-- Status -->
+      </colgroup>
+      <thead>
+        <tr>
+          <th>Order #</th>
+          <th>Buyer</th>
+          <th class="col-items">Items</th>
+          <th>Total</th>
+          <th class="col-method">Method</th>
+          <th>Date</th>
+          <th class="col-status">Status</th>
+        </tr>
+      </thead>
+      <tbody id="ordersTbody">
+        {% for order in page_obj %}
+        <tr class="o-row"
+            data-status="{{ order.status }}"
+            data-search="{{ order.order_number|lower }} {{ order.full_name|lower }}"
+            data-url="/dashboard/orders/{{ order.order_number }}/"
+            >
+          <td><span class="o-num">{{ order.order_number }}</span></td>
+          <td class="col-buyer">{{ order.full_name }}</td>
+          <td class="o-items col-items">{{ order.items.count }} item{{ order.items.count|pluralize }}</td>
+          <td class="o-total">KES {{ order.total|floatformat:0|intcomma }}</td>
+          <td class="o-method col-method">{{ order.get_payment_method_display|default:"—" }}</td>
+          <td class="o-date">{{ order.created_at|date:"M d, H:i" }}</td>
+          <td class="col-status">
+            {% with s=order.status %}
+            {% if s == 'pending' %}<span class="s-badge s-pending">Pending</span>
+            {% elif s == 'processing' %}<span class="s-badge s-processing">Processing</span>
+            {% elif s == 'shipped' %}<span class="s-badge s-shipped">Shipped</span>
+            {% elif s == 'delivered' %}<span class="s-badge s-delivered">Delivered</span>
+            {% elif s == 'cancelled' %}<span class="s-badge s-cancelled">Cancelled</span>
+            {% endif %}
+            {% endwith %}
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="7">
+            <div class="empty-state">
+              <div class="empty-icon">{% icon "package" size=48 color="var(--text-muted)" %}</div>
+              <div class="empty-heading">No orders found</div>
+              <div class="empty-sub">Try adjusting your filters or search term.</div>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    <!-- Pagination (client-side) -->
+    <div class="pagination" id="pagination" style="display:none"></div>
+  </div>
+</div>
+
+<!-- ── KANBAN VIEW ── -->
+<div id="kanbanView" style="display:none">
+  <div class="kanban-board">
+    {% for col_status, col_label, col_count in kanban_columns %}
+    <div class="k-col">
+      <div class="k-header">
+        <span class="k-title">{{ col_label }}</span>
+        <span class="k-count">{{ col_count }}</span>
+      </div>
+      <div class="k-cards" id="kcol-{{ col_status }}">
+        {% for order in orders %}{% if order.status == col_status %}
+        <a class="k-card" href="/dashboard/orders/{{ order.order_number }}/">
+          <div class="k-num">{{ order.order_number }}</div>
+          <div class="k-name">{{ order.full_name }}</div>
+          <div class="k-meta">
+            <span class="k-amount">KES {{ order.total|floatformat:0|intcomma }}</span>
+            <span class="k-time">{{ order.created_at|date:"H:i" }}</span>
+          </div>
+        </a>
+        {% endif %}{% endfor %}
+        {% if col_count == 0 %}
+        <div class="k-empty">No orders</div>
+        {% endif %}
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}{% endblock %}

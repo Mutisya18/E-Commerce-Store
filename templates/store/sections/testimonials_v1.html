@@ -1,0 +1,40 @@
+{% load icon_tags %}
+<div class="container">
+  <div class="section-header">
+    <div class="section-overline">Social Proof</div>
+    <h2 class="section-title" style="color:var(--section-heading-color);font-size:var(--section-heading-size);font-weight:var(--section-heading-weight);">What Our Customers Say</h2>
+  </div>
+  <div class="testimonial-grid">
+    {% if testimonials %}
+      {% for t in testimonials %}
+      <div class="testimonial-card">
+        <div class="t-stars">{% for i in "12345"|make_list %}{% if forloop.counter <= t.rating %}{% icon "star" size=14 color="var(--gold)" %}{% else %}{% icon "star-regular" size=14 color="var(--border)" %}{% endif %}{% endfor %}</div>
+        <p class="t-quote">"{{ t.review_text }}"</p>
+        <div class="t-reviewer">
+          <div class="t-avatar">{{ t.reviewer_name|slice:":2"|upper }}</div>
+          <div>
+            <div class="t-name">{{ t.reviewer_name }}</div>
+            {% if t.product %}<a href="/products/{{ t.product.slug }}/" class="t-product">{{ t.product.name }}</a>{% endif %}
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    {% else %}
+      <div class="testimonial-card">
+        <div class="t-stars">{% icon "star" size=14 color="var(--gold)" %}{% icon "star" size=14 color="var(--gold)" %}{% icon "star" size=14 color="var(--gold)" %}{% icon "star" size=14 color="var(--gold)" %}{% icon "star" size=14 color="var(--gold)" %}</div>
+        <p class="t-quote">"Ordered a MacBook on Monday, arrived in Nairobi by Wednesday. Genuine product, sealed box. I'm never buying electronics anywhere else."</p>
+        <div class="t-reviewer"><div class="t-avatar">JK</div><div><div class="t-name">James Kamau</div><div class="t-product">MacBook Air M2</div></div></div>
+      </div>
+      <div class="testimonial-card">
+        <div class="t-stars">{% icon "star" size=14 color="var(--gold)" %}{% icon "star" size=14 color="var(--gold)" %}{% icon "star" size=14 color="var(--gold)" %}{% icon "star" size=14 color="var(--gold)" %}{% icon "star" size=14 color="var(--gold)" %}</div>
+        <p class="t-quote">"The Sony headphones I got are incredible. Customer support helped me choose the right model for my needs. Fast, friendly, genuine."</p>
+        <div class="t-reviewer"><div class="t-avatar">AW</div><div><div class="t-name">Amina Wanjiru</div><div class="t-product">Sony WH-1000XM5</div></div></div>
+      </div>
+      <div class="testimonial-card">
+        <div class="t-stars">{% icon "star" size=14 color="var(--gold)" %}{% icon "star" size=14 color="var(--gold)" %}{% icon "star" size=14 color="var(--gold)" %}{% icon "star" size=14 color="var(--gold)" %}{% icon "star" size=14 color="var(--gold)" %}</div>
+        <p class="t-quote">"M-Pesa checkout is seamless. I was skeptical but the process was smoother than ordering food. My Samsung arrived the next day."</p>
+        <div class="t-reviewer"><div class="t-avatar">BM</div><div><div class="t-name">Brian Mwangi</div><div class="t-product">Samsung S24 Ultra</div></div></div>
+      </div>
+    {% endif %}
+  </div>
+</div>
